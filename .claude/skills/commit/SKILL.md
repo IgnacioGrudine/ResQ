@@ -106,6 +106,14 @@ For each approved commit, in order:
 If the user asks to change a message, update it before committing that group.
 If the user says "skip 2", skip that commit and continue with the rest.
 
+### Step 5 — Push
+
+After all commits are done, run:
+```
+git push
+```
+Show the result and confirm the branch is up to date with origin.
+
 ---
 
 ### Hard rules — never break these
