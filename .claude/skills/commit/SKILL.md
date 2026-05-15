@@ -66,6 +66,8 @@ Based on the projects touched in Step 1, run the appropriate build command(s):
 
 **If all builds pass:** report ✅ briefly (e.g. `✅ Backend build OK · Frontend build OK`) and continue to Step 3.
 
+> ⚠️ **Always shut down anything you started for verification.** Build verification is a *check*, not a deploy. If during this step you ran `docker compose up`, `dotnet run`, `ng serve` or any long-running process, you MUST tear it down (`docker compose down`, stop the dev servers, kill background processes) before moving on. Never leave services running after a commit. The repo state at the end of `/commit` is: code committed and pushed, nothing running.
+
 ---
 
 ### Step 3 — Draft the commit plan
@@ -144,6 +146,8 @@ Show the result and confirm the branch is up to date with origin.
 ### Hard rules — never break these
 
 - ❌ **Never commit code that hasn't been verified to build** (Step 2 is mandatory)
+- ❌ **Never add `Co-Authored-By` trailers, `🤖 Generated with Claude Code`, or any other attribution to Claude / Anthropic.** Every commit in this repo is authored solely by Ignacio. Commit messages contain ONLY the conventional-commit subject line and (optionally) a plain body — nothing else.
+- ❌ **Never leave processes or containers running after `/commit` ends.** If Step 2 spun anything up, tear it down before finishing.
 - ❌ Never use `git add .` or `git add -A`
 - ❌ Never commit `bin/`, `obj/`, `.vs/`, `*.user`, `.env`, secrets or credentials
 - ❌ Never use `--no-verify` or `--no-gpg-sign`
