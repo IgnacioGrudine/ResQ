@@ -1,0 +1,26 @@
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE / OS
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+.DS_Store
+Thumbs.db
+
+# Git / Docker
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Secrets / local env
+.env
+.env.*
+appsettings.Development.json

@@ -1,0 +1,50 @@
+# Backend-only orchestration: API + PostgreSQL
+# Useful for backend developers who don't need the frontend running.
+# Usage: docker compose up   (from the Backend/ folder)
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: resq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-resq}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resq_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-resq_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resq} -d ${POSTGRES_DB:-resq_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - resq-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: resq-backend:dev
+    container_name: resq-backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-resq_db};Username=${POSTGRES_USER:-resq};Password=${POSTGRES_PASSWORD:-resq_dev}"
+    ports:
+      - "5004:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - resq-net
+
+volumes:
+  pg_data:
+
+networks:
+  resq-net:
+    driver: bridge
