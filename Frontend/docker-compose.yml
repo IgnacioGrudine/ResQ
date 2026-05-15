@@ -1,0 +1,20 @@
+# Frontend-only orchestration: Angular app served by nginx
+# Useful for frontend developers building UI without spinning up the backend.
+# Usage: docker compose up   (from the Frontend/ folder)
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: resq-frontend:dev
+    container_name: resq-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    networks:
+      - resq-net
+
+networks:
+  resq-net:
+    driver: bridge
