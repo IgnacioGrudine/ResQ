@@ -1,7 +1,7 @@
 ---
 name: commit
-description: Smart atomic git commits. Analyzes all staged/unstaged changes, groups them by logical unit (controller, service, model, config, etc.), proposes individual conventional-commit messages in English, and asks for confirmation before committing each group. Never bundles unrelated changes into a single commit. Use this every time you want to commit changes to the ResQ repository.
-allowed-tools: Bash(git *)
+description: Smart atomic git commits. Verifies that affected projects (backend and/or frontend) build cleanly BEFORE proposing any commit. Then analyzes all staged/unstaged changes, groups them by logical unit (controller, service, model, config, etc.), proposes individual conventional-commit messages in English, and asks for confirmation before committing each group. Never bundles unrelated changes into a single commit. Never commits broken code. Use this every time you want to commit changes to the ResQ repository.
+allowed-tools: Bash(git *), Bash(dotnet *), Bash(ng *), Bash(npm *)
 shell: powershell
 ---
 
@@ -41,9 +41,34 @@ Read the `git status` and `git diff HEAD` output carefully. Group every changed 
 
 **Never mix files from different logical buckets into one commit.**
 
+Also determine **which projects were touched**: backend (`Backend/**`), frontend (`Frontend/**`), or both. This drives Step 2.
+
 ---
 
-### Step 2 — Draft the commit plan
+### Step 2 — Verify the build (MANDATORY — never skip)
+
+> **Cultural rule:** code is not "done" until it compiles. We do NOT commit work that we haven't verified. A feature is complete only when the affected project builds and starts up cleanly.
+
+Based on the projects touched in Step 1, run the appropriate build command(s):
+
+| Project touched | Command to run | Run from |
+|---|---|---|
+| Backend (`Backend/**`) | `dotnet build Backend/ResQ.sln` | repo root |
+| Frontend (`Frontend/**`) | `ng build --configuration=development` | `Frontend/` |
+| Both | run both commands | as above |
+| Only docs / `.claude/` / `.gitignore` / `CLAUDE.md` | skip the build (no compilable code touched) | — |
+
+**If any build fails:**
+1. STOP — do NOT propose a commit plan.
+2. Show the build error to the user clearly.
+3. Either fix the issue yourself (if the cause is obvious and within scope) or ask the user how to proceed.
+4. Re-run the build until it passes before continuing to Step 3.
+
+**If all builds pass:** report ✅ briefly (e.g. `✅ Backend build OK · Frontend build OK`) and continue to Step 3.
+
+---
+
+### Step 3 — Draft the commit plan
 
 For each bucket, prepare:
 - The **exact list of files** to `git add` (never use `git add .` or `git add -A`)
@@ -72,7 +97,7 @@ feat(backend): scaffold Web API with N-layer folder structure
 
 ---
 
-### Step 3 — Show the plan and ask for approval
+### Step 4 — Show the plan and ask for approval
 
 Present the full commit plan using this format (replacing the placeholders with the ACTUAL files and messages derived from the real git output above):
 
@@ -94,7 +119,7 @@ Options the user can give: `yes` (proceed with all), `skip N` (skip commit N), `
 
 ---
 
-### Step 4 — Execute approved commits
+### Step 5 — Execute approved commits
 
 Once the user confirms (fully or partially):
 
@@ -106,7 +131,7 @@ For each approved commit, in order:
 If the user asks to change a message, update it before committing that group.
 If the user says "skip 2", skip that commit and continue with the rest.
 
-### Step 5 — Push
+### Step 6 — Push
 
 After all commits are done, run:
 ```
@@ -118,9 +143,11 @@ Show the result and confirm the branch is up to date with origin.
 
 ### Hard rules — never break these
 
+- ❌ **Never commit code that hasn't been verified to build** (Step 2 is mandatory)
 - ❌ Never use `git add .` or `git add -A`
 - ❌ Never commit `bin/`, `obj/`, `.vs/`, `*.user`, `.env`, secrets or credentials
 - ❌ Never use `--no-verify` or `--no-gpg-sign`
 - ❌ Never amend an existing commit unless the user explicitly asks
 - ✅ If there are zero changes, say so clearly and stop
 - ✅ If a pre-commit hook fails, fix the issue and create a **new** commit (never amend)
+- ✅ A feature is "done" only when it compiles AND the affected project starts up cleanly
