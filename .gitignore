@@ -6,6 +6,11 @@
 # dotenv files
 .env
 
+# Local dev secrets — never commit real connection strings or API keys
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+
 # VS Code extension caches
 *.lscache
 
