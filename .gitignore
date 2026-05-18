@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# VS Code extension caches
+*.lscache
+
 # User-specific files
 *.rsuser
 *.suo
