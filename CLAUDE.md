@@ -137,7 +137,42 @@ Disponibles en `.claude/skills/`:
 
 ---
 
-## 10. Cómo trabajar conmigo (Claude) en este proyecto
+## 10. Levantar el entorno de desarrollo local
+
+### Requisitos previos
+- Docker Desktop corriendo
+- .NET 10 SDK instalado
+
+### Pasos
+```bash
+# 1. Levantar PostgreSQL en Docker (puerto 5433 — evita conflicto con Postgres nativo de Windows en 5432)
+docker run -d --name resq-postgres --restart unless-stopped \
+  -e POSTGRES_USER=resq -e POSTGRES_PASSWORD=resq_dev -e POSTGRES_DB=resq_db \
+  -p 5433:5432 postgres:17-alpine
+
+# 2. Aplicar migraciones
+cd Backend/ResQ.API
+dotnet ef database update
+
+# 3. Levantar la API
+dotnet run
+```
+
+### Swagger UI
+> ⚠️ **Usar siempre la URL HTTPS.** La versión HTTP redirige a HTTPS por `UseHttpsRedirection()`,
+> lo que puede hacer que el browser bloquee la página o no cargue correctamente el JS de Swagger.
+
+| URL | Descripción |
+|---|---|
+| **https://localhost:7107/swagger** ✅ | Swagger UI — usar esta |
+| http://localhost:5004/swagger | Redirige a HTTPS — no usar directamente |
+
+El botón **"Authorize"** en Swagger acepta el `accessToken` devuelto por `/api/auth/login`.
+Formato: pegar solo el token (sin el prefijo `Bearer`).
+
+---
+
+## 11. Cómo trabajar conmigo (Claude) en este proyecto
 
 1. **Asumí el contexto completo de este archivo** — no pidas explicaciones de qué es el proyecto.
 2. **Respetá la arquitectura N-Layer.** Lógica de negocio en un Service, no en un Controller.
