@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.DTOs.Auth;
+using ResQ.API.Extensions;
 using ResQ.API.Services.Auth;
 
 namespace ResQ.API.Controllers;
@@ -14,20 +15,10 @@ public class AuthController(IAuthService authService) : ControllerBase
     /// </summary>
     /// <remarks>Returns 409 Conflict if the email address is already registered.</remarks>
     [HttpPost("register/consumer")]
-    public async Task<IActionResult> RegisterConsumer(
+    public async Task<ActionResult<AuthResponse>> RegisterConsumer(
         [FromBody] RegisterConsumerRequest request,
         CancellationToken ct)
-    {
-        try
-        {
-            var response = await authService.RegisterConsumerAsync(request, ct);
-            return Ok(response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-    }
+        => (await authService.RegisterConsumerAsync(request, ct)).ToActionResult();
 
     /// <summary>
     /// Registers a new merchant account with business information.
@@ -35,20 +26,10 @@ public class AuthController(IAuthService authService) : ControllerBase
     /// </summary>
     /// <remarks>Returns 409 Conflict if the email address is already registered.</remarks>
     [HttpPost("register/merchant")]
-    public async Task<IActionResult> RegisterMerchant(
+    public async Task<ActionResult<AuthResponse>> RegisterMerchant(
         [FromBody] RegisterMerchantRequest request,
         CancellationToken ct)
-    {
-        try
-        {
-            var response = await authService.RegisterMerchantAsync(request, ct);
-            return Ok(response);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Conflict(new { message = ex.Message });
-        }
-    }
+        => (await authService.RegisterMerchantAsync(request, ct)).ToActionResult();
 
     /// <summary>
     /// Authenticates a user with email and password credentials.
@@ -56,20 +37,10 @@ public class AuthController(IAuthService authService) : ControllerBase
     /// </summary>
     /// <remarks>Returns 401 Unauthorized if the credentials are invalid or the account is inactive.</remarks>
     [HttpPost("login")]
-    public async Task<IActionResult> Login(
+    public async Task<ActionResult<AuthResponse>> Login(
         [FromBody] LoginRequest request,
         CancellationToken ct)
-    {
-        try
-        {
-            var response = await authService.LoginAsync(request, ct);
-            return Ok(response);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
-        }
-    }
+        => (await authService.LoginAsync(request, ct)).ToActionResult();
 
     /// <summary>
     /// Issues a new access token using a valid, non-expired refresh token.
@@ -77,20 +48,10 @@ public class AuthController(IAuthService authService) : ControllerBase
     /// </summary>
     /// <remarks>Returns 401 Unauthorized if the refresh token is invalid, expired, or already revoked.</remarks>
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh(
+    public async Task<ActionResult<AuthResponse>> Refresh(
         [FromBody] RefreshTokenRequest request,
         CancellationToken ct)
-    {
-        try
-        {
-            var response = await authService.RefreshTokenAsync(request.RefreshToken, ct);
-            return Ok(response);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Unauthorized(new { message = ex.Message });
-        }
-    }
+        => (await authService.RefreshTokenAsync(request.RefreshToken, ct)).ToActionResult();
 
     /// <summary>
     /// Revokes the provided refresh token, effectively ending the current session.
@@ -100,8 +61,5 @@ public class AuthController(IAuthService authService) : ControllerBase
     public async Task<IActionResult> Logout(
         [FromBody] RefreshTokenRequest request,
         CancellationToken ct)
-    {
-        await authService.LogoutAsync(request.RefreshToken, ct);
-        return NoContent();
-    }
+        => (await authService.LogoutAsync(request.RefreshToken, ct)).ToActionResult();
 }
