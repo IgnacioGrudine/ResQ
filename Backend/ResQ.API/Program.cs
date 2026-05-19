@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using ResQ.API.Data;
 using ResQ.API.Data.UnitOfWork;
 using ResQ.API.Models.Settings;
+using ResQ.API.Middleware;
 using ResQ.API.Services.Auth;
 using ResQ.API.Services.Jwt;
 using ResQ.API.Services.Password;
@@ -93,6 +94,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>(); // must be first — catches everything below
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
