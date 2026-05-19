@@ -5,6 +5,8 @@ using Microsoft.IdentityModel.Tokens;
 using ResQ.API.Data;
 using ResQ.API.Data.UnitOfWork;
 using ResQ.API.Models.Settings;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using ResQ.API.Middleware;
 using ResQ.API.Services.Auth;
 using ResQ.API.Services.Jwt;
@@ -12,8 +14,10 @@ using ResQ.API.Services.Password;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Controllers ───────────────────────────────────────────────────────────────
+// ── Controllers + FluentValidation ───────────────────────────────────────────
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 // ── OpenAPI + Swagger UI ──────────────────────────────────────────────────────
 builder.Services.AddOpenApi(options =>
