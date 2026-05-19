@@ -159,16 +159,17 @@ dotnet run
 ```
 
 ### Swagger UI
-> ⚠️ **Usar siempre la URL HTTPS.** La versión HTTP redirige a HTTPS por `UseHttpsRedirection()`,
-> lo que puede hacer que el browser bloquee la página o no cargue correctamente el JS de Swagger.
 
-| URL | Descripción |
-|---|---|
-| **https://localhost:7107/swagger** ✅ | Swagger UI — usar esta |
-| http://localhost:5004/swagger | Redirige a HTTPS — no usar directamente |
+| Modo | URL | Notas |
+|---|---|---|
+| **`dotnet run` (local)** | **https://localhost:7107/swagger** ✅ | Usar HTTPS — HTTP redirige |
+| **Docker Compose** | **http://localhost:5004/swagger** ✅ | Solo HTTP dentro del container |
 
 El botón **"Authorize"** en Swagger acepta el `accessToken` devuelto por `/api/auth/login`.
 Formato: pegar solo el token (sin el prefijo `Bearer`).
+
+> ℹ️ En Docker, `UseHttpsRedirection` se deshabilita automáticamente mediante `DOTNET_RUNNING_IN_CONTAINER=true`.
+> TLS termination es responsabilidad del reverse proxy en producción.
 
 ---
 
