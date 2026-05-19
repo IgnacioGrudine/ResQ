@@ -11,11 +11,44 @@ using ResQ.API.Services.Password;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Controllers & OpenAPI ────────────────────────────────────────────────────
+// ── Controllers ───────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
 
-// ── Database ─────────────────────────────────────────────────────────────────
+// ── OpenAPI + Swagger UI ──────────────────────────────────────────────────────
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Info.Title       = "ResQ API";
+        document.Info.Version     = "v1";
+        document.Info.Description = "API de ResQ — plataforma de rescate alimentario";
+
+        // Security scheme definition (JWT Bearer)
+        document.Components ??= new Microsoft.OpenApi.OpenApiComponents();
+        document.Components.SecuritySchemes ??=
+            new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
+
+        document.Components.SecuritySchemes["Bearer"] =
+            new Microsoft.OpenApi.OpenApiSecurityScheme
+            {
+                Type         = Microsoft.OpenApi.SecuritySchemeType.Http,
+                Scheme       = "bearer",
+                BearerFormat = "JWT",
+                Description  = "Ingresá el access token obtenido en /api/auth/login"
+            };
+
+        // Global security requirement (shows the padlock on every endpoint)
+        document.Security ??= [];
+        document.Security.Add(new Microsoft.OpenApi.OpenApiSecurityRequirement
+        {
+            [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", document)] = []
+        });
+
+        return Task.CompletedTask;
+    });
+});
+
+// ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<ResQDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -41,7 +74,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// ── Dependency Injection ─────────────────────────────────────────────────────
+// ── Dependency Injection ──────────────────────────────────────────────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -51,7 +84,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
-    app.MapOpenApi();
+{
+    app.MapOpenApi();                     // serves /openapi/v1.json
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "ResQ API v1");
+        options.DocumentTitle = "ResQ API — Swagger";
+    });
+}
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
