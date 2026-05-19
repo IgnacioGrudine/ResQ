@@ -1,4 +1,6 @@
+using FluentResults;
 using Microsoft.Extensions.Options;
+using ResQ.API.Common.Errors;
 using ResQ.API.Data.UnitOfWork;
 using ResQ.API.DTOs.Auth;
 using ResQ.API.Models.Auth;
@@ -19,10 +21,11 @@ public class AuthService(
 
     // ─── Register Consumer ────────────────────────────────────────────────────
 
-    public async Task<AuthResponse> RegisterConsumerAsync(
+    public async Task<Result<AuthResponse>> RegisterConsumerAsync(
         RegisterConsumerRequest request, CancellationToken ct = default)
     {
-        await EnsureEmailAvailableAsync(request.Email, ct);
+        if (await uow.Users.ExistsByEmailAsync(request.Email, ct))
+            return Result.Fail(new ConflictError("El email ya está registrado."));
 
         var user = await CreateUserAsync(request.Email, request.Password, ct);
 
@@ -46,15 +49,16 @@ public class AuthService(
 
         await uow.SaveChangesAsync(ct); // UserRole + ConsumerProfile en una sola transacción
 
-        return await IssueTokensAsync(user, Role.Consumer, profile.Id, ct);
+        return Result.Ok(await IssueTokensAsync(user, Role.Consumer, profile.Id, ct));
     }
 
     // ─── Register Merchant ────────────────────────────────────────────────────
 
-    public async Task<AuthResponse> RegisterMerchantAsync(
+    public async Task<Result<AuthResponse>> RegisterMerchantAsync(
         RegisterMerchantRequest request, CancellationToken ct = default)
     {
-        await EnsureEmailAvailableAsync(request.Email, ct);
+        if (await uow.Users.ExistsByEmailAsync(request.Email, ct))
+            return Result.Fail(new ConflictError("El email ya está registrado."));
 
         var user = await CreateUserAsync(request.Email, request.Password, ct);
 
@@ -82,41 +86,43 @@ public class AuthService(
 
         await uow.SaveChangesAsync(ct); // UserRole + MerchantProfile en una sola transacción
 
-        return await IssueTokensAsync(user, Role.Merchant, profile.Id, ct);
+        return Result.Ok(await IssueTokensAsync(user, Role.Merchant, profile.Id, ct));
     }
 
     // ─── Login ────────────────────────────────────────────────────────────────
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct = default)
+    public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
-        var user = await uow.Users.GetByEmailAsync(request.Email, ct)
-            ?? throw new UnauthorizedAccessException("Credenciales inválidas.");
+        var user = await uow.Users.GetByEmailAsync(request.Email, ct);
+        if (user is null)
+            return Result.Fail(new UnauthorizedError("Credenciales inválidas."));
 
         if (!passwordService.Verify(request.Password, user.PasswordHash))
-            throw new UnauthorizedAccessException("Credenciales inválidas.");
+            return Result.Fail(new UnauthorizedError("Credenciales inválidas."));
 
         if (!user.IsActive)
-            throw new UnauthorizedAccessException("La cuenta se encuentra desactivada.");
+            return Result.Fail(new UnauthorizedError("La cuenta se encuentra desactivada."));
 
-        var roles    = (await uow.UserRoles.GetByUserIdAsync(user.Id, ct)).ToList();
-        var primary  = roles.First().Role;
+        var roles     = (await uow.UserRoles.GetByUserIdAsync(user.Id, ct)).ToList();
+        var primary   = roles.First().Role;
         var profileId = await ResolveProfileIdAsync(user.Id, primary, ct);
 
-        return await IssueTokensAsync(user, primary, profileId, ct);
+        return Result.Ok(await IssueTokensAsync(user, primary, profileId, ct));
     }
 
     // ─── Refresh Token ────────────────────────────────────────────────────────
 
-    public async Task<AuthResponse> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
+    public async Task<Result<AuthResponse>> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
     {
-        var stored = await uow.RefreshTokens.GetByTokenAsync(refreshToken, ct)
-            ?? throw new UnauthorizedAccessException("Refresh token inválido.");
+        var stored = await uow.RefreshTokens.GetByTokenAsync(refreshToken, ct);
+        if (stored is null)
+            return Result.Fail(new UnauthorizedError("Refresh token inválido."));
 
         if (stored.IsRevoked || stored.ExpiresAt <= DateTime.UtcNow)
-            throw new UnauthorizedAccessException("Refresh token expirado o revocado.");
+            return Result.Fail(new UnauthorizedError("Refresh token expirado o revocado."));
 
-        var user   = stored.User;
-        var roles  = user.UserRoles.ToList();
+        var user    = stored.User;
+        var roles   = user.UserRoles.ToList();
         var primary = roles.First().Role;
         var profileId = await ResolveProfileIdAsync(user.Id, primary, ct);
 
@@ -139,40 +145,35 @@ public class AuthService(
         await uow.RefreshTokens.AddAsync(newRefreshToken, ct);
         await uow.SaveChangesAsync(ct);
 
-        var accessToken    = jwtService.GenerateAccessToken(user, roles.Select(r => r.Role), profileId);
-        var expiresAt      = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes);
+        var accessToken = jwtService.GenerateAccessToken(user, roles.Select(r => r.Role), profileId);
+        var expiresAt   = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes);
 
-        return new AuthResponse
+        return Result.Ok(new AuthResponse
         {
             AccessToken          = accessToken,
             RefreshToken         = newRefreshTokenStr,
             AccessTokenExpiresAt = expiresAt,
             Role                 = primary.ToString(),
             ProfileId            = profileId
-        };
+        });
     }
 
     // ─── Logout ───────────────────────────────────────────────────────────────
 
-    public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
+    public async Task<Result> LogoutAsync(string refreshToken, CancellationToken ct = default)
     {
         var stored = await uow.RefreshTokens.GetByTokenAsync(refreshToken, ct);
-        if (stored is null) return; // idempotente
+        if (stored is null) return Result.Ok(); // idempotente
 
         stored.IsRevoked = true;
         stored.UpdatedAt = DateTime.UtcNow;
         uow.RefreshTokens.Update(stored);
 
         await uow.SaveChangesAsync(ct);
+        return Result.Ok();
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
-
-    private async Task EnsureEmailAvailableAsync(string email, CancellationToken ct)
-    {
-        if (await uow.Users.ExistsByEmailAsync(email, ct))
-            throw new InvalidOperationException("El email ya está registrado.");
-    }
 
     private async Task<User> CreateUserAsync(string email, string password, CancellationToken ct)
     {
@@ -201,10 +202,10 @@ public class AuthService(
     private async Task<AuthResponse> IssueTokensAsync(
         User user, Role primaryRole, int? profileId, CancellationToken ct)
     {
-        var roles          = new[] { primaryRole };
-        var accessToken    = jwtService.GenerateAccessToken(user, roles, profileId);
-        var refreshToken   = jwtService.GenerateRefreshToken();
-        var expiresAt      = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes);
+        var roles        = new[] { primaryRole };
+        var accessToken  = jwtService.GenerateAccessToken(user, roles, profileId);
+        var refreshToken = jwtService.GenerateRefreshToken();
+        var expiresAt    = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes);
 
         var refreshTokenEntity = new RefreshToken
         {
