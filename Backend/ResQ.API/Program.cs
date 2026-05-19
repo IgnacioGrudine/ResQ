@@ -95,7 +95,16 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>(); // must be first — catches everything below
-app.UseHttpsRedirection();
+
+// HTTPS redirect only applies when running outside a container.
+// Inside Docker the app is HTTP-only (ASPNETCORE_URLS=http://+:8080);
+// TLS termination is the reverse-proxy's responsibility.
+var runningInContainer = bool.TryParse(
+    Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out var inContainer)
+    && inContainer;
+
+if (!runningInContainer)
+    app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
