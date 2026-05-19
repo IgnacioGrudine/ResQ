@@ -7,6 +7,7 @@ WORKDIR /src
 # Copy solution + csproj first to leverage Docker's layer cache for restore
 COPY ResQ.sln ./
 COPY ResQ.API/ResQ.API.csproj ./ResQ.API/
+COPY ResQ.Tests/ResQ.Tests.csproj ./ResQ.Tests/
 RUN dotnet restore ResQ.sln
 
 # Copy the rest of the sources and publish
