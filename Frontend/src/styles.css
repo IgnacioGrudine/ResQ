@@ -1,2 +1,25 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
+
+@theme {
+  --color-evergreen: #132A13;
+  --color-hunter: #31572C;
+  --color-fern: #4F772D;
+  --color-palm: #90A955;
+  --color-lime: #ECF39E;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: #ffffff;
+  color: #132A13;
+  -webkit-font-smoothing: antialiased;
+}
