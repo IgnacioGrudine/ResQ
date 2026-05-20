@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin } from '@lucide/angular';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuthLeftPanelComponent } from '../../../../layouts/auth-layout/auth-left-panel.component';
 import { ResqButtonComponent } from '../../../../shared/ui/button/resq-button.component';
 import { ResqInputComponent } from '../../../../shared/ui/input/resq-input.component';
 
@@ -14,7 +15,7 @@ const PHONE_PATTERN = /^\+?[\d\s\-()+]{7,20}$/;
 @Component({
   selector: 'app-register-merchant',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, ResqButtonComponent, ResqInputComponent],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
   templateUrl: './register-merchant.component.html'
 })
 export class RegisterMerchantComponent {

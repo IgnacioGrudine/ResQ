@@ -1,181 +1,188 @@
-<div class="min-h-screen bg-gradient-to-br from-evergreen to-hunter flex flex-col items-center justify-center px-4 py-12">
+<div class="lg:grid lg:grid-cols-2 min-h-screen">
 
-  <!-- Logo -->
-  <a routerLink="/" class="flex items-center gap-2 mb-8 group">
-    <svg lucideLeaf class="w-8 h-8 text-lime"></svg>
-    <span class="text-white font-bold text-2xl tracking-tight group-hover:text-lime transition-colors">ResQ</span>
-  </a>
+  <app-auth-left-panel />
 
-  <!-- Card -->
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-8">
+  <div class="flex flex-col items-center px-6 py-12
+              max-lg:min-h-screen max-lg:bg-gradient-to-br max-lg:from-evergreen max-lg:to-hunter lg:bg-gray-50">
 
-    <!-- Header -->
-    <div class="flex items-center gap-3 mb-7">
-      <a routerLink="/register"
-         class="w-8 h-8 flex items-center justify-center rounded-full bg-lime text-evergreen hover:bg-palm hover:text-white transition-colors text-sm font-bold">
-        ←
-      </a>
-      <div>
-        <h1 class="text-2xl font-bold text-evergreen">Registrar comercio</h1>
-        <p class="text-gray-500 text-sm flex items-center gap-1.5"><svg lucideStore class="w-4 h-4"></svg> Perfil de comercio</p>
-      </div>
-    </div>
+    <!-- Logo (mobile only) -->
+    <a routerLink="/" class="lg:hidden flex items-center gap-2 mb-8 group">
+      <svg lucideLeaf class="w-8 h-8 text-lime"></svg>
+      <span class="text-white font-bold text-2xl tracking-tight group-hover:text-lime transition-colors">ResQ</span>
+    </a>
 
-    <!-- API Error -->
-    @if (apiError()) {
-      <div class="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-        <svg lucideTriangleAlert class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></svg>
-        <p class="text-red-700 text-sm">{{ apiError() }}</p>
-      </div>
-    }
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-8 lg:my-auto">
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5" novalidate>
-
-      <!-- ── Sección: Acceso ── -->
-      <div class="flex flex-col gap-4">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Datos de acceso</p>
-
-        <resq-input
-          label="Email"
-          type="email"
-          placeholder="comercio@email.com"
-          [required]="true"
-          [errorMessage]="fieldError('email')"
-          formControlName="email"
-        />
-
-        <resq-input
-          label="Contraseña"
-          type="password"
-          placeholder="Mínimo 8 caracteres"
-          [required]="true"
-          [hint]="'Mínimo 8 caracteres.'"
-          [errorMessage]="fieldError('password')"
-          formControlName="password"
-        />
+      <!-- Header -->
+      <div class="flex items-center gap-3 mb-7">
+        <a routerLink="/register"
+           class="w-8 h-8 flex items-center justify-center rounded-full bg-lime text-evergreen hover:bg-palm hover:text-white transition-colors text-sm font-bold">
+          ←
+        </a>
+        <div>
+          <h1 class="text-2xl font-bold text-evergreen">Registrar comercio</h1>
+          <p class="text-gray-500 text-sm flex items-center gap-1.5"><svg lucideStore class="w-4 h-4"></svg> Perfil de comercio</p>
+        </div>
       </div>
 
-      <div class="border-t border-gray-100"></div>
-
-      <!-- ── Sección: Comercio ── -->
-      <div class="flex flex-col gap-4">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Datos del comercio</p>
-
-        <resq-input
-          label="Nombre del comercio"
-          placeholder="Ej: La Panadería de Juan"
-          [required]="true"
-          [errorMessage]="fieldError('businessName')"
-          formControlName="businessName"
-        />
-
-        <resq-input
-          label="CUIT"
-          placeholder="20-12345678-9"
-          [required]="true"
-          [hint]="'Formato: XX-XXXXXXXX-X'"
-          [errorMessage]="fieldError('cuit')"
-          formControlName="cuit"
-        />
-
-        <resq-input
-          label="Dirección"
-          placeholder="Ej: Av. Colón 1234, Córdoba"
-          [required]="true"
-          [errorMessage]="fieldError('address')"
-          formControlName="address"
-        />
-
-        <resq-input
-          label="Teléfono de contacto"
-          type="tel"
-          placeholder="+54 9 351 000 0000"
-          [required]="true"
-          [errorMessage]="fieldError('contactPhone')"
-          formControlName="contactPhone"
-        />
-      </div>
-
-      <div class="border-t border-gray-100"></div>
-
-      <!-- ── Sección: Ubicación ── -->
-      <div class="flex flex-col gap-3">
-        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ubicación del comercio</p>
-        <p class="text-sm text-gray-500">
-          Necesitamos tu ubicación para que los consumidores puedan encontrarte.
-        </p>
-
-        <!-- Estado: detectado -->
-        @if (geoDetected()) {
-          <div class="flex items-center gap-3 bg-lime/50 border border-palm rounded-xl px-4 py-3">
-            <svg lucideCheck class="w-5 h-5 text-fern flex-shrink-0"></svg>
-            <div class="text-sm">
-              <p class="font-semibold text-evergreen">Ubicación detectada</p>
-              <p class="text-gray-500">
-                {{ form.get('latitude')?.value | number:'1.4-6' }},
-                {{ form.get('longitude')?.value | number:'1.4-6' }}
-              </p>
-            </div>
-            <button type="button"
-                    (click)="detectLocation()"
-                    class="ml-auto text-xs text-fern hover:text-hunter underline font-medium transition-colors">
-              Volver a detectar
-            </button>
-          </div>
-        }
-
-        <!-- Botón detectar -->
-        @if (!geoDetected()) {
-          <button
-            type="button"
-            (click)="detectLocation()"
-            [disabled]="geoLoading()"
-            class="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-xl border-2 border-dashed border-palm
-                   bg-lime/20 text-hunter font-semibold text-sm
-                   hover:bg-lime/40 hover:border-fern transition-all duration-200
-                   disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            @if (geoLoading()) {
-              <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-              Detectando ubicación...
-            } @else {
-              <svg lucideMapPin class="w-4 h-4"></svg>
-              Detectar mi ubicación actual
-            }
-          </button>
-        }
-
-        @if (geoError()) {
-          <p class="text-xs text-red-500 flex items-center gap-1">
-            <svg lucideTriangleAlert class="w-4 h-4 flex-shrink-0"></svg> {{ geoError() }}
-          </p>
-        }
-      </div>
-
-      <resq-button
-        type="submit"
-        [loading]="loading()"
-        [fullWidth]="true"
-        [disabled]="!geoDetected()"
-      >
-        Registrar mi comercio
-      </resq-button>
-
-      @if (!geoDetected()) {
-        <p class="text-center text-xs text-gray-400 -mt-2">
-          Detectá tu ubicación para poder continuar.
-        </p>
+      <!-- API Error -->
+      @if (apiError()) {
+        <div class="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <svg lucideTriangleAlert class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></svg>
+          <p class="text-red-700 text-sm">{{ apiError() }}</p>
+        </div>
       }
 
-    </form>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5" novalidate>
 
-    <p class="text-center text-sm text-gray-400 mt-6">
-      ¿Ya tenés cuenta?
-      <a routerLink="/login" class="text-fern font-semibold hover:text-hunter transition-colors">Iniciá sesión</a>
-    </p>
+        <!-- ── Sección: Acceso ── -->
+        <div class="flex flex-col gap-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Datos de acceso</p>
+
+          <resq-input
+            label="Email"
+            type="email"
+            placeholder="comercio@email.com"
+            [required]="true"
+            [errorMessage]="fieldError('email')"
+            formControlName="email"
+          />
+
+          <resq-input
+            label="Contraseña"
+            type="password"
+            placeholder="Mínimo 8 caracteres"
+            [required]="true"
+            [hint]="'Mínimo 8 caracteres.'"
+            [errorMessage]="fieldError('password')"
+            formControlName="password"
+          />
+        </div>
+
+        <div class="border-t border-gray-100"></div>
+
+        <!-- ── Sección: Comercio ── -->
+        <div class="flex flex-col gap-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Datos del comercio</p>
+
+          <resq-input
+            label="Nombre del comercio"
+            placeholder="Ej: La Panadería de Juan"
+            [required]="true"
+            [errorMessage]="fieldError('businessName')"
+            formControlName="businessName"
+          />
+
+          <resq-input
+            label="CUIT"
+            placeholder="20-12345678-9"
+            [required]="true"
+            [hint]="'Formato: XX-XXXXXXXX-X'"
+            [errorMessage]="fieldError('cuit')"
+            formControlName="cuit"
+          />
+
+          <resq-input
+            label="Dirección"
+            placeholder="Ej: Av. Colón 1234, Córdoba"
+            [required]="true"
+            [errorMessage]="fieldError('address')"
+            formControlName="address"
+          />
+
+          <resq-input
+            label="Teléfono de contacto"
+            type="tel"
+            placeholder="+54 9 351 000 0000"
+            [required]="true"
+            [errorMessage]="fieldError('contactPhone')"
+            formControlName="contactPhone"
+          />
+        </div>
+
+        <div class="border-t border-gray-100"></div>
+
+        <!-- ── Sección: Ubicación ── -->
+        <div class="flex flex-col gap-3">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ubicación del comercio</p>
+          <p class="text-sm text-gray-500">
+            Necesitamos tu ubicación para que los consumidores puedan encontrarte.
+          </p>
+
+          <!-- Estado: detectado -->
+          @if (geoDetected()) {
+            <div class="flex items-center gap-3 bg-lime/50 border border-palm rounded-xl px-4 py-3">
+              <svg lucideCheck class="w-5 h-5 text-fern flex-shrink-0"></svg>
+              <div class="text-sm">
+                <p class="font-semibold text-evergreen">Ubicación detectada</p>
+                <p class="text-gray-500">
+                  {{ form.get('latitude')?.value | number:'1.4-6' }},
+                  {{ form.get('longitude')?.value | number:'1.4-6' }}
+                </p>
+              </div>
+              <button type="button"
+                      (click)="detectLocation()"
+                      class="ml-auto text-xs text-fern hover:text-hunter underline font-medium transition-colors">
+                Volver a detectar
+              </button>
+            </div>
+          }
+
+          <!-- Botón detectar -->
+          @if (!geoDetected()) {
+            <button
+              type="button"
+              (click)="detectLocation()"
+              [disabled]="geoLoading()"
+              class="flex items-center justify-center gap-2 w-full py-3 px-5 rounded-xl border-2 border-dashed border-palm
+                     bg-lime/20 text-hunter font-semibold text-sm
+                     hover:bg-lime/40 hover:border-fern transition-all duration-200
+                     disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              @if (geoLoading()) {
+                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Detectando ubicación...
+              } @else {
+                <svg lucideMapPin class="w-4 h-4"></svg>
+                Detectar mi ubicación actual
+              }
+            </button>
+          }
+
+          @if (geoError()) {
+            <p class="text-xs text-red-500 flex items-center gap-1">
+              <svg lucideTriangleAlert class="w-4 h-4 flex-shrink-0"></svg> {{ geoError() }}
+            </p>
+          }
+        </div>
+
+        <resq-button
+          type="submit"
+          [loading]="loading()"
+          [fullWidth]="true"
+          [disabled]="!geoDetected()"
+        >
+          Registrar mi comercio
+        </resq-button>
+
+        @if (!geoDetected()) {
+          <p class="text-center text-xs text-gray-400 -mt-2">
+            Detectá tu ubicación para poder continuar.
+          </p>
+        }
+
+      </form>
+
+      <p class="text-center text-sm text-gray-400 mt-6">
+        ¿Ya tenés cuenta?
+        <a routerLink="/login" class="text-fern font-semibold hover:text-hunter transition-colors">Iniciá sesión</a>
+      </p>
+
+    </div>
 
   </div>
 

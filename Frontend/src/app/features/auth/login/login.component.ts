@@ -4,13 +4,14 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LucideLeaf, LucideTriangleAlert } from '@lucide/angular';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthLeftPanelComponent } from '../../../layouts/auth-layout/auth-left-panel.component';
 import { ResqButtonComponent } from '../../../shared/ui/button/resq-button.component';
 import { ResqInputComponent } from '../../../shared/ui/input/resq-input.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LucideLeaf, LucideTriangleAlert, ResqButtonComponent, ResqInputComponent],
+  imports: [ReactiveFormsModule, RouterLink, LucideLeaf, LucideTriangleAlert, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
   templateUrl: './login.component.html'
 })
 export class LoginComponent {

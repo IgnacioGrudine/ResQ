@@ -4,13 +4,14 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LucideLeaf, LucideUser, LucideTriangleAlert } from '@lucide/angular';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuthLeftPanelComponent } from '../../../../layouts/auth-layout/auth-left-panel.component';
 import { ResqButtonComponent } from '../../../../shared/ui/button/resq-button.component';
 import { ResqInputComponent } from '../../../../shared/ui/input/resq-input.component';
 
 @Component({
   selector: 'app-register-consumer',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, LucideLeaf, LucideUser, LucideTriangleAlert, ResqButtonComponent, ResqInputComponent],
+  imports: [ReactiveFormsModule, RouterLink, LucideLeaf, LucideUser, LucideTriangleAlert, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
   templateUrl: './register-consumer.component.html'
 })
 export class RegisterConsumerComponent {
