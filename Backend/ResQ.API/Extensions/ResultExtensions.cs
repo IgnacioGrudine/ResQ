@@ -7,13 +7,31 @@ namespace ResQ.API.Extensions;
 /// <summary>
 /// Bridge between the FluentResults world (services) and the ASP.NET Core MVC world (controllers).
 /// Translates Result / Result&lt;T&gt; into the appropriate ActionResult + ProblemDetails response.
+/// Controllers call one of these methods and return the result — zero if/switch logic allowed there.
 /// </summary>
 public static class ResultExtensions
 {
     // ─── Public methods ───────────────────────────────────────────────────────
 
     /// <summary>
-    /// For GET / PUT endpoints that return a typed body on success (200 OK).
+    /// For GET / PUT endpoints: maps TService → TClient and returns 200 OK on success.
+    /// <paramref name="map"/> converts the internal service value to the client DTO.
+    /// <paramref name="onSuccess"/> runs side-effects (e.g. setting cookies) before the response is sent.
+    /// </summary>
+    public static ActionResult<TOut> ToActionResult<TIn, TOut>(
+        this Result<TIn> result,
+        Func<TIn, TOut> map,
+        Action<TIn>? onSuccess = null)
+    {
+        if (result.IsFailed)
+            return result.ToErrorResponse<TOut>();
+
+        onSuccess?.Invoke(result.Value);
+        return new OkObjectResult(map(result.Value));
+    }
+
+    /// <summary>
+    /// For GET / PUT endpoints that return the same type (no mapping needed). Returns 200 OK on success.
     /// </summary>
     public static ActionResult<T> ToActionResult<T>(this Result<T> result)
     {
@@ -24,31 +42,32 @@ public static class ResultExtensions
     }
 
     /// <summary>
-    /// For DELETE (and any void-success) endpoints that return 204 No Content on success.
+    /// For POST endpoints that create a resource: maps TService → TClient and returns 201 Created on success.
+    /// <paramref name="onSuccess"/> runs side-effects (e.g. setting cookies) before the response is sent.
     /// </summary>
-    public static IActionResult ToActionResult(this Result result)
+    public static ActionResult<TOut> ToCreatedResult<TIn, TOut>(
+        this Result<TIn> result,
+        Func<TIn, TOut> map,
+        Action<TIn>? onSuccess = null)
     {
-        if (result.IsSuccess)
-            return new NoContentResult();
+        if (result.IsFailed)
+            return result.ToErrorResponse<TOut>();
 
-        return result.ToErrorResponse();
+        onSuccess?.Invoke(result.Value);
+        return new ObjectResult(map(result.Value)) { StatusCode = StatusCodes.Status201Created };
     }
 
     /// <summary>
-    /// For POST endpoints that return 201 Created + Location header on success.
-    /// <paramref name="routeValuesSelector"/> is a deferred lambda so .Value is only
-    /// accessed after the IsSuccess guard — avoids InvalidOperationException on failure.
+    /// For void-success endpoints (DELETE, logout): returns 204 No Content on success.
+    /// <paramref name="onSuccess"/> runs side-effects (e.g. clearing cookies) before the response is sent.
     /// </summary>
-    public static ActionResult<T> ToCreatedResult<T>(
-        this Result<T> result,
-        string actionName,
-        Func<T, object> routeValuesSelector)
+    public static IActionResult ToActionResult(this Result result, Action? onSuccess = null)
     {
         if (result.IsFailed)
-            return result.ToErrorResponse<T>();
+            return result.ToErrorResponse();
 
-        var routeValues = routeValuesSelector(result.Value);
-        return new CreatedAtActionResult(actionName, null, routeValues, result.Value);
+        onSuccess?.Invoke();
+        return new NoContentResult();
     }
 
     // ─── Private helpers (centralise the IError → ActionResult switch) ────────
