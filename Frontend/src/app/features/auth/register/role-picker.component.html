@@ -1,0 +1,60 @@
+<div class="min-h-screen bg-gradient-to-br from-evergreen to-hunter flex flex-col items-center justify-center px-4 py-12">
+
+  <!-- Logo -->
+  <a routerLink="/" class="flex items-center gap-2 mb-10 group">
+    <svg lucideLeaf class="w-8 h-8 text-lime"></svg>
+    <span class="text-white font-bold text-2xl tracking-tight group-hover:text-lime transition-colors">ResQ</span>
+  </a>
+
+  <!-- Card -->
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 md:p-12">
+    <div class="text-center mb-10">
+      <h1 class="text-2xl md:text-3xl font-bold text-evergreen">¿Cómo querés unirte?</h1>
+      <p class="text-gray-500 mt-2">Elegí tu perfil para crear tu cuenta.</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5">
+
+      <!-- Consumidor -->
+      <a routerLink="/register/consumer"
+         class="group flex flex-col items-center text-center gap-4 p-8 rounded-xl border-2 border-gray-100
+                hover:border-fern hover:bg-lime/30 transition-all duration-200 cursor-pointer">
+        <svg lucideUser class="w-14 h-14 text-hunter group-hover:text-fern transition-colors"></svg>
+        <div>
+          <h2 class="text-xl font-bold text-evergreen group-hover:text-fern transition-colors">Soy consumidor</h2>
+          <p class="text-gray-500 text-sm mt-1 leading-relaxed">
+            Quiero encontrar packs sorpresa cerca mío y ahorrar dinero.
+          </p>
+        </div>
+        <span class="mt-auto px-5 py-2 rounded-lg bg-hunter text-white text-sm font-semibold
+                     group-hover:bg-fern transition-colors">
+          Crear cuenta →
+        </span>
+      </a>
+
+      <!-- Comercio -->
+      <a routerLink="/register/merchant"
+         class="group flex flex-col items-center text-center gap-4 p-8 rounded-xl border-2 border-gray-100
+                hover:border-fern hover:bg-lime/30 transition-all duration-200 cursor-pointer">
+        <svg lucideStore class="w-14 h-14 text-hunter group-hover:text-fern transition-colors"></svg>
+        <div>
+          <h2 class="text-xl font-bold text-evergreen group-hover:text-fern transition-colors">Tengo un comercio</h2>
+          <p class="text-gray-500 text-sm mt-1 leading-relaxed">
+            Quiero vender mis excedentes y recuperar costos.
+          </p>
+        </div>
+        <span class="mt-auto px-5 py-2 rounded-lg bg-hunter text-white text-sm font-semibold
+                     group-hover:bg-fern transition-colors">
+          Registrar comercio →
+        </span>
+      </a>
+
+    </div>
+
+    <p class="text-center text-sm text-gray-400 mt-8">
+      ¿Ya tenés cuenta?
+      <a routerLink="/login" class="text-fern font-semibold hover:text-hunter transition-colors">Iniciá sesión</a>
+    </p>
+  </div>
+
+</div>

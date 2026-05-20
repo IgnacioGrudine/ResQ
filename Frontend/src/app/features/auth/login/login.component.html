@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-gradient-to-br from-evergreen to-hunter flex flex-col items-center justify-center px-4 py-12">
+
+  <!-- Logo -->
+  <a routerLink="/" class="flex items-center gap-2 mb-8 group">
+    <svg lucideLeaf class="w-8 h-8 text-lime"></svg>
+    <span class="text-white font-bold text-2xl tracking-tight group-hover:text-lime transition-colors">ResQ</span>
+  </a>
+
+  <!-- Card -->
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+
+    <div class="mb-7">
+      <h1 class="text-2xl font-bold text-evergreen">Iniciar sesión</h1>
+      <p class="text-gray-500 text-sm mt-1">Bienvenido de vuelta.</p>
+    </div>
+
+    <!-- API Error -->
+    @if (apiError()) {
+      <div class="mb-5 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+        <svg lucideTriangleAlert class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></svg>
+        <p class="text-red-700 text-sm">{{ apiError() }}</p>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5" novalidate>
+
+      <resq-input
+        label="Email"
+        type="email"
+        placeholder="tu@email.com"
+        [required]="true"
+        [errorMessage]="fieldError('email')"
+        formControlName="email"
+      />
+
+      <resq-input
+        label="Contraseña"
+        type="password"
+        placeholder="••••••••"
+        [required]="true"
+        [errorMessage]="fieldError('password')"
+        formControlName="password"
+      />
+
+      <resq-button
+        type="submit"
+        [loading]="loading()"
+        [fullWidth]="true"
+        class="mt-1"
+      >
+        Ingresar
+      </resq-button>
+
+    </form>
+
+    <p class="text-center text-sm text-gray-400 mt-6">
+      ¿No tenés cuenta?
+      <a routerLink="/register" class="text-fern font-semibold hover:text-hunter transition-colors">Registrarte</a>
+    </p>
+
+  </div>
+
+</div>
