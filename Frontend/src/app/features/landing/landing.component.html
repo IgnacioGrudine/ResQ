@@ -1,0 +1,256 @@
+<div class="min-h-screen flex flex-col">
+
+  <!-- ═══════════════════════════════════════ NAVBAR ═══════════════════════════════════════ -->
+  <nav class="sticky top-0 z-50 bg-evergreen shadow-md">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <a routerLink="/" class="flex items-center gap-2 group">
+        <svg lucideLeaf class="w-6 h-6 text-lime"></svg>
+        <span class="text-white font-bold text-xl tracking-tight group-hover:text-lime transition-colors">ResQ</span>
+      </a>
+
+      <!-- CTAs -->
+      <div class="flex items-center gap-3">
+        <a routerLink="/login">
+          <resq-button variant="ghost" size="sm">
+            <span class="text-white">Ingresar</span>
+          </resq-button>
+        </a>
+        <a routerLink="/register">
+          <button
+            class="px-4 py-2 rounded-lg bg-lime text-evergreen font-semibold text-sm hover:bg-palm hover:text-white transition-all duration-200"
+          >
+            Registrarse
+          </button>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+  <section class="bg-evergreen text-white py-20 md:py-28">
+    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <!-- Copy -->
+      <div class="flex flex-col gap-6">
+        <div class="inline-flex items-center gap-2 bg-hunter px-4 py-2 rounded-full w-fit">
+          <svg lucideLeaf class="w-4 h-4 text-lime"></svg>
+          <span class="text-lime text-sm font-medium">Plataforma de rescate de alimentos</span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+          Rescatá comida.<br />
+          <span class="text-lime">Ahorrá dinero.</span><br />
+          Cuidá el planeta.
+        </h1>
+
+        <p class="text-gray-300 text-lg leading-relaxed max-w-md">
+          Conectamos comercios gastronómicos con personas que quieren comer bien y gastar menos,
+          rescatando los excedentes del día antes de que se desperdicien.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+          <a routerLink="/register">
+            <resq-button size="lg" [fullWidth]="false">
+              <span class="text-white">Registrarme gratis</span>
+            </resq-button>
+          </a>
+          <a routerLink="/login">
+            <button
+              class="px-7 py-3.5 rounded-lg border border-white/40 text-white font-semibold text-lg hover:bg-white/10 transition-all duration-200"
+            >
+              Ya tengo cuenta
+            </button>
+          </a>
+        </div>
+
+        <div class="flex items-center gap-6 pt-2 text-sm text-gray-400">
+          <span class="flex items-center gap-1.5">
+            <svg lucideCheck class="w-4 h-4 text-lime"></svg> Sin costo de registro
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg lucideCheck class="w-4 h-4 text-lime"></svg> Packs desde $500
+          </span>
+        </div>
+      </div>
+
+      <!-- Ilustración placeholder -->
+      <div class="hidden md:flex justify-center items-center">
+        <div class="relative w-80 h-80">
+          <!-- Círculo decorativo de fondo -->
+          <div class="absolute inset-0 rounded-full bg-hunter opacity-50"></div>
+          <div class="absolute inset-8 rounded-full bg-fern opacity-40"></div>
+          <!-- Emoji central -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <svg lucideShoppingBag class="w-20 h-20 text-lime"></svg>
+            <span class="text-lime font-semibold text-lg">Pack Sorpresa</span>
+            <span class="text-gray-300 text-sm">Hasta 70% de descuento</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ CÓMO FUNCIONA ═══════════════════════════════════════ -->
+  <section class="bg-white py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl md:text-4xl font-bold text-evergreen">¿Cómo funciona para vos?</h2>
+        <p class="text-gray-500 mt-3 text-lg">Tres pasos y tu pack sorpresa está en tus manos.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        @for (step of steps; track step.number) {
+          <resq-card variant="lime" [hover]="false">
+            <div class="flex flex-col items-center text-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-hunter text-white font-bold text-xl flex items-center justify-center shadow-md">
+                {{ step.number }}
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-evergreen">{{ step.title }}</h3>
+                <p class="text-gray-600 mt-2 text-sm leading-relaxed">{{ step.description }}</p>
+              </div>
+            </div>
+          </resq-card>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ TRIPLE IMPACTO ═══════════════════════════════════════ -->
+  <section class="bg-lime py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-14">
+        <h2 class="text-3xl md:text-4xl font-bold text-evergreen">El impacto de cada rescate</h2>
+        <p class="text-hunter mt-3 text-lg">Cada pack que comprás genera un triple impacto positivo.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        @for (impact of impacts; track impact.title) {
+          <resq-card variant="default" [hover]="true">
+            <div class="flex flex-col gap-4">
+              <ng-container [ngComponentOutlet]="impact.icon" [ngComponentOutletInputs]="{ size: 40, color: '#31572C' }" />
+              <div>
+                <h3 class="text-xl font-bold text-evergreen">{{ impact.title }}</h3>
+                <p class="text-gray-600 mt-2 text-sm leading-relaxed">{{ impact.description }}</p>
+              </div>
+            </div>
+          </resq-card>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ PARA COMERCIOS ═══════════════════════════════════════ -->
+  <section class="bg-hunter text-white py-20">
+    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+      <div class="flex flex-col gap-6">
+        <div class="inline-flex items-center gap-2 bg-evergreen px-4 py-2 rounded-full w-fit">
+          <svg lucideStore class="w-4 h-4 text-lime"></svg>
+          <span class="text-lime text-sm font-medium">Para comercios</span>
+        </div>
+        <h2 class="text-3xl md:text-4xl font-bold">
+          ¿Tenés un comercio gastronómico?
+        </h2>
+        <p class="text-gray-300 text-lg leading-relaxed">
+          Sumá ResQ y convertí los excedentes del día en ingresos reales,
+          mientras contribuís a reducir el desperdicio en tu comunidad.
+        </p>
+        <a routerLink="/register" class="w-fit">
+          <button
+            class="px-7 py-3.5 rounded-lg bg-lime text-evergreen font-bold text-lg hover:bg-palm hover:text-white transition-all duration-200"
+          >
+            Registrar mi comercio
+          </button>
+        </a>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        @for (feature of merchantFeatures; track feature) {
+          <div class="flex items-center gap-4 bg-evergreen/40 rounded-xl px-5 py-4">
+            <div class="w-6 h-6 rounded-full bg-lime flex items-center justify-center flex-shrink-0">
+              <svg class="w-3.5 h-3.5 text-evergreen" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span class="text-white font-medium">{{ feature }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ STATS ═══════════════════════════════════════ -->
+  <section class="bg-white py-16">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid grid-cols-3 gap-8 text-center">
+        @for (stat of stats; track stat.label) {
+          <div class="flex flex-col gap-1">
+            <span class="text-4xl md:text-5xl font-bold text-hunter">{{ stat.value }}</span>
+            <span class="text-gray-500 text-sm md:text-base">{{ stat.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ CTA FINAL ═══════════════════════════════════════ -->
+  <section class="bg-fern py-20">
+    <div class="max-w-2xl mx-auto px-6 text-center flex flex-col gap-6 items-center">
+      <svg lucideLeaf class="w-12 h-12 text-white/80"></svg>
+      <h2 class="text-3xl md:text-4xl font-bold text-white">
+        ¿Listo para rescatar tu primer pack?
+      </h2>
+      <p class="text-white/80 text-lg">
+        Creá tu cuenta gratis y empezá hoy mismo a marcar la diferencia.
+      </p>
+      <a routerLink="/register">
+        <button
+          class="px-8 py-4 rounded-xl bg-evergreen text-white font-bold text-lg hover:bg-hunter transition-all duration-200 shadow-lg"
+        >
+          Registrarme ahora
+        </button>
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ FOOTER ═══════════════════════════════════════ -->
+  <footer class="bg-evergreen text-gray-400 py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="grid md:grid-cols-3 gap-10 pb-10 border-b border-white/10">
+        <!-- Brand -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center gap-2">
+            <svg lucideLeaf class="w-5 h-5 text-lime"></svg>
+            <span class="text-white font-bold text-lg">ResQ</span>
+          </div>
+          <p class="text-sm leading-relaxed">
+            Rescatamos alimentos, generamos impacto.<br />Hecho en Córdoba, Argentina.
+          </p>
+        </div>
+
+        <!-- Plataforma -->
+        <div class="flex flex-col gap-3">
+          <h4 class="text-white font-semibold text-sm uppercase tracking-wider">Plataforma</h4>
+          <nav class="flex flex-col gap-2 text-sm">
+            <a routerLink="/login" class="hover:text-lime transition-colors">Iniciar sesión</a>
+            <a routerLink="/register" class="hover:text-lime transition-colors">Registrarse</a>
+          </nav>
+        </div>
+
+        <!-- Legal -->
+        <div class="flex flex-col gap-3">
+          <h4 class="text-white font-semibold text-sm uppercase tracking-wider">Legal</h4>
+          <nav class="flex flex-col gap-2 text-sm">
+            <a href="#" class="hover:text-lime transition-colors">Términos y condiciones</a>
+            <a href="#" class="hover:text-lime transition-colors">Política de privacidad</a>
+          </nav>
+        </div>
+      </div>
+
+      <div class="pt-8 text-center text-sm">
+        © 2026 ResQ — Todos los derechos reservados
+      </div>
+    </div>
+  </footer>
+
+</div>
