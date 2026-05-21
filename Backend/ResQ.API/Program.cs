@@ -3,12 +3,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ResQ.API.Data;
-using ResQ.API.Data.UnitOfWork;
 using ResQ.API.Models.Settings;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using ResQ.API.Middleware;
+using ResQ.API.Repositories.Auth;
+using ResQ.API.Repositories.Catalog;
+using ResQ.API.Repositories.Orders;
+using ResQ.API.Repositories.Reviews;
 using ResQ.API.Services.Auth;
+using ResQ.API.Services.Catalog;
 using ResQ.API.Services.Consumers;
 using ResQ.API.Services.Jwt;
 using ResQ.API.Services.Merchants;
@@ -32,7 +36,6 @@ builder.Services.AddOpenApi(options =>
         document.Info.Version     = "v1";
         document.Info.Description = "API de ResQ — plataforma de rescate alimentario";
 
-        // Security scheme definition (JWT Bearer)
         document.Components ??= new Microsoft.OpenApi.OpenApiComponents();
         document.Components.SecuritySchemes ??=
             new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
@@ -46,7 +49,6 @@ builder.Services.AddOpenApi(options =>
                 Description  = "Ingresá el access token obtenido en /api/auth/login"
             };
 
-        // Global security requirement (shows the padlock on every endpoint)
         document.Security ??= [];
         document.Security.Add(new Microsoft.OpenApi.OpenApiSecurityRequirement
         {
@@ -83,22 +85,34 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// ── Dependency Injection ──────────────────────────────────────────────────────
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// ── Repositories ──────────────────────────────────────────────────────────────
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IConsumerProfileRepository, ConsumerProfileRepository>();
+builder.Services.AddScoped<IMerchantProfileRepository, MerchantProfileRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IMerchantCategoryRepository, MerchantCategoryRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+
+// ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMerchantService, MerchantService>();
+builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IConsumerService, ConsumerService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();                     // serves /openapi/v1.json
+    app.MapOpenApi();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/openapi/v1.json", "ResQ API v1");
@@ -106,11 +120,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseMiddleware<ExceptionHandlingMiddleware>(); // must be first — catches everything below
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// HTTPS redirect only applies when running outside a container.
-// Inside Docker the app is HTTP-only (ASPNETCORE_URLS=http://+:8080);
-// TLS termination is the reverse-proxy's responsibility.
 var runningInContainer = bool.TryParse(
     Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), out var inContainer)
     && inContainer;
