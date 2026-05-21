@@ -24,4 +24,7 @@ public class GenericRepository<T>(ResQDbContext db) : IGenericRepository<T>
 
     public void Delete(T entity)
         => _set.Remove(entity);
+
+    public async Task<int> SaveChangesAsync(CancellationToken ct = default)
+        => await _db.SaveChangesAsync(ct);
 }
