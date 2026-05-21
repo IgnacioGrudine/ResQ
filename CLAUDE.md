@@ -163,7 +163,7 @@ dotnet run
 | Modo | URL | Notas |
 |---|---|---|
 | **`dotnet run` (local)** | **https://localhost:7107/swagger** ✅ | Usar HTTPS — HTTP redirige |
-| **Docker Compose** | **http://localhost:5004/swagger** ✅ | Solo HTTP dentro del container |
+| **Docker Compose** | **http://localhost/swagger** ✅ | A través del reverse proxy Nginx |
 
 El botón **"Authorize"** en Swagger acepta el `accessToken` devuelto por `/api/auth/login`.
 Formato: pegar solo el token (sin el prefijo `Bearer`).
