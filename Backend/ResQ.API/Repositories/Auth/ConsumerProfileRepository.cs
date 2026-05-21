@@ -9,4 +9,10 @@ public class ConsumerProfileRepository(ResQDbContext db) : GenericRepository<Con
 {
     public async Task<ConsumerProfile?> GetByUserIdAsync(int userId, CancellationToken ct = default)
         => await _set.FirstOrDefaultAsync(cp => cp.UserId == userId, ct);
+
+    public async Task<ConsumerProfile?> GetByIdWithUserAsync(int profileId, CancellationToken ct = default)
+        => await _set
+            .AsNoTracking()
+            .Include(cp => cp.User)
+            .FirstOrDefaultAsync(cp => cp.Id == profileId, ct);
 }

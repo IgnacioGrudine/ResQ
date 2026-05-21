@@ -6,4 +6,5 @@ namespace ResQ.API.Repositories.Auth;
 public interface IConsumerProfileRepository : IGenericRepository<ConsumerProfile>
 {
     Task<ConsumerProfile?> GetByUserIdAsync(int userId, CancellationToken ct = default);
+    Task<ConsumerProfile?> GetByIdWithUserAsync(int profileId, CancellationToken ct = default);
 }
