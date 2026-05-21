@@ -5,5 +5,6 @@ namespace ResQ.API.Services.Orders;
 
 public interface IOrderService
 {
-    Task<Result<IEnumerable<OrderSummaryResponse>>> GetMyOrdersAsync(int consumerProfileId, CancellationToken ct = default);
+    Task<Result<IEnumerable<OrderSummaryResponse>>> GetConsumerOrdersAsync(int consumerProfileId, CancellationToken ct = default);
+    Task<Result<IEnumerable<MerchantOrderSummaryResponse>>> GetMerchantOrdersAsync(int merchantProfileId, CancellationToken ct = default);
 }

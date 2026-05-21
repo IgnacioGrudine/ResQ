@@ -1,15 +1,19 @@
 using FluentResults;
 using ResQ.API.Common.Errors;
-using ResQ.API.Data.UnitOfWork;
 using ResQ.API.DTOs.Consumers;
+using ResQ.API.DTOs.Orders;
+using ResQ.API.Repositories.Auth;
+using ResQ.API.Services.Orders;
 
 namespace ResQ.API.Services.Consumers;
 
-public class ConsumerService(IUnitOfWork uow) : IConsumerService
+public class ConsumerService(
+    IConsumerProfileRepository consumerProfiles,
+    IOrderService orderService) : IConsumerService
 {
     public async Task<Result<ConsumerProfileResponse>> GetMyProfileAsync(int consumerProfileId, CancellationToken ct = default)
     {
-        var profile = await uow.ConsumerProfiles.GetByIdWithUserAsync(consumerProfileId, ct);
+        var profile = await consumerProfiles.GetByIdWithUserAsync(consumerProfileId, ct);
         if (profile is null)
             return Result.Fail(new NotFoundError("Perfil de consumidor no encontrado."));
 
@@ -26,7 +30,7 @@ public class ConsumerService(IUnitOfWork uow) : IConsumerService
     public async Task<Result<ConsumerProfileResponse>> UpdateMyProfileAsync(
         int consumerProfileId, UpdateConsumerProfileRequest request, CancellationToken ct = default)
     {
-        var profile = await uow.ConsumerProfiles.GetByIdWithUserAsync(consumerProfileId, ct);
+        var profile = await consumerProfiles.GetByIdWithUserAsync(consumerProfileId, ct);
         if (profile is null)
             return Result.Fail(new NotFoundError("Perfil de consumidor no encontrado."));
 
@@ -34,9 +38,9 @@ public class ConsumerService(IUnitOfWork uow) : IConsumerService
         profile.LastName    = request.LastName;
         profile.PhoneNumber = request.PhoneNumber;
         profile.UpdatedAt   = DateTime.UtcNow;
-        uow.ConsumerProfiles.Update(profile);
+        consumerProfiles.Update(profile);
 
-        await uow.SaveChangesAsync(ct);
+        await consumerProfiles.SaveChangesAsync(ct);
 
         return Result.Ok(new ConsumerProfileResponse
         {
@@ -47,4 +51,7 @@ public class ConsumerService(IUnitOfWork uow) : IConsumerService
             PhoneNumber = profile.PhoneNumber
         });
     }
+
+    public Task<Result<IEnumerable<OrderSummaryResponse>>> GetMyOrdersAsync(int consumerProfileId, CancellationToken ct = default)
+        => orderService.GetConsumerOrdersAsync(consumerProfileId, ct);
 }

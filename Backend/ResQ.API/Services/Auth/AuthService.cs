@@ -1,18 +1,22 @@
 using FluentResults;
 using Microsoft.Extensions.Options;
 using ResQ.API.Common.Errors;
-using ResQ.API.Data.UnitOfWork;
 using ResQ.API.DTOs.Auth;
 using ResQ.API.Models.Auth;
 using ResQ.API.Models.Enums;
 using ResQ.API.Models.Settings;
+using ResQ.API.Repositories.Auth;
 using ResQ.API.Services.Jwt;
 using ResQ.API.Services.Password;
 
 namespace ResQ.API.Services.Auth;
 
 public class AuthService(
-    IUnitOfWork uow,
+    IUserRepository users,
+    IUserRoleRepository userRoles,
+    IRefreshTokenRepository refreshTokens,
+    IConsumerProfileRepository consumerProfiles,
+    IMerchantProfileRepository merchantProfiles,
     IPasswordService passwordService,
     IJwtService jwtService,
     IOptions<JwtSettings> jwtOptions) : IAuthService
@@ -24,18 +28,17 @@ public class AuthService(
     public async Task<Result<AuthResponse>> RegisterConsumerAsync(
         RegisterConsumerRequest request, CancellationToken ct = default)
     {
-        if (await uow.Users.ExistsByEmailAsync(request.Email, ct))
+        if (await users.ExistsByEmailAsync(request.Email, ct))
             return Result.Fail(new ConflictError("El email ya está registrado."));
 
         var user = await CreateUserAsync(request.Email, request.Password, ct);
 
-        var userRole = new UserRole
+        await userRoles.AddAsync(new UserRole
         {
             UserId    = user.Id,
             Role      = Role.Consumer,
             CreatedAt = DateTime.UtcNow
-        };
-        await uow.UserRoles.AddAsync(userRole, ct);
+        }, ct);
 
         var profile = new ConsumerProfile
         {
@@ -45,9 +48,9 @@ public class AuthService(
             PhoneNumber = request.PhoneNumber,
             CreatedAt   = DateTime.UtcNow
         };
-        await uow.ConsumerProfiles.AddAsync(profile, ct);
+        await consumerProfiles.AddAsync(profile, ct);
 
-        await uow.SaveChangesAsync(ct); // UserRole + ConsumerProfile en una sola transacción
+        await users.SaveChangesAsync(ct);
 
         return Result.Ok(await IssueTokensAsync(user, Role.Consumer, profile.Id, ct));
     }
@@ -57,18 +60,17 @@ public class AuthService(
     public async Task<Result<AuthResponse>> RegisterMerchantAsync(
         RegisterMerchantRequest request, CancellationToken ct = default)
     {
-        if (await uow.Users.ExistsByEmailAsync(request.Email, ct))
+        if (await users.ExistsByEmailAsync(request.Email, ct))
             return Result.Fail(new ConflictError("El email ya está registrado."));
 
         var user = await CreateUserAsync(request.Email, request.Password, ct);
 
-        var userRole = new UserRole
+        await userRoles.AddAsync(new UserRole
         {
             UserId    = user.Id,
             Role      = Role.Merchant,
             CreatedAt = DateTime.UtcNow
-        };
-        await uow.UserRoles.AddAsync(userRole, ct);
+        }, ct);
 
         var profile = new MerchantProfile
         {
@@ -82,9 +84,9 @@ public class AuthService(
             MpConnectionStatus = MpConnectionStatus.Disconnected,
             CreatedAt          = DateTime.UtcNow
         };
-        await uow.MerchantProfiles.AddAsync(profile, ct);
+        await merchantProfiles.AddAsync(profile, ct);
 
-        await uow.SaveChangesAsync(ct); // UserRole + MerchantProfile en una sola transacción
+        await users.SaveChangesAsync(ct);
 
         return Result.Ok(await IssueTokensAsync(user, Role.Merchant, profile.Id, ct));
     }
@@ -93,7 +95,7 @@ public class AuthService(
 
     public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request, CancellationToken ct = default)
     {
-        var user = await uow.Users.GetByEmailAsync(request.Email, ct);
+        var user = await users.GetByEmailAsync(request.Email, ct);
         if (user is null)
             return Result.Fail(new UnauthorizedError("Credenciales inválidas."));
 
@@ -103,7 +105,7 @@ public class AuthService(
         if (!user.IsActive)
             return Result.Fail(new UnauthorizedError("La cuenta se encuentra desactivada."));
 
-        var roles     = (await uow.UserRoles.GetByUserIdAsync(user.Id, ct)).ToList();
+        var roles     = (await userRoles.GetByUserIdAsync(user.Id, ct)).ToList();
         var primary   = roles.First().Role;
         var profileId = await ResolveProfileIdAsync(user.Id, primary, ct);
 
@@ -114,36 +116,34 @@ public class AuthService(
 
     public async Task<Result<AuthResponse>> RefreshTokenAsync(string refreshToken, CancellationToken ct = default)
     {
-        var stored = await uow.RefreshTokens.GetByTokenAsync(refreshToken, ct);
+        var stored = await refreshTokens.GetByTokenAsync(refreshToken, ct);
         if (stored is null)
             return Result.Fail(new UnauthorizedError("Refresh token inválido."));
 
         if (stored.IsRevoked || stored.ExpiresAt <= DateTime.UtcNow)
             return Result.Fail(new UnauthorizedError("Refresh token expirado o revocado."));
 
-        var user    = stored.User;
-        var roles   = user.UserRoles.ToList();
-        var primary = roles.First().Role;
+        var user      = stored.User;
+        var roles     = user.UserRoles.ToList();
+        var primary   = roles.First().Role;
         var profileId = await ResolveProfileIdAsync(user.Id, primary, ct);
 
         var newRefreshTokenStr = jwtService.GenerateRefreshToken();
 
-        // Revocar token viejo con trazabilidad
         stored.IsRevoked       = true;
         stored.ReplacedByToken = newRefreshTokenStr;
         stored.UpdatedAt       = DateTime.UtcNow;
-        uow.RefreshTokens.Update(stored);
+        refreshTokens.Update(stored);
 
-        // Emitir nuevo refresh token
-        var newRefreshToken = new RefreshToken
+        await refreshTokens.AddAsync(new RefreshToken
         {
             UserId    = user.Id,
             Token     = newRefreshTokenStr,
             ExpiresAt = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpirationDays),
             CreatedAt = DateTime.UtcNow
-        };
-        await uow.RefreshTokens.AddAsync(newRefreshToken, ct);
-        await uow.SaveChangesAsync(ct);
+        }, ct);
+
+        await refreshTokens.SaveChangesAsync(ct);
 
         var accessToken = jwtService.GenerateAccessToken(user, roles.Select(r => r.Role), profileId);
         var expiresAt   = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes);
@@ -162,14 +162,14 @@ public class AuthService(
 
     public async Task<Result> LogoutAsync(string refreshToken, CancellationToken ct = default)
     {
-        var stored = await uow.RefreshTokens.GetByTokenAsync(refreshToken, ct);
-        if (stored is null) return Result.Ok(); // idempotente
+        var stored = await refreshTokens.GetByTokenAsync(refreshToken, ct);
+        if (stored is null) return Result.Ok();
 
         stored.IsRevoked = true;
         stored.UpdatedAt = DateTime.UtcNow;
-        uow.RefreshTokens.Update(stored);
+        refreshTokens.Update(stored);
 
-        await uow.SaveChangesAsync(ct);
+        await refreshTokens.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
@@ -184,8 +184,8 @@ public class AuthService(
             IsActive     = true,
             CreatedAt    = DateTime.UtcNow
         };
-        await uow.Users.AddAsync(user, ct);
-        await uow.SaveChangesAsync(ct); // necesitamos el user.Id antes de crear los hijos
+        await users.AddAsync(user, ct);
+        await users.SaveChangesAsync(ct);
         return user;
     }
 
@@ -193,8 +193,8 @@ public class AuthService(
     {
         return role switch
         {
-            Role.Consumer => (await uow.ConsumerProfiles.GetByUserIdAsync(userId, ct))?.Id,
-            Role.Merchant => (await uow.MerchantProfiles.GetByUserIdAsync(userId, ct))?.Id,
+            Role.Consumer => (await consumerProfiles.GetByUserIdAsync(userId, ct))?.Id,
+            Role.Merchant => (await merchantProfiles.GetByUserIdAsync(userId, ct))?.Id,
             _             => null
         };
     }
@@ -202,26 +202,24 @@ public class AuthService(
     private async Task<AuthResponse> IssueTokensAsync(
         User user, Role primaryRole, int? profileId, CancellationToken ct)
     {
-        var roles        = new[] { primaryRole };
-        var accessToken  = jwtService.GenerateAccessToken(user, roles, profileId);
+        var roles       = new[] { primaryRole };
+        var accessToken = jwtService.GenerateAccessToken(user, roles, profileId);
         var refreshToken = jwtService.GenerateRefreshToken();
-        var expiresAt    = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes);
 
-        var refreshTokenEntity = new RefreshToken
+        await refreshTokens.AddAsync(new RefreshToken
         {
             UserId    = user.Id,
             Token     = refreshToken,
             ExpiresAt = DateTime.UtcNow.AddDays(_jwt.RefreshTokenExpirationDays),
             CreatedAt = DateTime.UtcNow
-        };
-        await uow.RefreshTokens.AddAsync(refreshTokenEntity, ct);
-        await uow.SaveChangesAsync(ct);
+        }, ct);
+        await refreshTokens.SaveChangesAsync(ct);
 
         return new AuthResponse
         {
             AccessToken          = accessToken,
             RefreshToken         = refreshToken,
-            AccessTokenExpiresAt = expiresAt,
+            AccessTokenExpiresAt = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenExpirationMinutes),
             Role                 = primaryRole.ToString(),
             ProfileId            = profileId
         };

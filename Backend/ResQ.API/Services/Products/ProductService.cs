@@ -1,17 +1,17 @@
 using FluentResults;
 using ResQ.API.Common.Errors;
-using ResQ.API.Data.UnitOfWork;
 using ResQ.API.DTOs.Products;
 using ResQ.API.Models.Catalog;
+using ResQ.API.Repositories.Catalog;
 
 namespace ResQ.API.Services.Products;
 
-public class ProductService(IUnitOfWork uow) : IProductService
+public class ProductService(IProductRepository products) : IProductService
 {
     public async Task<Result<IEnumerable<ProductResponse>>> GetMyProductsAsync(int merchantProfileId, CancellationToken ct = default)
     {
-        var products = await uow.Products.GetByMerchantIdAsync(merchantProfileId, ct);
-        return Result.Ok(products.Select(MapProduct));
+        var result = await products.GetByMerchantIdAsync(merchantProfileId, ct);
+        return Result.Ok(result.Select(MapProduct));
     }
 
     public async Task<Result<ProductResponse>> CreateProductAsync(
@@ -33,8 +33,8 @@ public class ProductService(IUnitOfWork uow) : IProductService
             CreatedAt       = DateTime.UtcNow
         };
 
-        await uow.Products.AddAsync(product, ct);
-        await uow.SaveChangesAsync(ct);
+        await products.AddAsync(product, ct);
+        await products.SaveChangesAsync(ct);
 
         return Result.Ok(MapProduct(product));
     }
@@ -42,7 +42,7 @@ public class ProductService(IUnitOfWork uow) : IProductService
     public async Task<Result<ProductResponse>> UpdateProductAsync(
         int merchantProfileId, int productId, UpdateProductRequest request, CancellationToken ct = default)
     {
-        var product = await uow.Products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
+        var product = await products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
         if (product is null)
             return Result.Fail(new NotFoundError("Pack no encontrado."));
 
@@ -56,34 +56,34 @@ public class ProductService(IUnitOfWork uow) : IProductService
         product.PickupTimeStart = request.PickupTimeStart;
         product.PickupTimeEnd   = request.PickupTimeEnd;
         product.UpdatedAt       = DateTime.UtcNow;
-        uow.Products.Update(product);
+        products.Update(product);
 
-        await uow.SaveChangesAsync(ct);
+        await products.SaveChangesAsync(ct);
         return Result.Ok(MapProduct(product));
     }
 
     public async Task<Result> DeleteProductAsync(int merchantProfileId, int productId, CancellationToken ct = default)
     {
-        var product = await uow.Products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
+        var product = await products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
         if (product is null)
             return Result.Fail(new NotFoundError("Pack no encontrado."));
 
-        uow.Products.Delete(product);
-        await uow.SaveChangesAsync(ct);
+        products.Delete(product);
+        await products.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
     public async Task<Result<ProductResponse>> ToggleProductAsync(int merchantProfileId, int productId, CancellationToken ct = default)
     {
-        var product = await uow.Products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
+        var product = await products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
         if (product is null)
             return Result.Fail(new NotFoundError("Pack no encontrado."));
 
         product.IsActive  = !product.IsActive;
         product.UpdatedAt = DateTime.UtcNow;
-        uow.Products.Update(product);
+        products.Update(product);
 
-        await uow.SaveChangesAsync(ct);
+        await products.SaveChangesAsync(ct);
         return Result.Ok(MapProduct(product));
     }
 
