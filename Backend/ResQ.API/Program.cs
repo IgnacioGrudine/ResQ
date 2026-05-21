@@ -9,8 +9,12 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using ResQ.API.Middleware;
 using ResQ.API.Services.Auth;
+using ResQ.API.Services.Consumers;
 using ResQ.API.Services.Jwt;
+using ResQ.API.Services.Merchants;
+using ResQ.API.Services.Orders;
 using ResQ.API.Services.Password;
+using ResQ.API.Services.Products;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +88,10 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IMerchantService, MerchantService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IConsumerService, ConsumerService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
