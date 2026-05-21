@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.DTOs.Consumers;
+using ResQ.API.DTOs.Orders;
 using ResQ.API.Extensions;
 using ResQ.API.Services.Consumers;
 
@@ -21,4 +22,9 @@ public class ConsumersController(IConsumerService consumerService) : ControllerB
     public async Task<ActionResult<ConsumerProfileResponse>> UpdateMyProfile(
         [FromBody] UpdateConsumerProfileRequest request, CancellationToken ct)
         => (await consumerService.UpdateMyProfileAsync(User.GetProfileId(), request, ct)).ToActionResult();
+
+    /// <summary>Returns the full order history for the authenticated consumer.</summary>
+    [HttpGet("me/orders")]
+    public async Task<ActionResult<IEnumerable<OrderSummaryResponse>>> GetMyOrders(CancellationToken ct)
+        => (await consumerService.GetMyOrdersAsync(User.GetProfileId(), ct)).ToActionResult();
 }
