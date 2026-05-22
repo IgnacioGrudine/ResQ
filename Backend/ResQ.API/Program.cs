@@ -30,6 +30,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 // ── OpenAPI + Swagger UI ──────────────────────────────────────────────────────
 builder.Services.AddOpenApi(options =>
 {
+    // Swagger UI (Swashbuckle) only renders up to 3.0.x — .NET 10 emits 3.1 by default
+    options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+
     options.AddDocumentTransformer((document, _, _) =>
     {
         document.Info.Title       = "ResQ API";
@@ -109,6 +112,13 @@ builder.Services.AddScoped<IConsumerService, ConsumerService>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+// Apply pending migrations on startup so the Docker DB schema is always in sync.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ResQDbContext>();
+    db.Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {
