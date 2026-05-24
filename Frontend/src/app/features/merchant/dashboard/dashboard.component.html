@@ -18,83 +18,88 @@
   @else if (data(); as d) {
 
     <!-- ══════════════════════════════════════════════════════════════
-         HEADER — personalized greeting + status pills
-         NOTE: overflow-hidden lives on the blob wrapper, NOT here,
-         so it doesn't clip the KPI cards that overlap via -mt-XX.
+         HEADER — greeting + status pills + KPI cards
+         The KPI cards live INSIDE this div so they're always
+         painted above the evergreen background (no z-index tricks needed).
     ══════════════════════════════════════════════════════════════ -->
-    <div class="bg-evergreen px-4 md:px-8 pt-7 pb-24 relative">
-      <!-- Decorative blobs (overflow-hidden scoped to this wrapper) -->
+    <div class="bg-evergreen px-4 md:px-8 pt-7 pb-6 relative">
+
+      <!-- Decorative blobs (scoped overflow so they don't affect layout) -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full"></div>
         <div class="absolute right-12 top-20 w-28 h-28 bg-white/5 rounded-full"></div>
       </div>
 
-      <div class="max-w-5xl mx-auto relative">
-        <p class="text-white/60 text-sm font-medium capitalize">{{ todayFormatted }}</p>
-        <h1 class="text-2xl font-bold text-white mt-0.5 leading-snug">
-          {{ greeting }},<br>{{ d.businessName }}
-        </h1>
+      <div class="max-w-5xl mx-auto relative flex flex-col gap-5">
 
-        <!-- Status pills -->
-        <div class="flex flex-wrap gap-2 mt-4">
-          <span class="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs px-3 py-1.5 rounded-full font-medium">
-            <svg lucidePackage class="w-3.5 h-3.5"></svg>
-            {{ d.activePackCount }} packs activos
-          </span>
+        <!-- Greeting row -->
+        <div>
+          <p class="text-white/60 text-sm font-medium capitalize">{{ todayFormatted }}</p>
+          <h1 class="text-2xl font-bold text-white mt-0.5 leading-snug">
+            {{ greeting }},<br>{{ d.businessName }}
+          </h1>
 
-          @if (d.averageRating > 0) {
+          <!-- Status pills -->
+          <div class="flex flex-wrap gap-2 mt-4">
             <span class="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs px-3 py-1.5 rounded-full font-medium">
-              <svg lucideStar class="w-3.5 h-3.5 text-amber-300 fill-amber-300"></svg>
-              {{ d.averageRating | number:'1.1-1' }} promedio
+              <svg lucidePackage class="w-3.5 h-3.5"></svg>
+              {{ d.activePackCount }} packs activos
             </span>
-          }
 
-          @if (d.activeOrders > 0) {
-            <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-900 text-xs px-3 py-1.5 rounded-full font-bold">
-              <svg lucideClipboardList class="w-3.5 h-3.5"></svg>
-              {{ d.activeOrders }} por retirar
-            </span>
-          }
+            @if (d.averageRating > 0) {
+              <span class="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                <svg lucideStar class="w-3.5 h-3.5 text-amber-300 fill-amber-300"></svg>
+                {{ d.averageRating | number:'1.1-1' }} promedio
+              </span>
+            }
+
+            @if (d.activeOrders > 0) {
+              <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-900 text-xs px-3 py-1.5 rounded-full font-bold">
+                <svg lucideClipboardList class="w-3.5 h-3.5"></svg>
+                {{ d.activeOrders }} por retirar
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- ── KPI cards (white cards on dark green) ── -->
+        <div class="grid grid-cols-3 gap-3">
+
+          <!-- Income -->
+          <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4">
+            <p class="text-[11px] text-white/60 font-semibold uppercase tracking-wide">Hoy · Ingresos</p>
+            <p class="text-2xl font-bold text-white mt-1.5 leading-none">${{ d.todayIncome | number:'1.0-0' }}</p>
+            <p class="text-xs text-white/50 mt-1">{{ d.packsSoldToday }} packs vendidos</p>
+          </div>
+
+          <!-- Active orders -->
+          <div class="rounded-2xl p-4 border"
+            [class]="d.activeOrders > 0
+              ? 'bg-amber-400/20 border-amber-300/40'
+              : 'bg-white/10 border-white/20'">
+            <p class="text-[11px] text-white/60 font-semibold uppercase tracking-wide">Por retirar</p>
+            <p class="text-2xl font-bold mt-1.5 leading-none"
+              [class]="d.activeOrders > 0 ? 'text-amber-300' : 'text-white'">
+              {{ d.activeOrders }}
+            </p>
+            <p class="text-xs text-white/50 mt-1">órdenes pendientes</p>
+          </div>
+
+          <!-- Rating -->
+          <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4">
+            <p class="text-[11px] text-white/60 font-semibold uppercase tracking-wide">Rating</p>
+            <p class="text-2xl font-bold text-white mt-1.5 leading-none">
+              {{ d.averageRating > 0 ? (d.averageRating | number:'1.1-1') : '—' }}
+            </p>
+            <p class="text-xs text-white/50 mt-1">{{ d.reviewCount }} reseñas</p>
+          </div>
+
         </div>
       </div>
     </div>
 
-    <!-- ── Content (overlaps header) ────────────────────────────────── -->
-    <div class="max-w-5xl mx-auto px-4 md:px-8 -mt-14 pb-12 flex flex-col gap-4">
-
-      <!-- ══════════════════════════════════════════════════════════════
-           TODAY KPI ROW
-      ══════════════════════════════════════════════════════════════ -->
-      <div class="grid grid-cols-3 gap-3">
-
-        <!-- Income -->
-        <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-lime-400">
-          <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Hoy · Ingresos</p>
-          <p class="text-xl font-bold text-gray-800 mt-1.5 leading-none">${{ d.todayIncome | number:'1.0-0' }}</p>
-          <p class="text-xs text-gray-400 mt-1">{{ d.packsSoldToday }} packs</p>
-        </div>
-
-        <!-- Active orders -->
-        <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4"
-          [class]="d.activeOrders > 0 ? 'border-amber-400' : 'border-gray-200'">
-          <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Por retirar</p>
-          <p class="text-xl font-bold mt-1.5 leading-none"
-            [class]="d.activeOrders > 0 ? 'text-amber-500' : 'text-gray-800'">
-            {{ d.activeOrders }}
-          </p>
-          <p class="text-xs text-gray-400 mt-1">órdenes</p>
-        </div>
-
-        <!-- Rating -->
-        <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-amber-300">
-          <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Rating</p>
-          <p class="text-xl font-bold text-gray-800 mt-1.5 leading-none">
-            {{ d.averageRating > 0 ? (d.averageRating | number:'1.1-1') : '—' }}
-          </p>
-          <p class="text-xs text-gray-400 mt-1">{{ d.reviewCount }} reseñas</p>
-        </div>
-
-      </div>
+    <!-- ── Content area (gray, starts right below header) ──────────── -->
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-5 flex flex-col gap-4">
 
       <!-- ══════════════════════════════════════════════════════════════
            ACTIVE ORDERS ALERT
@@ -155,7 +160,7 @@
           }
         </div>
 
-        <!-- Day labels below bars -->
+        <!-- Day labels -->
         <div class="flex gap-1.5 mt-2">
           @for (bar of chartBars(); track bar.day) {
             <div class="flex-1 text-center">
@@ -219,7 +224,7 @@
           }
         </div>
 
-        <!-- Historical totals (white card) -->
+        <!-- Historical totals -->
         <div class="bg-white rounded-2xl shadow-sm p-5">
           <div class="flex items-center gap-2 mb-4">
             <svg lucideTrendingUp class="w-5 h-5 text-fern"></svg>
@@ -288,7 +293,7 @@
 
       </div>
 
-      <!-- ── Footer ─────────────────────────────────────────────────── -->
+      <!-- Footer -->
       <div class="flex items-center justify-center gap-1.5 text-gray-300 text-xs pt-2">
         <svg lucideLeaf class="w-3.5 h-3.5"></svg>
         ResQ &mdash; Menos desperdicio, más impacto
