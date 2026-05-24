@@ -17,4 +17,27 @@ public class ProductRepository(ResQDbContext db) : GenericRepository<Product>(db
 
     public async Task<Product?> GetByIdForMerchantAsync(int productId, int merchantId, CancellationToken ct = default)
         => await _set.FirstOrDefaultAsync(p => p.Id == productId && p.MerchantId == merchantId, ct);
+
+    public async Task<IEnumerable<Product>> GetAllActiveWithMerchantAsync(CancellationToken ct = default)
+        => await _set
+            .AsNoTracking()
+            .Include(p => p.Merchant)
+                .ThenInclude(m => m.MerchantCategories)
+                .ThenInclude(mc => mc.Category)
+            .Include(p => p.Merchant)
+                .ThenInclude(m => m.Reviews)
+            .Where(p => p.IsActive && p.StockQuantity > 0)
+            .ToListAsync(ct);
+
+    public async Task<Product?> GetByIdWithMerchantAsync(int productId, CancellationToken ct = default)
+        => await _set
+            .AsNoTracking()
+            .Include(p => p.Merchant)
+                .ThenInclude(m => m.MerchantCategories)
+                .ThenInclude(mc => mc.Category)
+            .Include(p => p.Merchant)
+                .ThenInclude(m => m.Reviews)
+            .Include(p => p.Merchant)
+                .ThenInclude(m => m.Products.Where(op => op.IsActive && op.StockQuantity > 0 && op.Id != productId))
+            .FirstOrDefaultAsync(p => p.Id == productId, ct);
 }
