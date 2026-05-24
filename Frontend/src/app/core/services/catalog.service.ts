@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PackListItem, MerchantDetail } from '../models/catalog.models';
+import { Category, PackListItem, MerchantDetail } from '../models/catalog.models';
 
 export interface PackFilters {
   lat?: number;
@@ -15,6 +15,10 @@ export interface PackFilters {
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
   private readonly http = inject(HttpClient);
+
+  getCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>('/api/catalog/categories');
+  }
 
   getPacks(filters: PackFilters = {}): Observable<PackListItem[]> {
     let params = new HttpParams();

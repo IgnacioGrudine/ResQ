@@ -1,17 +1,18 @@
 export type OrderStatus = 'Pending' | 'Paid' | 'PickedUp' | 'Cancelled';
 
 export interface OrderItem {
-  packName: string;
+  productName: string;
   quantity: number;
   unitPrice: number;
 }
 
 export interface Order {
   id: number;
+  externalReference: string;
   merchantName: string;
-  status: OrderStatus;
-  pickupCode?: string;
   totalAmount: number;
+  orderStatus: OrderStatus;
+  pickupCode?: string;
   createdAt: string;
   items: OrderItem[];
 }
