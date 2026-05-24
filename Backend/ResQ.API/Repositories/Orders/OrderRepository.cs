@@ -24,4 +24,10 @@ public class OrderRepository(ResQDbContext db) : GenericRepository<Order>(db), I
             .Where(o => o.MerchantId == merchantId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(ct);
+
+    public async Task<Order?> GetByPickupCodeAsync(int merchantId, string pickupCode, CancellationToken ct = default)
+        => await _set
+            .Include(o => o.Consumer)
+            .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+            .FirstOrDefaultAsync(o => o.MerchantId == merchantId && o.PickupCode == pickupCode, ct);
 }
