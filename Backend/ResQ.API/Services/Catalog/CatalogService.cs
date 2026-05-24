@@ -2,6 +2,7 @@ using FluentResults;
 using ResQ.API.Common.Errors;
 using ResQ.API.DTOs.Catalog;
 using ResQ.API.DTOs.Merchants;
+using ResQ.API.DTOs.Shared;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Services.Merchants;
 
@@ -9,8 +10,15 @@ namespace ResQ.API.Services.Catalog;
 
 public class CatalogService(
     IMerchantService merchantService,
-    IProductRepository productRepository) : ICatalogService
+    IProductRepository productRepository,
+    ICategoryRepository categoryRepository) : ICatalogService
 {
+    public async Task<Result<IEnumerable<CategoryResponse>>> GetCategoriesAsync(CancellationToken ct = default)
+    {
+        var cats = await categoryRepository.GetAllAsync(ct);
+        return Result.Ok(cats.Select(c => new CategoryResponse { Id = c.Id, Name = c.Name }));
+    }
+
     public Task<Result<IEnumerable<MerchantListItemResponse>>> GetCatalogAsync(CancellationToken ct = default)
         => merchantService.GetCatalogAsync(ct);
 

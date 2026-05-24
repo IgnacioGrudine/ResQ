@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.DTOs.Catalog;
 using ResQ.API.DTOs.Merchants;
+using ResQ.API.DTOs.Shared;
 using ResQ.API.Extensions;
 using ResQ.API.Services.Catalog;
 
@@ -10,6 +11,11 @@ namespace ResQ.API.Controllers;
 [Route("api/catalog")]
 public class CatalogController(ICatalogService catalogService) : ControllerBase
 {
+    /// <summary>Returns all available product categories.</summary>
+    [HttpGet("categories")]
+    public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetCategories(CancellationToken ct)
+        => (await catalogService.GetCategoriesAsync(ct)).ToActionResult();
+
     /// <summary>Returns the list of merchants with active packs available today.</summary>
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MerchantListItemResponse>>> GetCatalog(CancellationToken ct)
