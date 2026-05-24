@@ -114,7 +114,7 @@ export class RegisterMerchantComponent {
     }).subscribe({
       next: () => {
         this.loading.set(false);
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel']);
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

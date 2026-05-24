@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { merchantGuard } from './core/guards/merchant.guard';
 
 export const routes: Routes = [
   {
@@ -57,6 +58,42 @@ export const routes: Routes = [
         path: 'profile',
         loadComponent: () =>
           import('./features/consumer/profile/profile.component').then(m => m.ProfileComponent)
+      }
+    ]
+  },
+
+  // ── Merchant area ──────────────────────────────────────────────
+  {
+    path: 'panel',
+    canActivate: [merchantGuard],
+    loadComponent: () =>
+      import('./layouts/merchant-layout/merchant-layout.component')
+        .then(m => m.MerchantLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/merchant/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'packs',
+        loadComponent: () =>
+          import('./features/merchant/packs/packs.component').then(m => m.PacksComponent)
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/merchant/orders/merchant-orders.component').then(m => m.MerchantOrdersComponent)
+      },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./features/merchant/reviews/reviews.component').then(m => m.ReviewsComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/merchant/profile/merchant-profile.component').then(m => m.MerchantProfileComponent)
       }
     ]
   },
