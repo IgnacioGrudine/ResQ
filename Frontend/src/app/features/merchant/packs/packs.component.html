@@ -1,0 +1,209 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 md:px-8 pt-6 pb-10">
+    <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-white">Mis Packs</h1>
+        <p class="text-white/60 text-sm mt-0.5">Gestioná los packs sorpresa de tu comercio</p>
+      </div>
+      <button (click)="openCreate()"
+        class="shrink-0 flex items-center gap-2 bg-lime text-hunter font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-lime/90 transition-colors">
+        <svg lucidePlus class="w-4 h-4"></svg>
+        <span class="hidden sm:inline">Agregar pack</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-4 md:px-8 -mt-5 pb-10">
+
+    @if (loading()) {
+      <div class="flex justify-center pt-16">
+        <div class="w-9 h-9 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+      </div>
+    }
+
+    @else if (!packs().length) {
+      <div class="bg-white rounded-2xl shadow-sm p-10 text-center">
+        <svg lucidePackage class="w-12 h-12 text-gray-200 mx-auto mb-3"></svg>
+        <p class="text-gray-400 text-sm">Todavía no publicaste ningún pack.</p>
+        <button (click)="openCreate()" class="mt-4 text-evergreen font-semibold text-sm">Crear mi primer pack</button>
+      </div>
+    }
+
+    @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        @for (p of packs(); track p.id) {
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="p-5 flex-1">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <span class="inline-block text-[10px] font-bold text-fern bg-lime/40 px-2 py-0.5 rounded-full mb-1.5 uppercase tracking-wide">
+                    {{ p.productType === 'ExplicitItem' ? 'Ítem' : 'Sorpresa' }}
+                  </span>
+                  <h3 class="font-bold text-gray-800 leading-tight">{{ p.name }}</h3>
+                </div>
+                <span class="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full {{ statusClasses(p) }}">
+                  {{ statusLabel(p) }}
+                </span>
+              </div>
+
+              @if (p.description) {
+                <p class="text-sm text-gray-500 mt-2 line-clamp-2">{{ p.description }}</p>
+              }
+
+              <div class="flex items-baseline gap-2 mt-3">
+                <span class="text-xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-0' }}</span>
+                <span class="text-sm text-gray-300 line-through">${{ p.originalPrice | number:'1.0-0' }}</span>
+                <span class="text-xs font-semibold text-hunter bg-lime/50 px-2 py-0.5 rounded-full">-{{ discountPercent(p) }}%</span>
+              </div>
+
+              <div class="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                <span><strong class="text-gray-700">{{ p.stockQuantity }}</strong> en stock</span>
+                <span class="flex items-center gap-1">
+                  <svg lucideClock class="w-4 h-4 text-evergreen"></svg>
+                  {{ formatTime(p.pickupTimeStart) }}–{{ formatTime(p.pickupTimeEnd) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center border-t border-gray-50">
+              <button (click)="toggle(p)"
+                class="flex-1 py-3 text-sm font-semibold transition-colors"
+                [class]="p.isActive ? 'text-gray-500 hover:bg-gray-50' : 'text-fern hover:bg-fern/5'">
+                {{ p.isActive ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button (click)="openEdit(p)"
+                class="flex items-center justify-center gap-1.5 flex-1 py-3 text-sm font-semibold text-evergreen border-l border-gray-50 hover:bg-evergreen/5 transition-colors">
+                <svg lucidePencil class="w-4 h-4"></svg> Editar
+              </button>
+              <button (click)="askDelete(p.id)"
+                class="flex items-center justify-center w-12 py-3 text-red-400 border-l border-gray-50 hover:bg-red-50 transition-colors">
+                <svg lucideTrash2 class="w-4 h-4"></svg>
+              </button>
+            </div>
+
+            <!-- Delete confirm inline -->
+            @if (deletingId() === p.id) {
+              <div class="bg-red-50 px-5 py-3 flex items-center justify-between gap-3">
+                <span class="text-sm text-red-600 font-medium">¿Eliminar este pack?</span>
+                <div class="flex gap-2">
+                  <button (click)="cancelDelete()" class="text-sm text-gray-500 px-3 py-1 rounded-lg hover:bg-white">Cancelar</button>
+                  <button (click)="confirmDelete(p.id)" class="text-sm text-white bg-red-500 px-3 py-1 rounded-lg hover:bg-red-600 font-semibold">Eliminar</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+
+  <!-- ── Form modal ── -->
+  @if (formOpen()) {
+    <div class="fixed inset-0 z-40 bg-black/40 flex items-end sm:items-center justify-center p-0 sm:p-4" (click)="closeForm()">
+      <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-xl max-h-[92vh] overflow-y-auto" (click)="$event.stopPropagation()">
+
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
+          <h2 class="font-bold text-gray-800">{{ editingId == null ? 'Nuevo pack' : 'Editar pack' }}</h2>
+          <button (click)="closeForm()" class="text-gray-400 hover:text-gray-600">
+            <svg lucideX class="w-5 h-5"></svg>
+          </button>
+        </div>
+
+        <div class="p-5 flex flex-col gap-4">
+          <!-- Name -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre del pack</label>
+            <input [(ngModel)]="form.name" type="text" placeholder="Ej: Pack Sorpresa Dulce"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Descripción (opcional)</label>
+            <textarea [(ngModel)]="form.description" rows="2" placeholder="Qué incluye el pack..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 resize-none"></textarea>
+          </div>
+
+          <!-- Type -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Tipo</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" (click)="form.productType = 1"
+                class="py-2.5 rounded-xl text-sm font-semibold border transition-colors"
+                [class]="form.productType === 1 ? 'bg-evergreen text-white border-evergreen' : 'bg-white text-gray-500 border-gray-200'">
+                Pack Sorpresa
+              </button>
+              <button type="button" (click)="form.productType = 2"
+                class="py-2.5 rounded-xl text-sm font-semibold border transition-colors"
+                [class]="form.productType === 2 ? 'bg-evergreen text-white border-evergreen' : 'bg-white text-gray-500 border-gray-200'">
+                Ítem explícito
+              </button>
+            </div>
+          </div>
+
+          <!-- Prices -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Precio original</label>
+              <input [(ngModel)]="form.originalPrice" type="number" min="0" placeholder="1500"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Precio de venta</label>
+              <input [(ngModel)]="form.salePrice" type="number" min="0" placeholder="700"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+            </div>
+          </div>
+
+          <!-- Stock -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Stock disponible</label>
+            <input [(ngModel)]="form.stockQuantity" type="number" min="0" placeholder="5"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+          </div>
+
+          <!-- Pickup times -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Retiro desde</label>
+              <input [(ngModel)]="form.pickupTimeStart" type="time"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Retiro hasta</label>
+              <input [(ngModel)]="form.pickupTimeEnd" type="time"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+            </div>
+          </div>
+
+          <!-- Image URL -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">URL de imagen (opcional)</label>
+            <input [(ngModel)]="form.imageUrl" type="url" placeholder="https://..."
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+          </div>
+
+          @if (formError()) {
+            <p class="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2.5">{{ formError() }}</p>
+          }
+
+          <button (click)="save()" [disabled]="saving()"
+            class="w-full py-3 rounded-xl font-bold text-sm bg-evergreen text-white hover:bg-hunter disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors">
+            @if (saving()) {
+              <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+              Guardando...
+            } @else {
+              {{ editingId == null ? 'Crear pack' : 'Guardar cambios' }}
+            }
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

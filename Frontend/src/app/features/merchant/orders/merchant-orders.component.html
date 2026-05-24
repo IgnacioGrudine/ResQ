@@ -1,0 +1,121 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 md:px-8 pt-6 pb-10">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-xl font-bold text-white">Órdenes / Retiros</h1>
+      <p class="text-white/60 text-sm mt-0.5">{{ activeCount }} órden{{ activeCount === 1 ? '' : 'es' }} pendiente{{ activeCount === 1 ? '' : 's' }} de retiro</p>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-4 md:px-8 -mt-5 pb-10 flex flex-col gap-4">
+
+    <!-- ── Confirm pickup box ── -->
+    <div class="bg-white rounded-2xl shadow-sm p-5">
+      <div class="flex items-center gap-2 mb-3">
+        <svg lucideTicket class="w-5 h-5 text-evergreen"></svg>
+        <h2 class="font-bold text-gray-800">Confirmar retiro</h2>
+      </div>
+      <p class="text-sm text-gray-400 mb-3">Ingresá el código que presenta el cliente para validar la entrega.</p>
+      <div class="flex gap-2">
+        <input [(ngModel)]="codeInput" (keydown.enter)="confirmByCode()" type="text" placeholder="Ej: RSQ-4872"
+          class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm uppercase tracking-wider font-semibold focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+        <button (click)="confirmByCode()" [disabled]="confirming() || !codeInput.trim()"
+          class="shrink-0 flex items-center gap-2 bg-evergreen text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-hunter disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+          @if (confirming()) {
+            <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+          } @else {
+            <svg lucideCheck class="w-4 h-4"></svg>
+          }
+          Confirmar
+        </button>
+      </div>
+      @if (confirmMsg()) {
+        <p class="text-sm mt-3 rounded-xl px-4 py-2.5 font-medium"
+          [class]="confirmOk() ? 'bg-lime/40 text-hunter' : 'bg-red-50 text-red-600'">
+          {{ confirmMsg() }}
+        </p>
+      }
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+      @for (tab of [
+        { key: 'all',       label: 'Todas'           },
+        { key: 'pending',   label: 'Por retirar'     },
+        { key: 'delivered', label: 'Entregadas'      },
+        { key: 'cancelled', label: 'Canceladas'      }
+      ]; track tab.key) {
+        <button (click)="activeTab = $any(tab.key)"
+          class="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all border"
+          [class]="activeTab === tab.key
+            ? 'bg-evergreen text-white border-evergreen shadow-sm'
+            : 'bg-white text-gray-500 border-gray-200 hover:border-evergreen'">
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+
+    <!-- ── List ── -->
+    @if (loading()) {
+      <div class="flex justify-center pt-12">
+        <div class="w-8 h-8 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+      </div>
+    }
+
+    @else if (!filteredOrders.length) {
+      <div class="bg-white rounded-2xl shadow-sm p-10 text-center">
+        <svg lucideClipboardList class="w-12 h-12 text-gray-200 mx-auto mb-3"></svg>
+        <p class="text-gray-400 text-sm">No hay órdenes en esta categoría.</p>
+      </div>
+    }
+
+    @else {
+      @for (order of filteredOrders; track order.id) {
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <!-- Card header -->
+          <div class="flex items-start justify-between px-5 pt-4 pb-3">
+            <div>
+              <p class="font-bold text-gray-800">{{ order.consumerName }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(order.createdAt) }}</p>
+            </div>
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full {{ statusClasses(order.orderStatus) }}">
+              {{ statusLabel(order.orderStatus) }}
+            </span>
+          </div>
+
+          <!-- Items -->
+          <div class="px-5 pb-3 flex flex-col gap-1">
+            @for (item of order.items; track item.productName) {
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">{{ item.quantity }}x {{ item.productName }}</span>
+                <span class="text-gray-500">${{ item.unitPrice | number:'1.0-0' }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Total + code -->
+          <div class="flex items-center justify-between px-5 py-3 border-t border-gray-50">
+            <span class="text-sm text-gray-500">Código: <strong class="text-gray-700 tracking-wider">{{ order.pickupCode }}</strong></span>
+            <span class="text-base font-bold text-evergreen">${{ order.totalAmount | number:'1.0-0' }}</span>
+          </div>
+
+          <!-- Inline confirm for Paid orders -->
+          @if (order.orderStatus === 'Paid') {
+            <button (click)="confirmRow(order)" [disabled]="rowConfirming() === order.id"
+              class="w-full py-3 bg-lime/40 text-hunter font-bold text-sm flex items-center justify-center gap-2 hover:bg-lime/60 disabled:opacity-60 transition-colors">
+              @if (rowConfirming() === order.id) {
+                <div class="w-4 h-4 border-2 border-hunter/40 border-t-hunter rounded-full animate-spin"></div>
+                Confirmando...
+              } @else {
+                <svg lucideCheck class="w-4 h-4"></svg>
+                Confirmar retiro
+              }
+            </button>
+          }
+        </div>
+      }
+    }
+
+  </div>
+</div>

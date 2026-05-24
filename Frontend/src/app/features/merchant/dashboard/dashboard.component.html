@@ -1,0 +1,159 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 md:px-8 pt-6 pb-10">
+    <h1 class="text-xl font-bold text-white">Dashboard</h1>
+    <p class="text-white/60 text-sm mt-0.5">Resumen de tu comercio en ResQ</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-4 md:px-8 -mt-5 pb-10">
+
+    @if (loading()) {
+      <div class="flex justify-center pt-16">
+        <div class="w-9 h-9 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+      </div>
+    }
+
+    @else if (error()) {
+      <div class="bg-white rounded-2xl shadow-sm p-10 text-center">
+        <p class="text-gray-500">{{ error() }}</p>
+      </div>
+    }
+
+    @else if (data(); as d) {
+
+      <!-- ── Today metrics ── -->
+      <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Hoy</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Órdenes activas</span>
+            <svg lucideClipboardList class="w-5 h-5 text-evergreen"></svg>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.activeOrders }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">pendientes de retiro</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Ingresos del día</span>
+            <svg lucideDollarSign class="w-5 h-5 text-evergreen"></svg>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mt-2">${{ d.todayIncome | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">ganancia neta</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Packs vendidos</span>
+            <svg lucidePackage class="w-5 h-5 text-evergreen"></svg>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.packsSoldToday }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">hoy</p>
+        </div>
+      </div>
+
+      <!-- ── Historical metrics ── -->
+      <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6 px-1">Histórico</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Ventas recuperadas</span>
+            <svg lucideTrendingUp class="w-5 h-5 text-fern"></svg>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.totalSales }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">órdenes completadas</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Ingresos acumulados</span>
+            <svg lucideDollarSign class="w-5 h-5 text-fern"></svg>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mt-2">${{ d.totalIncome | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">ganancia total</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-500">Comida rescatada</span>
+            <svg lucideLeaf class="w-5 h-5 text-fern"></svg>
+          </div>
+          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.kgFoodRescued | number:'1.0-1' }} <span class="text-lg">kg</span></p>
+          <p class="text-xs text-gray-400 mt-0.5">del desperdicio</p>
+        </div>
+      </div>
+
+      <!-- ── Rating + MP status ── -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+        <!-- Rating -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-5">
+          <div class="text-center shrink-0">
+            <p class="text-4xl font-bold text-evergreen">{{ d.averageRating | number:'1.1-1' }}</p>
+            <div class="flex items-center gap-0.5 mt-1 justify-center">
+              @for (s of stars(d.averageRating); track s) {
+                <svg lucideStar class="w-3.5 h-3.5"
+                  [class]="s <= d.averageRating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
+                </svg>
+              }
+            </div>
+          </div>
+          <div class="border-l border-gray-100 pl-5">
+            <p class="font-bold text-gray-800">Rating promedio</p>
+            <p class="text-sm text-gray-400 mt-0.5">{{ d.reviewCount }} reseñas recibidas</p>
+            <a routerLink="/panel/reviews" class="text-sm text-evergreen font-semibold mt-2 inline-flex items-center gap-1 hover:gap-2 transition-all">
+              Ver reseñas <svg lucideChevronRight class="w-4 h-4"></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- MP status -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+            [class]="mpConnected ? 'bg-fern/15' : 'bg-amber-50'">
+            <svg lucideCreditCard class="w-6 h-6" [class]="mpConnected ? 'text-fern' : 'text-amber-500'"></svg>
+          </div>
+          <div>
+            <p class="font-bold text-gray-800">Mercado Pago</p>
+            @if (mpConnected) {
+              <p class="text-sm text-fern font-semibold mt-0.5">Cuenta vinculada</p>
+            } @else {
+              <p class="text-sm text-amber-600 font-semibold mt-0.5">No vinculado</p>
+              <p class="text-xs text-gray-400 mt-0.5">Vinculá tu cuenta para cobrar online (próximamente)</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Quick access ── -->
+      <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6 px-1">Accesos rápidos</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <a routerLink="/panel/packs"
+          class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 hover:shadow-md transition-shadow">
+          <svg lucidePackage class="w-6 h-6 text-evergreen shrink-0"></svg>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-gray-800">Mis Packs</p>
+            <p class="text-xs text-gray-400">{{ d.activePackCount }} activos</p>
+          </div>
+          <svg lucideChevronRight class="w-5 h-5 text-gray-300"></svg>
+        </a>
+        <a routerLink="/panel/orders"
+          class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 hover:shadow-md transition-shadow">
+          <svg lucideClipboardList class="w-6 h-6 text-evergreen shrink-0"></svg>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-gray-800">Órdenes</p>
+            <p class="text-xs text-gray-400">{{ d.activeOrders }} por retirar</p>
+          </div>
+          <svg lucideChevronRight class="w-5 h-5 text-gray-300"></svg>
+        </a>
+        <a routerLink="/panel/profile"
+          class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 hover:shadow-md transition-shadow">
+          <svg lucideStar class="w-6 h-6 text-evergreen shrink-0"></svg>
+          <div class="flex-1 min-w-0">
+            <p class="font-bold text-gray-800">Mi Comercio</p>
+            <p class="text-xs text-gray-400">Datos y categorías</p>
+          </div>
+          <svg lucideChevronRight class="w-5 h-5 text-gray-300"></svg>
+        </a>
+      </div>
+
+    }
+
+  </div>
+</div>

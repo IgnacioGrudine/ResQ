@@ -1,0 +1,118 @@
+<div class="min-h-screen bg-gray-50">
+
+  @if (loading()) {
+    <div class="flex justify-center items-center min-h-screen">
+      <div class="w-10 h-10 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+    </div>
+  }
+
+  @else if (profile(); as p) {
+    <!-- ── Header ── -->
+    <div class="bg-evergreen px-4 md:px-8 pt-6 pb-16 text-center">
+      <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold mx-auto">
+        {{ initials(p.businessName) }}
+      </div>
+      <h1 class="text-xl font-bold text-white mt-3">{{ p.businessName }}</h1>
+      <p class="text-white/60 text-sm mt-0.5">CUIT {{ p.cuit }}</p>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 md:px-8 -mt-10 pb-10 flex flex-col gap-4">
+
+      <!-- ── Business data ── -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-5">
+          <svg lucideStore class="w-5 h-5 text-evergreen"></svg>
+          <h2 class="font-bold text-gray-700">Datos del comercio</h2>
+        </div>
+
+        <div class="flex flex-col gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre del comercio</label>
+            <input [(ngModel)]="form.businessName" type="text"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Dirección</label>
+            <input [(ngModel)]="form.address" type="text"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Teléfono de contacto</label>
+            <input [(ngModel)]="form.contactPhone" type="tel"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+          </div>
+
+          <!-- Location -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Ubicación en el mapa</label>
+            <button (click)="detectLocation()" [disabled]="geoLoading()"
+              class="w-full flex items-center justify-center gap-2 py-2.5 border border-evergreen text-evergreen rounded-xl text-sm font-semibold hover:bg-evergreen hover:text-white disabled:opacity-60 transition-colors">
+              @if (geoLoading()) {
+                <div class="w-4 h-4 border-2 border-evergreen/40 border-t-evergreen rounded-full animate-spin"></div>
+                Detectando...
+              } @else {
+                <svg lucideMapPin class="w-4 h-4"></svg>
+                Actualizar a mi ubicación actual
+              }
+            </button>
+            @if (geoMsg()) {
+              <p class="text-xs text-gray-500 mt-2">{{ geoMsg() }}</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Categories ── -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h2 class="font-bold text-gray-700 mb-1">Categorías</h2>
+        <p class="text-sm text-gray-400 mb-4">Elegí los rubros que mejor describen tu comercio.</p>
+        <div class="flex flex-wrap gap-2">
+          @for (cat of categories(); track cat.id) {
+            <button type="button" (click)="toggleCategory(cat.id)"
+              class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-colors"
+              [class]="isSelected(cat.id)
+                ? 'bg-evergreen text-white border-evergreen'
+                : 'bg-white text-gray-500 border-gray-200 hover:border-evergreen'">
+              @if (isSelected(cat.id)) {
+                <svg lucideCheck class="w-3.5 h-3.5"></svg>
+              }
+              {{ cat.name }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Save -->
+      <button (click)="saveProfile()" [disabled]="saving()"
+        class="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+        [class]="saved()
+          ? 'bg-fern text-white'
+          : 'bg-hunter text-white hover:bg-evergreen disabled:opacity-60 disabled:cursor-not-allowed'">
+        @if (saving()) {
+          <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+          Guardando...
+        } @else if (saved()) {
+          Guardado
+        } @else {
+          <svg lucideSave class="w-4 h-4"></svg>
+          Guardar cambios
+        }
+      </button>
+
+      <!-- Logout -->
+      <button (click)="logout()"
+        class="w-full py-3 rounded-xl font-semibold text-sm border-2 border-red-300 text-red-500 flex items-center justify-center gap-2 hover:bg-red-50 transition-colors">
+        <svg lucideLogOut class="w-4 h-4"></svg>
+        Cerrar sesión
+      </button>
+
+      <div class="flex items-center justify-center gap-1.5 text-gray-300 text-xs pt-2">
+        <svg lucideLeaf class="w-3.5 h-3.5"></svg>
+        ResQ &mdash; Menos desperdicio, más impacto
+      </div>
+
+    </div>
+  }
+</div>
