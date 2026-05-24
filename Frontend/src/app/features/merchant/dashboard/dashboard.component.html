@@ -1,159 +1,300 @@
 <div class="min-h-screen bg-gray-50">
 
-  <!-- ── Header ── -->
-  <div class="bg-evergreen px-4 md:px-8 pt-6 pb-10">
-    <h1 class="text-xl font-bold text-white">Dashboard</h1>
-    <p class="text-white/60 text-sm mt-0.5">Resumen de tu comercio en ResQ</p>
-  </div>
+  <!-- ══════════════════════════════════════════════════════════════
+       LOADING / ERROR
+  ══════════════════════════════════════════════════════════════ -->
+  @if (loading()) {
+    <div class="flex justify-center items-center min-h-screen">
+      <div class="w-10 h-10 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+    </div>
+  }
 
-  <div class="max-w-5xl mx-auto px-4 md:px-8 -mt-5 pb-10">
+  @else if (error()) {
+    <div class="flex justify-center items-center min-h-screen px-6">
+      <p class="text-gray-400 text-sm">{{ error() }}</p>
+    </div>
+  }
 
-    @if (loading()) {
-      <div class="flex justify-center pt-16">
-        <div class="w-9 h-9 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
-      </div>
-    }
+  @else if (data(); as d) {
 
-    @else if (error()) {
-      <div class="bg-white rounded-2xl shadow-sm p-10 text-center">
-        <p class="text-gray-500">{{ error() }}</p>
-      </div>
-    }
-
-    @else if (data(); as d) {
-
-      <!-- ── Today metrics ── -->
-      <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Hoy</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Órdenes activas</span>
-            <svg lucideClipboardList class="w-5 h-5 text-evergreen"></svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.activeOrders }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">pendientes de retiro</p>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Ingresos del día</span>
-            <svg lucideDollarSign class="w-5 h-5 text-evergreen"></svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-800 mt-2">${{ d.todayIncome | number:'1.0-0' }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">ganancia neta</p>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Packs vendidos</span>
-            <svg lucidePackage class="w-5 h-5 text-evergreen"></svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.packsSoldToday }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">hoy</p>
-        </div>
+    <!-- ══════════════════════════════════════════════════════════════
+         HEADER — personalized greeting + status pills
+         NOTE: overflow-hidden lives on the blob wrapper, NOT here,
+         so it doesn't clip the KPI cards that overlap via -mt-XX.
+    ══════════════════════════════════════════════════════════════ -->
+    <div class="bg-evergreen px-4 md:px-8 pt-7 pb-24 relative">
+      <!-- Decorative blobs (overflow-hidden scoped to this wrapper) -->
+      <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full"></div>
+        <div class="absolute right-12 top-20 w-28 h-28 bg-white/5 rounded-full"></div>
       </div>
 
-      <!-- ── Historical metrics ── -->
-      <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6 px-1">Histórico</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Ventas recuperadas</span>
-            <svg lucideTrendingUp class="w-5 h-5 text-fern"></svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.totalSales }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">órdenes completadas</p>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Ingresos acumulados</span>
-            <svg lucideDollarSign class="w-5 h-5 text-fern"></svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-800 mt-2">${{ d.totalIncome | number:'1.0-0' }}</p>
-          <p class="text-xs text-gray-400 mt-0.5">ganancia total</p>
-        </div>
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-500">Comida rescatada</span>
-            <svg lucideLeaf class="w-5 h-5 text-fern"></svg>
-          </div>
-          <p class="text-3xl font-bold text-gray-800 mt-2">{{ d.kgFoodRescued | number:'1.0-1' }} <span class="text-lg">kg</span></p>
-          <p class="text-xs text-gray-400 mt-0.5">del desperdicio</p>
+      <div class="max-w-5xl mx-auto relative">
+        <p class="text-white/60 text-sm font-medium capitalize">{{ todayFormatted }}</p>
+        <h1 class="text-2xl font-bold text-white mt-0.5 leading-snug">
+          {{ greeting }},<br>{{ d.businessName }}
+        </h1>
+
+        <!-- Status pills -->
+        <div class="flex flex-wrap gap-2 mt-4">
+          <span class="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+            <svg lucidePackage class="w-3.5 h-3.5"></svg>
+            {{ d.activePackCount }} packs activos
+          </span>
+
+          @if (d.averageRating > 0) {
+            <span class="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs px-3 py-1.5 rounded-full font-medium">
+              <svg lucideStar class="w-3.5 h-3.5 text-amber-300 fill-amber-300"></svg>
+              {{ d.averageRating | number:'1.1-1' }} promedio
+            </span>
+          }
+
+          @if (d.activeOrders > 0) {
+            <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-900 text-xs px-3 py-1.5 rounded-full font-bold">
+              <svg lucideClipboardList class="w-3.5 h-3.5"></svg>
+              {{ d.activeOrders }} por retirar
+            </span>
+          }
         </div>
       </div>
+    </div>
 
-      <!-- ── Rating + MP status ── -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+    <!-- ── Content (overlaps header) ────────────────────────────────── -->
+    <div class="max-w-5xl mx-auto px-4 md:px-8 -mt-14 pb-12 flex flex-col gap-4">
+
+      <!-- ══════════════════════════════════════════════════════════════
+           TODAY KPI ROW
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="grid grid-cols-3 gap-3">
+
+        <!-- Income -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-lime-400">
+          <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Hoy · Ingresos</p>
+          <p class="text-xl font-bold text-gray-800 mt-1.5 leading-none">${{ d.todayIncome | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-1">{{ d.packsSoldToday }} packs</p>
+        </div>
+
+        <!-- Active orders -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4"
+          [class]="d.activeOrders > 0 ? 'border-amber-400' : 'border-gray-200'">
+          <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Por retirar</p>
+          <p class="text-xl font-bold mt-1.5 leading-none"
+            [class]="d.activeOrders > 0 ? 'text-amber-500' : 'text-gray-800'">
+            {{ d.activeOrders }}
+          </p>
+          <p class="text-xs text-gray-400 mt-1">órdenes</p>
+        </div>
+
         <!-- Rating -->
-        <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-5">
-          <div class="text-center shrink-0">
-            <p class="text-4xl font-bold text-evergreen">{{ d.averageRating | number:'1.1-1' }}</p>
-            <div class="flex items-center gap-0.5 mt-1 justify-center">
-              @for (s of stars(d.averageRating); track s) {
-                <svg lucideStar class="w-3.5 h-3.5"
-                  [class]="s <= d.averageRating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
-                </svg>
+        <div class="bg-white rounded-2xl shadow-sm p-4 border-l-4 border-amber-300">
+          <p class="text-[11px] text-gray-400 font-semibold uppercase tracking-wide">Rating</p>
+          <p class="text-xl font-bold text-gray-800 mt-1.5 leading-none">
+            {{ d.averageRating > 0 ? (d.averageRating | number:'1.1-1') : '—' }}
+          </p>
+          <p class="text-xs text-gray-400 mt-1">{{ d.reviewCount }} reseñas</p>
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           ACTIVE ORDERS ALERT
+      ══════════════════════════════════════════════════════════════ -->
+      @if (d.activeOrders > 0) {
+        <a routerLink="/panel/orders"
+          class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3 hover:bg-amber-100 transition-colors">
+          <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <svg lucideClipboardList class="w-5 h-5 text-amber-600"></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-amber-800 text-sm">
+              {{ d.activeOrders === 1 ? '1 orden esperando retiro' : d.activeOrders + ' órdenes esperando retiro' }}
+            </p>
+            <p class="text-xs text-amber-600 mt-0.5">Confirmá el retiro cuando llegue el cliente</p>
+          </div>
+          <svg lucideChevronRight class="w-5 h-5 text-amber-400 shrink-0"></svg>
+        </a>
+      }
+
+      <!-- ══════════════════════════════════════════════════════════════
+           WEEKLY BAR CHART
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+
+        <div class="flex items-start justify-between mb-5">
+          <div>
+            <h3 class="font-bold text-gray-800">Actividad semanal</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Órdenes de los últimos 7 días</p>
+          </div>
+          <div class="text-right">
+            <p class="text-2xl font-bold text-evergreen leading-none">{{ d.totalSales }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">ventas totales</p>
+          </div>
+        </div>
+
+        <!-- Order count labels above bars -->
+        <div class="flex gap-1.5 mb-1">
+          @for (bar of chartBars(); track bar.day) {
+            <div class="flex-1 text-center h-4">
+              @if (bar.orders > 0) {
+                <span class="text-[11px] font-bold"
+                  [class]="bar.isToday ? 'text-evergreen' : 'text-gray-400'">
+                  {{ bar.orders }}
+                </span>
               }
             </div>
-          </div>
-          <div class="border-l border-gray-100 pl-5">
-            <p class="font-bold text-gray-800">Rating promedio</p>
-            <p class="text-sm text-gray-400 mt-0.5">{{ d.reviewCount }} reseñas recibidas</p>
-            <a routerLink="/panel/reviews" class="text-sm text-evergreen font-semibold mt-2 inline-flex items-center gap-1 hover:gap-2 transition-all">
-              Ver reseñas <svg lucideChevronRight class="w-4 h-4"></svg>
-            </a>
-          </div>
+          }
         </div>
 
-        <!-- MP status -->
-        <div class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
-            [class]="mpConnected ? 'bg-fern/15' : 'bg-amber-50'">
-            <svg lucideCreditCard class="w-6 h-6" [class]="mpConnected ? 'text-fern' : 'text-amber-500'"></svg>
+        <!-- Bars -->
+        <div class="flex items-end gap-1.5" style="height: 6rem">
+          @for (bar of chartBars(); track bar.day) {
+            <div class="flex-1 rounded-t-lg transition-all duration-500"
+              [style.height]="(bar.orders > 0 ? bar.heightPct : 5) + '%'"
+              [class]="bar.orders === 0 ? 'bg-gray-100' : bar.isToday ? 'bg-evergreen' : 'bg-evergreen/30'">
+            </div>
+          }
+        </div>
+
+        <!-- Day labels below bars -->
+        <div class="flex gap-1.5 mt-2">
+          @for (bar of chartBars(); track bar.day) {
+            <div class="flex-1 text-center">
+              <span class="text-[11px] font-semibold"
+                [class]="bar.isToday ? 'text-evergreen' : 'text-gray-400'">
+                {{ bar.day }}
+              </span>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════
+           REPUTATION + HISTORICAL TOTALS ROW
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Reputation (dark evergreen card) -->
+        <div class="bg-evergreen rounded-2xl p-5 text-white relative overflow-hidden">
+          <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -right-8 -top-8 w-36 h-36 bg-white/[0.06] rounded-full"></div>
+            <div class="absolute -right-2 top-12 w-20 h-20 bg-white/[0.06] rounded-full"></div>
           </div>
-          <div>
-            <p class="font-bold text-gray-800">Mercado Pago</p>
-            @if (mpConnected) {
-              <p class="text-sm text-fern font-semibold mt-0.5">Cuenta vinculada</p>
-            } @else {
-              <p class="text-sm text-amber-600 font-semibold mt-0.5">No vinculado</p>
-              <p class="text-xs text-gray-400 mt-0.5">Vinculá tu cuenta para cobrar online (próximamente)</p>
+
+          <div class="flex items-center gap-2 mb-4 relative">
+            <svg lucideStar class="w-5 h-5 text-amber-300 fill-amber-300"></svg>
+            <h3 class="font-bold text-white text-sm">Reputación</h3>
+          </div>
+
+          @if (d.reviewCount > 0) {
+            <div class="relative">
+              <p class="text-5xl font-bold text-white leading-none">{{ d.averageRating | number:'1.1-1' }}</p>
+
+              <div class="flex items-center gap-1.5 mt-3">
+                @for (s of starRange; track s) {
+                  <svg lucideStar class="w-6 h-6"
+                    [class]="s <= d.averageRating
+                      ? 'text-amber-400 fill-amber-400'
+                      : 'text-white/20 fill-white/10'">
+                  </svg>
+                }
+              </div>
+
+              <p class="text-sm text-white/60 mt-2">
+                {{ d.reviewCount }} {{ d.reviewCount === 1 ? 'reseña' : 'reseñas' }}
+              </p>
+            </div>
+
+            <a routerLink="/panel/reviews"
+              class="mt-4 relative flex items-center gap-1 text-sm text-amber-300 font-semibold hover:gap-2 transition-all w-fit">
+              Ver reseñas <svg lucideChevronRight class="w-4 h-4"></svg>
+            </a>
+          } @else {
+            <div class="relative">
+              <p class="text-white/50 text-sm">Todavía no recibiste reseñas.</p>
+              <p class="text-white/30 text-xs mt-2 leading-relaxed">
+                Tus clientes podrán valorar su experiencia después de retirar un pack.
+              </p>
+            </div>
+          }
+        </div>
+
+        <!-- Historical totals (white card) -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <svg lucideTrendingUp class="w-5 h-5 text-fern"></svg>
+            <h3 class="font-bold text-gray-800 text-sm">Resultados acumulados</h3>
+          </div>
+
+          <div class="flex flex-col divide-y divide-gray-50">
+            <div class="flex items-center justify-between py-2.5">
+              <p class="text-sm text-gray-500">Órdenes completadas</p>
+              <p class="font-bold text-gray-800">{{ d.totalSales }}</p>
+            </div>
+            <div class="flex items-center justify-between py-2.5">
+              <p class="text-sm text-gray-500">Ingresos acumulados</p>
+              <p class="font-bold text-gray-800">${{ d.totalIncome | number:'1.0-0' }}</p>
+            </div>
+            <div class="flex items-center justify-between py-2.5">
+              <p class="text-sm text-gray-500">Packs activos</p>
+              <p class="font-bold text-evergreen">{{ d.activePackCount }}</p>
+            </div>
+            <div class="flex items-center justify-between py-2.5">
+              <p class="text-sm text-gray-500">Reseñas recibidas</p>
+              <div class="flex items-center gap-1.5">
+                <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
+                <p class="font-bold text-gray-800">{{ d.reviewCount }}</p>
+              </div>
+            </div>
+            @if (d.averageRating > 0) {
+              <div class="flex items-center justify-between py-2.5">
+                <p class="text-sm text-gray-500">Rating promedio</p>
+                <p class="font-bold text-amber-500">{{ d.averageRating | number:'1.1-1' }} ★</p>
+              </div>
             }
           </div>
         </div>
+
       </div>
 
-      <!-- ── Quick access ── -->
-      <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 mt-6 px-1">Accesos rápidos</h2>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <!-- ══════════════════════════════════════════════════════════════
+           QUICK ACCESS
+      ══════════════════════════════════════════════════════════════ -->
+      <div class="grid grid-cols-3 gap-3">
+
         <a routerLink="/panel/packs"
-          class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 hover:shadow-md transition-shadow">
-          <svg lucidePackage class="w-6 h-6 text-evergreen shrink-0"></svg>
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-gray-800">Mis Packs</p>
-            <p class="text-xs text-gray-400">{{ d.activePackCount }} activos</p>
+          class="bg-white rounded-2xl shadow-sm p-4 flex flex-col items-center gap-2.5 hover:shadow-md transition-shadow text-center group cursor-pointer">
+          <div class="w-11 h-11 rounded-full bg-evergreen/10 flex items-center justify-center group-hover:bg-evergreen/20 transition-colors">
+            <svg lucidePackage class="w-5 h-5 text-evergreen"></svg>
           </div>
-          <svg lucideChevronRight class="w-5 h-5 text-gray-300"></svg>
+          <p class="text-xs font-semibold text-gray-700">Mis Packs</p>
         </a>
+
         <a routerLink="/panel/orders"
-          class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 hover:shadow-md transition-shadow">
-          <svg lucideClipboardList class="w-6 h-6 text-evergreen shrink-0"></svg>
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-gray-800">Órdenes</p>
-            <p class="text-xs text-gray-400">{{ d.activeOrders }} por retirar</p>
+          class="bg-white rounded-2xl shadow-sm p-4 flex flex-col items-center gap-2.5 hover:shadow-md transition-shadow text-center group cursor-pointer">
+          <div class="w-11 h-11 rounded-full bg-evergreen/10 flex items-center justify-center group-hover:bg-evergreen/20 transition-colors">
+            <svg lucideClipboardList class="w-5 h-5 text-evergreen"></svg>
           </div>
-          <svg lucideChevronRight class="w-5 h-5 text-gray-300"></svg>
+          <p class="text-xs font-semibold text-gray-700">Órdenes</p>
         </a>
-        <a routerLink="/panel/profile"
-          class="bg-white rounded-2xl shadow-sm p-5 flex items-center gap-3 hover:shadow-md transition-shadow">
-          <svg lucideStar class="w-6 h-6 text-evergreen shrink-0"></svg>
-          <div class="flex-1 min-w-0">
-            <p class="font-bold text-gray-800">Mi Comercio</p>
-            <p class="text-xs text-gray-400">Datos y categorías</p>
+
+        <a routerLink="/panel/reviews"
+          class="bg-white rounded-2xl shadow-sm p-4 flex flex-col items-center gap-2.5 hover:shadow-md transition-shadow text-center group cursor-pointer">
+          <div class="w-11 h-11 rounded-full bg-evergreen/10 flex items-center justify-center group-hover:bg-evergreen/20 transition-colors">
+            <svg lucideStar class="w-5 h-5 text-evergreen"></svg>
           </div>
-          <svg lucideChevronRight class="w-5 h-5 text-gray-300"></svg>
+          <p class="text-xs font-semibold text-gray-700">Reseñas</p>
         </a>
+
       </div>
 
-    }
+      <!-- ── Footer ─────────────────────────────────────────────────── -->
+      <div class="flex items-center justify-center gap-1.5 text-gray-300 text-xs pt-2">
+        <svg lucideLeaf class="w-3.5 h-3.5"></svg>
+        ResQ &mdash; Menos desperdicio, más impacto
+      </div>
 
-  </div>
+    </div>
+  }
+
 </div>
