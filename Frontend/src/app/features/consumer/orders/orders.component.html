@@ -1,0 +1,86 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 pt-6 pb-10">
+    <h1 class="text-xl font-bold text-white">Mis Órdenes</h1>
+    <p class="text-white/60 text-sm mt-0.5">Historial de tus compras en ResQ</p>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 mt-5 overflow-x-auto scrollbar-hide">
+      @for (tab of [
+        { key: 'all',       label: 'Todas'       },
+        { key: 'active',    label: 'Activas'      },
+        { key: 'completed', label: 'Completadas'  },
+        { key: 'cancelled', label: 'Canceladas'   }
+      ]; track tab.key) {
+        <button (click)="activeTab = $any(tab.key)"
+          class="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all"
+          [class]="activeTab === tab.key
+            ? 'bg-white text-evergreen shadow-sm'
+            : 'text-white/70 hover:text-white'">
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Content ── -->
+  <div class="max-w-2xl mx-auto px-4 -mt-5 pb-10 flex flex-col gap-3">
+
+    @if (loading()) {
+      <div class="flex justify-center pt-16">
+        <div class="w-8 h-8 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+      </div>
+    }
+
+    @else if (!filteredOrders.length) {
+      <div class="bg-white rounded-2xl shadow-sm p-10 text-center mt-2">
+        <svg lucideShoppingBag class="w-12 h-12 text-gray-200 mx-auto mb-3"></svg>
+        <p class="text-gray-400 text-sm">No tenés órdenes en esta categoría.</p>
+      </div>
+    }
+
+    @else {
+      @for (order of filteredOrders; track order.id) {
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <!-- Card header -->
+          <div class="flex items-start justify-between px-5 pt-4 pb-3">
+            <div>
+              <p class="font-bold text-gray-800">{{ order.merchantName }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(order.createdAt) }}</p>
+            </div>
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full {{ statusClasses(order.status) }}">
+              {{ statusLabel(order.status) }}
+            </span>
+          </div>
+
+          <!-- Items -->
+          <div class="px-5 pb-3 flex flex-col gap-1">
+            @for (item of order.items; track item.packName) {
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">{{ item.quantity }}x {{ item.packName }}</span>
+                <span class="text-gray-500">${{ item.unitPrice | number:'1.0-0' }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Total -->
+          <div class="flex items-center justify-between px-5 py-3 border-t border-gray-50">
+            <span class="text-sm font-semibold text-gray-500">Total</span>
+            <span class="text-base font-bold text-evergreen">${{ order.totalAmount | number:'1.0-0' }}</span>
+          </div>
+
+          <!-- Pickup code (only for Paid orders) -->
+          @if (order.status === 'Paid' && order.pickupCode) {
+            <div class="mx-4 mb-4 bg-lime/40 border border-fern/20 rounded-xl p-4 text-center">
+              <p class="text-xs font-semibold text-hunter uppercase tracking-wider mb-1">Código de retiro</p>
+              <p class="text-2xl font-bold tracking-widest text-evergreen">{{ order.pickupCode }}</p>
+              <p class="text-xs text-gray-500 mt-1">Mostrá este código al retirar tu pedido</p>
+            </div>
+          }
+        </div>
+      }
+    }
+
+  </div>
+</div>

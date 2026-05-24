@@ -1,0 +1,95 @@
+<div class="min-h-screen bg-gray-50">
+
+  @if (loading()) {
+    <div class="flex justify-center items-center min-h-screen">
+      <div class="w-10 h-10 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+    </div>
+  }
+
+  @else if (profile(); as p) {
+    <!-- ── Header ── -->
+    <div class="bg-evergreen px-4 pt-6 pb-16 text-center">
+      <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold mx-auto">
+        {{ initials(p) }}
+      </div>
+      <h1 class="text-xl font-bold text-white mt-3">{{ p.firstName }} {{ p.lastName }}</h1>
+      <p class="text-white/60 text-sm mt-0.5">{{ p.email }}</p>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 -mt-10 pb-10 flex flex-col gap-4">
+
+      <!-- ── Stats ── -->
+      <div class="bg-white rounded-2xl shadow-sm grid grid-cols-3 divide-x divide-gray-100">
+        <div class="flex flex-col items-center py-5 px-3 text-center">
+          <span class="text-2xl font-bold text-evergreen">{{ p.totalOrders }}</span>
+          <span class="text-xs text-gray-400 mt-0.5">Órdenes</span>
+        </div>
+        <div class="flex flex-col items-center py-5 px-3 text-center">
+          <span class="text-2xl font-bold text-evergreen">${{ p.totalSaved | number:'1.0-0' }}</span>
+          <span class="text-xs text-gray-400 mt-0.5">Ahorrado</span>
+        </div>
+        <div class="flex flex-col items-center py-5 px-3 text-center">
+          <span class="text-2xl font-bold text-evergreen">{{ p.co2SavedKg }}</span>
+          <span class="text-xs text-gray-400 mt-0.5">kg CO₂ evitado</span>
+        </div>
+      </div>
+
+      <!-- ── Edit form ── -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <h2 class="font-bold text-gray-700 mb-5">Mis datos</h2>
+
+        <div class="flex flex-col gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre</label>
+              <input [(ngModel)]="form.firstName" type="text"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Apellido</label>
+              <input [(ngModel)]="form.lastName" type="text"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 transition-colors">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Teléfono</label>
+            <input [(ngModel)]="form.phoneNumber" type="tel" placeholder="+54 351 000-0000"
+              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 transition-colors">
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <button (click)="saveProfile()" [disabled]="saving()"
+          class="mt-5 w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
+          [class]="saved()
+            ? 'bg-fern text-white'
+            : 'bg-hunter text-white hover:bg-evergreen disabled:opacity-60 disabled:cursor-not-allowed'">
+          @if (saving()) {
+            <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+            Guardando...
+          } @else if (saved()) {
+            Guardado
+          } @else {
+            <svg lucideSave class="w-4 h-4"></svg>
+            Guardar cambios
+          }
+        </button>
+      </div>
+
+      <!-- ── Logout ── -->
+      <button (click)="logout()"
+        class="w-full py-3 rounded-xl font-semibold text-sm border-2 border-red-300 text-red-500 flex items-center justify-center gap-2 hover:bg-red-50 transition-colors">
+        <svg lucideLogOut class="w-4 h-4"></svg>
+        Cerrar sesión
+      </button>
+
+      <!-- Branding footer -->
+      <div class="flex items-center justify-center gap-1.5 text-gray-300 text-xs pt-2">
+        <svg lucideLeaf class="w-3.5 h-3.5"></svg>
+        ResQ &mdash; Menos desperdicio, más impacto
+      </div>
+
+    </div>
+  }
+</div>
