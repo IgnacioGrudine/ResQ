@@ -7,7 +7,14 @@ export const ProductTypeValue = { SurprisePack: 1, ExplicitItem: 2 } as const;
 export type MerchantOrderStatus = 'Pending' | 'Paid' | 'PickedUp' | 'Cancelled';
 
 // ── Dashboard ──
+export interface DailySales {
+  day: string;
+  orders: number;
+  income: number;
+}
+
 export interface MerchantDashboard {
+  businessName: string;
   activeOrders: number;
   todayIncome: number;
   packsSoldToday: number;
@@ -18,6 +25,7 @@ export interface MerchantDashboard {
   reviewCount: number;
   activePackCount: number;
   mpConnectionStatus: string;
+  weeklySales: DailySales[];
 }
 
 // ── Packs (own products, include isActive) ──
