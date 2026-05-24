@@ -152,8 +152,21 @@ public class MerchantService(
 
         var totalPacks = completed.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity);
 
+        // Last 7 days ending today (index 0 = 6 days ago, index 6 = today)
+        var dayLabels   = new[] { "Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb" };
+        var weeklySales = Enumerable.Range(0, 7)
+            .Select(i => today.AddDays(-6 + i))
+            .Select(day => new DailySalesDto(
+                Day:    dayLabels[(int)day.DayOfWeek],
+                Orders: completed.Count(o => o.CreatedAt.Date == day),
+                Income: completed.Where(o => o.CreatedAt.Date == day).Sum(o => o.MerchantEarnings)
+            ))
+            .ToList();
+
         return Result.Ok(new MerchantDashboardResponse
         {
+            BusinessName       = merchant.BusinessName,
+
             ActiveOrders       = orders.Count(o => o.OrderStatus == OrderStatus.Paid),
             TodayIncome        = todayDone.Sum(o => o.MerchantEarnings),
             PacksSoldToday     = todayDone.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity),
@@ -167,7 +180,9 @@ public class MerchantService(
             ReviewCount        = allReviews.Count,
 
             ActivePackCount    = products.Count(p => p.IsActive),
-            MpConnectionStatus = merchant.MpConnectionStatus.ToString()
+            MpConnectionStatus = merchant.MpConnectionStatus.ToString(),
+
+            WeeklySales        = weeklySales
         });
     }
 
