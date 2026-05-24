@@ -49,16 +49,16 @@
               <p class="font-bold text-gray-800">{{ order.merchantName }}</p>
               <p class="text-xs text-gray-400 mt-0.5">{{ formatDate(order.createdAt) }}</p>
             </div>
-            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full {{ statusClasses(order.status) }}">
-              {{ statusLabel(order.status) }}
+            <span class="text-[11px] font-bold px-2.5 py-1 rounded-full {{ statusClasses(order.orderStatus) }}">
+              {{ statusLabel(order.orderStatus) }}
             </span>
           </div>
 
           <!-- Items -->
           <div class="px-5 pb-3 flex flex-col gap-1">
-            @for (item of order.items; track item.packName) {
+            @for (item of order.items; track item.productName) {
               <div class="flex items-center justify-between text-sm">
-                <span class="text-gray-600">{{ item.quantity }}x {{ item.packName }}</span>
+                <span class="text-gray-600">{{ item.quantity }}x {{ item.productName }}</span>
                 <span class="text-gray-500">${{ item.unitPrice | number:'1.0-0' }}</span>
               </div>
             }
@@ -71,7 +71,7 @@
           </div>
 
           <!-- Pickup code (only for Paid orders) -->
-          @if (order.status === 'Paid' && order.pickupCode) {
+          @if (order.orderStatus === 'Paid' && order.pickupCode) {
             <div class="mx-4 mb-4 bg-lime/40 border border-fern/20 rounded-xl p-4 text-center">
               <p class="text-xs font-semibold text-hunter uppercase tracking-wider mb-1">Código de retiro</p>
               <p class="text-2xl font-bold tracking-widest text-evergreen">{{ order.pickupCode }}</p>

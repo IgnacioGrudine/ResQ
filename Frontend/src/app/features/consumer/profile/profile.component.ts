@@ -24,19 +24,26 @@ export class ProfileComponent implements OnInit {
   form = { firstName: '', lastName: '', phoneNumber: '' };
 
   ngOnInit(): void {
-    this.consumer.getProfile().subscribe(p => {
-      this.profile.set(p);
-      this.form = { firstName: p.firstName, lastName: p.lastName, phoneNumber: p.phoneNumber ?? '' };
-      this.loading.set(false);
+    this.consumer.getProfile().subscribe({
+      next: p => {
+        this.profile.set(p);
+        this.form = { firstName: p.firstName, lastName: p.lastName, phoneNumber: p.phoneNumber ?? '' };
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
     });
   }
 
   saveProfile(): void {
     this.saving.set(true);
-    this.consumer.updateProfile(this.form).subscribe(() => {
-      this.saving.set(false);
-      this.saved.set(true);
-      setTimeout(() => this.saved.set(false), 2500);
+    this.consumer.updateProfile(this.form).subscribe({
+      next: updated => {
+        this.profile.set(updated);
+        this.saving.set(false);
+        this.saved.set(true);
+        setTimeout(() => this.saved.set(false), 2500);
+      },
+      error: () => this.saving.set(false)
     });
   }
 

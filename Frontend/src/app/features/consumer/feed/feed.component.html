@@ -32,7 +32,7 @@
 
     <!-- ── Category chips ── -->
     <div class="flex gap-2 py-4 overflow-x-auto scrollbar-hide">
-      @for (cat of categories; track cat.name) {
+      @for (cat of categories(); track cat.name) {
         <button
           (click)="selectCategory(cat.id)"
           class="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all"

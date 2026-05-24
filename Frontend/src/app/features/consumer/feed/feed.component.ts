@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { CatalogService, PackFilters } from '../../../core/services/catalog.service';
-import { PackListItem } from '../../../core/models/catalog.models';
+import { Category, PackListItem } from '../../../core/models/catalog.models';
 import {
   LucideSearch,
   LucideLeaf,
@@ -25,27 +25,18 @@ export class FeedComponent implements OnInit {
   private readonly catalog = inject(CatalogService);
   private readonly router  = inject(Router);
 
-  readonly packs   = signal<PackListItem[]>([]);
-  readonly loading = signal(false);
-  readonly error   = signal<string | null>(null);
+  readonly packs      = signal<PackListItem[]>([]);
+  readonly categories = signal<FilterCategory[]>([{ id: null, name: 'Todos' }]);
+  readonly loading    = signal(false);
+  readonly error      = signal<string | null>(null);
 
-  searchInput        = '';
+  searchInput         = '';
   selectedCategory: number | null = null;
-  selectedMaxPrice   = '';
+  selectedMaxPrice    = '';
   selectedMaxDistance = '';
   userLat: number | null = null;
   userLon: number | null = null;
   locationDenied = false;
-
-  readonly categories: FilterCategory[] = [
-    { id: null, name: 'Todos' },
-    { id: 1,    name: 'Panadería' },
-    { id: 2,    name: 'Sushi' },
-    { id: 3,    name: 'Café' },
-    { id: 4,    name: 'Restaurante' },
-    { id: 5,    name: 'Vegano' },
-    { id: 6,    name: 'Heladería' },
-  ];
 
   readonly priceOptions = [
     { value: '',     label: 'Cualquier precio' },
@@ -63,8 +54,19 @@ export class FeedComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loadCategories();
     this.loadPacks();
     this.requestLocation();
+  }
+
+  loadCategories(): void {
+    this.catalog.getCategories().subscribe({
+      next: cats => this.categories.set([
+        { id: null, name: 'Todos' },
+        ...cats.map((c: Category) => ({ id: c.id, name: c.name }))
+      ]),
+      error: () => { /* keep the "Todos" fallback already in the signal */ }
+    });
   }
 
   requestLocation(): void {

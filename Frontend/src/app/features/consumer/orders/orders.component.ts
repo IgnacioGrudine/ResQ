@@ -29,9 +29,9 @@ export class OrdersComponent implements OnInit {
   get filteredOrders(): Order[] {
     const all = this.orders();
     switch (this.activeTab) {
-      case 'active':    return all.filter(o => o.status === 'Paid');
-      case 'completed': return all.filter(o => o.status === 'PickedUp');
-      case 'cancelled': return all.filter(o => o.status === 'Cancelled');
+      case 'active':    return all.filter(o => o.orderStatus === 'Paid');
+      case 'completed': return all.filter(o => o.orderStatus === 'PickedUp');
+      case 'cancelled': return all.filter(o => o.orderStatus === 'Cancelled');
       default:          return all;
     }
   }
