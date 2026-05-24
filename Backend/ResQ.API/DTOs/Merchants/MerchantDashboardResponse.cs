@@ -2,6 +2,9 @@ namespace ResQ.API.DTOs.Merchants;
 
 public class MerchantDashboardResponse
 {
+    // ── Identity ──
+    public string BusinessName { get; set; } = string.Empty;
+
     // ── Today ──
     public int ActiveOrders { get; set; }       // Paid, pending pickup
     public decimal TodayIncome { get; set; }     // earnings from today's paid/picked-up orders
@@ -19,4 +22,7 @@ public class MerchantDashboardResponse
     // ── Catalog & integrations ──
     public int ActivePackCount { get; set; }
     public string MpConnectionStatus { get; set; } = string.Empty;
+
+    // ── Chart ──
+    public List<DailySalesDto> WeeklySales { get; set; } = [];
 }
