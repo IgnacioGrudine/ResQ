@@ -7,4 +7,5 @@ public interface IOrderService
 {
     Task<Result<IEnumerable<OrderSummaryResponse>>> GetConsumerOrdersAsync(int consumerProfileId, CancellationToken ct = default);
     Task<Result<IEnumerable<MerchantOrderSummaryResponse>>> GetMerchantOrdersAsync(int merchantProfileId, CancellationToken ct = default);
+    Task<Result<MerchantOrderSummaryResponse>> ConfirmPickupAsync(int merchantProfileId, string pickupCode, CancellationToken ct = default);
 }

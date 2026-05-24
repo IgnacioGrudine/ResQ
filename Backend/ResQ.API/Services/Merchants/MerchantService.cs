@@ -6,8 +6,10 @@ using ResQ.API.DTOs.Products;
 using ResQ.API.DTOs.Reviews;
 using ResQ.API.DTOs.Shared;
 using ResQ.API.Models.Catalog;
+using ResQ.API.Models.Enums;
 using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
+using ResQ.API.Repositories.Orders;
 using ResQ.API.Repositories.Reviews;
 using ResQ.API.Services.Orders;
 
@@ -17,6 +19,8 @@ public class MerchantService(
     IMerchantProfileRepository merchantProfiles,
     IMerchantCategoryRepository merchantCategories,
     IReviewRepository reviews,
+    IOrderRepository orderRepository,
+    IProductRepository productRepository,
     IOrderService orderService) : IMerchantService
 {
     // ─── Public catalog ───────────────────────────────────────────────────────
@@ -125,6 +129,47 @@ public class MerchantService(
 
     public Task<Result<IEnumerable<MerchantOrderSummaryResponse>>> GetMyOrdersAsync(int merchantProfileId, CancellationToken ct = default)
         => orderService.GetMerchantOrdersAsync(merchantProfileId, ct);
+
+    public Task<Result<MerchantOrderSummaryResponse>> ConfirmPickupAsync(
+        int merchantProfileId, string pickupCode, CancellationToken ct = default)
+        => orderService.ConfirmPickupAsync(merchantProfileId, pickupCode, ct);
+
+    // ─── Authenticated merchant — dashboard ──────────────────────────────────
+
+    public async Task<Result<MerchantDashboardResponse>> GetDashboardAsync(int merchantProfileId, CancellationToken ct = default)
+    {
+        var merchant = await merchantProfiles.GetByIdAsync(merchantProfileId, ct);
+        if (merchant is null)
+            return Result.Fail(new NotFoundError("Perfil de comercio no encontrado."));
+
+        var orders   = (await orderRepository.GetByMerchantIdAsync(merchantProfileId, ct)).ToList();
+        var products = (await productRepository.GetByMerchantIdAsync(merchantProfileId, ct)).ToList();
+        var allReviews = (await reviews.GetByMerchantIdAsync(merchantProfileId, ct)).ToList();
+
+        var today     = DateTime.UtcNow.Date;
+        var completed = orders.Where(o => o.OrderStatus != OrderStatus.Cancelled).ToList();
+        var todayDone = completed.Where(o => o.CreatedAt.Date == today).ToList();
+
+        var totalPacks = completed.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity);
+
+        return Result.Ok(new MerchantDashboardResponse
+        {
+            ActiveOrders       = orders.Count(o => o.OrderStatus == OrderStatus.Paid),
+            TodayIncome        = todayDone.Sum(o => o.MerchantEarnings),
+            PacksSoldToday     = todayDone.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity),
+
+            TotalSales         = completed.Count,
+            TotalIncome        = completed.Sum(o => o.MerchantEarnings),
+            KgFoodRescued      = Math.Round(totalPacks * 1.0m, 1),
+
+            AverageRating      = allReviews.Count > 0
+                                     ? Math.Round((decimal)allReviews.Average(r => r.Rating), 1) : 0,
+            ReviewCount        = allReviews.Count,
+
+            ActivePackCount    = products.Count(p => p.IsActive),
+            MpConnectionStatus = merchant.MpConnectionStatus.ToString()
+        });
+    }
 
     // ─── Authenticated merchant — reviews ────────────────────────────────────
 
