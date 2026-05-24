@@ -34,12 +34,49 @@ export const routes: Routes = [
       }
     ]
   },
+
+  // ── Consumer area ──────────────────────────────────────────────
   {
     path: 'home',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/home/home.component').then(m => m.HomeComponent)
+      import('./layouts/consumer-layout/consumer-layout.component')
+        .then(m => m.ConsumerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/consumer/feed/feed.component').then(m => m.FeedComponent)
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./features/consumer/orders/orders.component').then(m => m.OrdersComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/consumer/profile/profile.component').then(m => m.ProfileComponent)
+      }
+    ]
   },
+
+  // ── Detail screens (no consumer layout) ────────────────────────
+  {
+    path: 'packs/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/consumer/pack-detail/pack-detail.component')
+        .then(m => m.PackDetailComponent)
+  },
+  {
+    path: 'merchant/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/consumer/merchant-detail/merchant-detail.component')
+        .then(m => m.MerchantDetailComponent)
+  },
+
   {
     path: '**',
     redirectTo: ''
