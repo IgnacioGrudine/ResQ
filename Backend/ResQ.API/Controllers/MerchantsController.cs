@@ -24,10 +24,21 @@ public class MerchantsController(IMerchantService merchantService) : ControllerB
         [FromBody] UpdateMerchantProfileRequest request, CancellationToken ct)
         => (await merchantService.UpdateMyProfileAsync(User.GetProfileId(), request, ct)).ToActionResult();
 
+    /// <summary>Returns the authenticated merchant's dashboard metrics (today + historical + reputation).</summary>
+    [HttpGet("me/dashboard")]
+    public async Task<ActionResult<MerchantDashboardResponse>> GetDashboard(CancellationToken ct)
+        => (await merchantService.GetDashboardAsync(User.GetProfileId(), ct)).ToActionResult();
+
     /// <summary>Returns all orders received by the authenticated merchant.</summary>
     [HttpGet("me/orders")]
     public async Task<ActionResult<IEnumerable<MerchantOrderSummaryResponse>>> GetMyOrders(CancellationToken ct)
         => (await merchantService.GetMyOrdersAsync(User.GetProfileId(), ct)).ToActionResult();
+
+    /// <summary>Validates a pickup code and marks the matching order as picked up.</summary>
+    [HttpPost("me/orders/confirm-pickup")]
+    public async Task<ActionResult<MerchantOrderSummaryResponse>> ConfirmPickup(
+        [FromBody] ConfirmPickupRequest request, CancellationToken ct)
+        => (await merchantService.ConfirmPickupAsync(User.GetProfileId(), request.PickupCode, ct)).ToActionResult();
 
     /// <summary>Returns all reviews received by the authenticated merchant.</summary>
     [HttpGet("me/reviews")]
