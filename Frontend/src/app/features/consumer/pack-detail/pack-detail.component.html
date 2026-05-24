@@ -30,12 +30,10 @@
           <svg lucideLeaf class="w-20 h-20 text-white/20"></svg>
         </div>
       }
-      <!-- Back button -->
       <button (click)="goBack()"
         class="absolute top-4 left-4 w-10 h-10 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors">
         <svg lucideArrowLeft class="w-5 h-5"></svg>
       </button>
-      <!-- Discount badge -->
       <div class="absolute top-4 right-4 bg-lime text-hunter font-bold text-sm px-3 py-1 rounded-full shadow">
         -{{ discountPercent(p.originalPrice, p.salePrice) }}%
       </div>
@@ -43,17 +41,14 @@
 
     <div class="max-w-2xl mx-auto px-4 py-5 flex flex-col gap-5">
 
-      <!-- ── Pack header ── -->
+      <!-- ── Pack info ── -->
       <div class="bg-white rounded-2xl p-5 shadow-sm">
         <span class="inline-block text-[11px] font-bold text-fern bg-lime/50 px-3 py-0.5 rounded-full mb-3 uppercase tracking-wide">
           {{ p.productType }}
         </span>
         <h1 class="text-2xl font-bold text-gray-800 leading-tight">{{ p.name }}</h1>
-
-        <!-- Stock -->
         <p class="text-sm text-gray-400 mt-1">{{ p.stockQuantity }} unidades disponibles</p>
 
-        <!-- Prices -->
         <div class="flex items-baseline gap-3 mt-4">
           <span class="text-3xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-0' }}</span>
           <span class="text-lg text-gray-300 line-through">${{ p.originalPrice | number:'1.0-0' }}</span>
@@ -62,121 +57,120 @@
           </span>
         </div>
 
-        <!-- Pickup time -->
         <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
           <svg lucideClock class="w-4 h-4 text-evergreen shrink-0"></svg>
           <span>Retiro entre <strong class="text-gray-700">{{ formatTime(p.pickupTimeStart) }}</strong> y <strong class="text-gray-700">{{ formatTime(p.pickupTimeEnd) }}</strong></span>
         </div>
 
-        <!-- Description -->
         @if (p.description) {
           <p class="text-sm text-gray-500 mt-4 leading-relaxed">{{ p.description }}</p>
         }
       </div>
 
-      <!-- ── Merchant card ── -->
-      <div class="bg-white rounded-2xl p-5 shadow-sm">
-        <div class="flex items-start gap-4">
-          <!-- Avatar -->
-          <div class="w-12 h-12 rounded-full bg-evergreen flex items-center justify-center text-white font-bold text-sm shrink-0">
-            {{ initials(p.merchantName) }}
-          </div>
-          <!-- Info -->
-          <div class="flex-1 min-w-0">
-            <h2 class="font-bold text-gray-800 truncate">{{ p.merchantName }}</h2>
-            <div class="flex items-center gap-1 mt-0.5">
-              <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
-              <span class="text-sm font-semibold text-gray-700">{{ p.merchantAverageRating }}</span>
-              <span class="text-xs text-gray-400">({{ p.merchantReviewCount }} reseñas)</span>
+      <!-- ── Merchant card (shown once merchant loads) ── -->
+      @if (merchant(); as m) {
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-full bg-evergreen flex items-center justify-center text-white font-bold text-sm shrink-0">
+              {{ initials(m.businessName) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h2 class="font-bold text-gray-800 truncate">{{ m.businessName }}</h2>
+              <div class="flex items-center gap-1 mt-0.5">
+                <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
+                <span class="text-sm font-semibold text-gray-700">{{ m.averageRating }}</span>
+                <span class="text-xs text-gray-400">({{ m.reviewCount }} reseñas)</span>
+              </div>
             </div>
           </div>
+
+          <div class="flex items-start gap-2 mt-4 text-sm text-gray-500">
+            <svg lucideMapPin class="w-4 h-4 text-evergreen shrink-0 mt-0.5"></svg>
+            <span>{{ m.address }}</span>
+          </div>
+
+          @if (m.contactPhone) {
+            <div class="flex items-center gap-2 mt-2 text-sm text-gray-500">
+              <svg lucidePhone class="w-4 h-4 text-evergreen shrink-0"></svg>
+              <a [href]="'tel:' + m.contactPhone" class="hover:text-evergreen transition-colors">{{ m.contactPhone }}</a>
+            </div>
+          }
+
+          @if (m.categories.length) {
+            <div class="flex flex-wrap gap-2 mt-4">
+              @for (cat of m.categories; track cat.id) {
+                <span class="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{{ cat.name }}</span>
+              }
+            </div>
+          }
+
+          <button (click)="openMerchant(m.id)"
+            class="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border border-evergreen text-evergreen rounded-xl text-sm font-semibold hover:bg-evergreen hover:text-white transition-colors">
+            <svg lucideStore class="w-4 h-4"></svg>
+            Ver comercio completo
+            <svg lucideChevronRight class="w-4 h-4"></svg>
+          </button>
         </div>
 
-        <!-- Address -->
-        <div class="flex items-start gap-2 mt-4 text-sm text-gray-500">
-          <svg lucideMapPin class="w-4 h-4 text-evergreen shrink-0 mt-0.5"></svg>
-          <span>{{ p.merchantAddress }}</span>
-        </div>
-
-        <!-- Phone -->
-        @if (p.merchantPhone) {
-          <div class="flex items-center gap-2 mt-2 text-sm text-gray-500">
-            <svg lucidePhone class="w-4 h-4 text-evergreen shrink-0"></svg>
-            <a [href]="'tel:' + p.merchantPhone" class="hover:text-evergreen transition-colors">{{ p.merchantPhone }}</a>
-          </div>
-        }
-
-        <!-- Categories -->
-        @if (p.merchantCategories.length) {
-          <div class="flex flex-wrap gap-2 mt-4">
-            @for (cat of p.merchantCategories; track cat) {
-              <span class="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{{ cat }}</span>
-            }
-          </div>
-        }
-
-        <!-- Ver comercio -->
-        <button (click)="openMerchant(p.merchantId)"
-          class="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border border-evergreen text-evergreen rounded-xl text-sm font-semibold hover:bg-evergreen hover:text-white transition-colors">
-          <svg lucideStore class="w-4 h-4"></svg>
-          Ver comercio completo
-          <svg lucideChevronRight class="w-4 h-4"></svg>
-        </button>
-      </div>
-
-      <!-- ── Otros packs del comercio ── -->
-      @if (p.merchantOtherPacks.length) {
-        <div>
-          <h3 class="font-bold text-gray-700 mb-3">Otros packs de {{ p.merchantName }}</h3>
-          <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-            @for (op of p.merchantOtherPacks; track op.id) {
-              <div (click)="openPack(op.id)"
-                class="shrink-0 w-44 bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
-                <div class="aspect-[4/3] bg-gradient-to-br from-evergreen to-hunter relative overflow-hidden">
-                  @if (op.imageUrl) {
-                    <img [src]="op.imageUrl" [alt]="op.name" class="w-full h-full object-cover">
-                  } @else {
-                    <div class="absolute inset-0 flex items-center justify-center">
-                      <svg lucideLeaf class="w-7 h-7 text-white/30"></svg>
+        <!-- ── Otros packs del comercio ── -->
+        @if (m.activeProducts.length) {
+          <div>
+            <h3 class="font-bold text-gray-700 mb-3">Otros packs de {{ m.businessName }}</h3>
+            <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              @for (prod of m.activeProducts; track prod.id) {
+                @if (prod.id !== p.id) {
+                  <div (click)="openPack(prod.id)"
+                    class="shrink-0 w-44 bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
+                    <div class="aspect-[4/3] bg-gradient-to-br from-evergreen to-hunter relative overflow-hidden">
+                      @if (prod.imageUrl) {
+                        <img [src]="prod.imageUrl" [alt]="prod.name" class="w-full h-full object-cover">
+                      } @else {
+                        <div class="absolute inset-0 flex items-center justify-center">
+                          <svg lucideLeaf class="w-7 h-7 text-white/30"></svg>
+                        </div>
+                      }
+                      <div class="absolute top-1.5 right-1.5 bg-lime text-hunter text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                        -{{ discountPercent(prod.originalPrice, prod.salePrice) }}%
+                      </div>
                     </div>
-                  }
-                  <div class="absolute top-1.5 right-1.5 bg-lime text-hunter text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                    -{{ discountPercent(op.originalPrice, op.salePrice) }}%
+                    <div class="p-2.5">
+                      <p class="text-xs font-semibold text-gray-800 line-clamp-1">{{ prod.name }}</p>
+                      <p class="text-evergreen font-bold text-sm mt-1">${{ prod.salePrice | number:'1.0-0' }}</p>
+                    </div>
                   </div>
-                </div>
-                <div class="p-2.5">
-                  <p class="text-xs font-semibold text-gray-800 line-clamp-1">{{ op.name }}</p>
-                  <p class="text-evergreen font-bold text-sm mt-1">${{ op.salePrice | number:'1.0-0' }}</p>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- ── Reseñas recientes ── -->
-      @if (p.merchantRecentReviews.length) {
-        <div>
-          <h3 class="font-bold text-gray-700 mb-3">Reseñas del comercio</h3>
-          <div class="flex flex-col gap-3">
-            @for (rev of p.merchantRecentReviews; track rev.id) {
-              <div class="bg-white rounded-xl p-4 shadow-sm">
-                <div class="flex items-center gap-1 mb-2">
-                  @for (s of stars(rev.rating); track s) {
-                    <svg lucideStar class="w-3.5 h-3.5"
-                      [class]="s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
-                    </svg>
-                  }
-                  <span class="text-xs text-gray-400 ml-auto">{{ formatDate(rev.createdAt) }}</span>
-                </div>
-                @if (rev.comment) {
-                  <p class="text-sm text-gray-600 leading-relaxed">{{ rev.comment }}</p>
                 }
-              </div>
-            }
+              }
+            </div>
           </div>
-        </div>
+        }
+
+        <!-- ── Reseñas recientes ── -->
+        @if (m.recentReviews.length) {
+          <div>
+            <h3 class="font-bold text-gray-700 mb-3">Reseñas del comercio</h3>
+            <div class="flex flex-col gap-3">
+              @for (rev of m.recentReviews; track rev.id) {
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                  <div class="flex items-center gap-1 mb-2">
+                    @for (s of stars(rev.rating); track s) {
+                      <svg lucideStar class="w-3.5 h-3.5"
+                        [class]="s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
+                      </svg>
+                    }
+                    <span class="text-xs text-gray-400 ml-auto">{{ formatDate(rev.createdAt) }}</span>
+                  </div>
+                  @if (rev.comment) {
+                    <p class="text-sm text-gray-600 leading-relaxed">{{ rev.comment }}</p>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
       }
+      <!-- /merchant loaded -->
 
     </div>
 

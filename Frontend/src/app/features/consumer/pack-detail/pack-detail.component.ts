@@ -2,8 +2,9 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { DecimalPipe } from '@angular/common';
+import { switchMap } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
-import { PackDetail } from '../../../core/models/catalog.models';
+import { PackListItem, MerchantDetail } from '../../../core/models/catalog.models';
 import {
   LucideArrowLeft,
   LucideLeaf,
@@ -32,14 +33,21 @@ export class PackDetailComponent implements OnInit {
   private readonly router   = inject(Router);
   private readonly location = inject(Location);
 
-  readonly pack    = signal<PackDetail | null>(null);
-  readonly loading = signal(true);
-  readonly error   = signal<string | null>(null);
+  readonly pack     = signal<PackListItem | null>(null);
+  readonly merchant = signal<MerchantDetail | null>(null);
+  readonly loading  = signal(true);
+  readonly error    = signal<string | null>(null);
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.catalog.getPackDetail(id).subscribe({
-      next:  p  => { this.pack.set(p); this.loading.set(false); },
+
+    this.catalog.getPackById(id).pipe(
+      switchMap(pack => {
+        this.pack.set(pack);
+        return this.catalog.getMerchantDetail(pack.merchantId);
+      })
+    ).subscribe({
+      next:  m  => { this.merchant.set(m); this.loading.set(false); },
       error: () => { this.error.set('No se pudo cargar el pack.'); this.loading.set(false); }
     });
   }
