@@ -118,6 +118,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ResQDbContext>();
     db.Database.Migrate();
+    DatabaseSeeder.Seed(db);
 }
 
 if (app.Environment.IsDevelopment())
