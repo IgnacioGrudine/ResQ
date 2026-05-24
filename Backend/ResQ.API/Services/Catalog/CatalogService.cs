@@ -2,7 +2,6 @@ using FluentResults;
 using ResQ.API.Common.Errors;
 using ResQ.API.DTOs.Catalog;
 using ResQ.API.DTOs.Merchants;
-using ResQ.API.DTOs.Shared;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Services.Merchants;
 
@@ -45,7 +44,7 @@ public class CatalogService(
             double? distanceKm = lat.HasValue && lon.HasValue
                 ? Math.Round(HaversineKm(lat.Value, lon.Value, (double)p.Merchant.Latitude, (double)p.Merchant.Longitude), 1)
                 : null;
-            return MapPackBase<PackListItemResponse>(p, p.Merchant, distanceKm);
+            return MapPack(p, distanceKm);
         });
 
         if (maxDistance.HasValue && lat.HasValue && lon.HasValue)
@@ -58,42 +57,16 @@ public class CatalogService(
         return Result.Ok(sorted.AsEnumerable());
     }
 
-    public async Task<Result<PackDetailResponse>> GetPackDetailAsync(int packId, CancellationToken ct = default)
+    public async Task<Result<PackListItemResponse>> GetPackByIdAsync(int packId, CancellationToken ct = default)
     {
         var product = await productRepository.GetByIdWithMerchantAsync(packId, ct);
         if (product is null)
             return Result.Fail(new NotFoundError($"Pack {packId} not found."));
 
-        var merchant = product.Merchant;
-
-        var otherPacks = merchant.Products
-            .Select(p => MapPackBase<PackListItemResponse>(p, merchant))
-            .ToList();
-
-        var recentReviews = merchant.Reviews
-            .OrderByDescending(r => r.CreatedAt)
-            .Take(5)
-            .Select(r => new DTOs.Reviews.ReviewResponse
-            {
-                Id        = r.Id,
-                Rating    = r.Rating,
-                Comment   = r.Comment,
-                CreatedAt = r.CreatedAt
-            }).ToList();
-
-        var response = MapPackBase<PackDetailResponse>(product, merchant);
-        response.MerchantPhone          = merchant.ContactPhone;
-        response.MerchantCategoriesFull = merchant.MerchantCategories
-            .Select(mc => new CategoryResponse { Id = mc.CategoryId, Name = mc.Category.Name })
-            .ToList();
-        response.MerchantOtherPacks    = otherPacks;
-        response.MerchantRecentReviews = recentReviews;
-
-        return Result.Ok(response);
+        return Result.Ok(MapPack(product));
     }
 
-    private static T MapPackBase<T>(Models.Catalog.Product p, Models.Auth.MerchantProfile merchant, double? distanceKm = null)
-        where T : PackListItemResponse, new() => new()
+    private static PackListItemResponse MapPack(Models.Catalog.Product p, double? distanceKm = null) => new()
     {
         Id                    = p.Id,
         Name                  = p.Name,
@@ -105,15 +78,11 @@ public class CatalogService(
         StockQuantity         = p.StockQuantity,
         PickupTimeStart       = p.PickupTimeStart,
         PickupTimeEnd         = p.PickupTimeEnd,
-        MerchantId            = merchant.Id,
-        MerchantName          = merchant.BusinessName,
-        MerchantAddress       = merchant.Address,
-        MerchantLatitude      = merchant.Latitude,
-        MerchantLongitude     = merchant.Longitude,
-        MerchantCategories    = merchant.MerchantCategories.Select(mc => mc.Category.Name).ToList(),
-        MerchantAverageRating = merchant.Reviews.Count > 0
-            ? Math.Round((decimal)merchant.Reviews.Average(r => r.Rating), 1) : 0,
-        MerchantReviewCount   = merchant.Reviews.Count,
+        MerchantId            = p.Merchant.Id,
+        MerchantName          = p.Merchant.BusinessName,
+        MerchantAverageRating = p.Merchant.Reviews.Count > 0
+            ? Math.Round((decimal)p.Merchant.Reviews.Average(r => r.Rating), 1) : 0,
+        MerchantReviewCount   = p.Merchant.Reviews.Count,
         DistanceKm            = distanceKm
     };
 

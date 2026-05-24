@@ -33,11 +33,6 @@ public class ProductRepository(ResQDbContext db) : GenericRepository<Product>(db
         => await _set
             .AsNoTracking()
             .Include(p => p.Merchant)
-                .ThenInclude(m => m.MerchantCategories)
-                .ThenInclude(mc => mc.Category)
-            .Include(p => p.Merchant)
                 .ThenInclude(m => m.Reviews)
-            .Include(p => p.Merchant)
-                .ThenInclude(m => m.Products.Where(op => op.IsActive && op.StockQuantity > 0 && op.Id != productId))
             .FirstOrDefaultAsync(p => p.Id == productId, ct);
 }

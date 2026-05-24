@@ -13,5 +13,5 @@ public interface ICatalogService
         string? search, int? categoryId,
         decimal? maxPrice, double? maxDistance,
         CancellationToken ct = default);
-    Task<Result<PackDetailResponse>> GetPackDetailAsync(int packId, CancellationToken ct = default);
+    Task<Result<PackListItemResponse>> GetPackByIdAsync(int packId, CancellationToken ct = default);
 }

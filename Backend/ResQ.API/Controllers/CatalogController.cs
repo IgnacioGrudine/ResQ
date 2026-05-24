@@ -35,8 +35,8 @@ public class CatalogController(ICatalogService catalogService) : ControllerBase
         CancellationToken ct)
         => (await catalogService.GetPacksAsync(lat, lon, search, categoryId, maxPrice, maxDistance, ct)).ToActionResult();
 
-    /// <summary>Returns the full detail of a pack including merchant context, other packs and recent reviews.</summary>
+    /// <summary>Returns the pack data by ID. To get full merchant context call GET /api/catalog/{merchantId}.</summary>
     [HttpGet("packs/{id:int}")]
-    public async Task<ActionResult<PackDetailResponse>> GetPackDetail(int id, CancellationToken ct)
-        => (await catalogService.GetPackDetailAsync(id, ct)).ToActionResult();
+    public async Task<ActionResult<PackListItemResponse>> GetPackById(int id, CancellationToken ct)
+        => (await catalogService.GetPackByIdAsync(id, ct)).ToActionResult();
 }
