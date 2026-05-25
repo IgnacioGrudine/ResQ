@@ -89,6 +89,7 @@ export interface MerchantProfile {
   latitude: number;
   longitude: number;
   contactPhone: string;
+  photoUrl?: string;
   categories: Category[];
 }
 

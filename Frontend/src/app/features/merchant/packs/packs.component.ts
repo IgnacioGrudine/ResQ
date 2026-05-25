@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
@@ -9,7 +9,9 @@ import {
   LucidePencil,
   LucideTrash2,
   LucideX,
-  LucideClock
+  LucideClock,
+  LucideCamera,
+  LucideImage
 } from '@lucide/angular';
 
 interface PackForm {
@@ -27,20 +29,24 @@ interface PackForm {
 @Component({
   selector: 'app-merchant-packs',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock],
+  imports: [DecimalPipe, FormsModule, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage],
   templateUrl: './packs.component.html'
 })
 export class PacksComponent implements OnInit {
   private readonly merchant = inject(MerchantService);
 
+  @ViewChild('packImageInput') packImageInput!: ElementRef<HTMLInputElement>;
+
   readonly packs   = signal<MerchantProduct[]>([]);
   readonly loading = signal(true);
 
   // Form modal state
-  readonly formOpen   = signal(false);
-  readonly saving     = signal(false);
-  readonly formError  = signal<string | null>(null);
+  readonly formOpen    = signal(false);
+  readonly saving      = signal(false);
+  readonly formError   = signal<string | null>(null);
+  readonly imagePreview = signal<string | null>(null);
   editingId: number | null = null;
+  pendingImageFile: File | null = null;
 
   // Delete confirm state
   readonly deletingId = signal<number | null>(null);
@@ -72,6 +78,8 @@ export class PacksComponent implements OnInit {
     this.editingId = null;
     this.form = this.emptyForm();
     this.formError.set(null);
+    this.pendingImageFile = null;
+    this.imagePreview.set(null);
     this.formOpen.set(true);
   }
 
@@ -89,11 +97,28 @@ export class PacksComponent implements OnInit {
       pickupTimeEnd: p.pickupTimeEnd.substring(0, 5)
     };
     this.formError.set(null);
+    this.pendingImageFile = null;
+    this.imagePreview.set(p.imageUrl ?? null);
     this.formOpen.set(true);
   }
 
   closeForm(): void {
     this.formOpen.set(false);
+    this.pendingImageFile = null;
+    this.imagePreview.set(null);
+  }
+
+  triggerImageInput(): void {
+    this.packImageInput.nativeElement.click();
+  }
+
+  onImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.pendingImageFile = file;
+    const reader = new FileReader();
+    reader.onload = () => this.imagePreview.set(reader.result as string);
+    reader.readAsDataURL(file);
   }
 
   private validate(): string | null {
@@ -133,9 +158,26 @@ export class PacksComponent implements OnInit {
       : this.merchant.updateProduct(this.editingId, payload);
 
     req.subscribe({
-      next: () => { this.saving.set(false); this.formOpen.set(false); this.load(); },
+      next: (saved) => {
+        if (this.pendingImageFile) {
+          this.merchant.uploadPackImage(saved.id, this.pendingImageFile).subscribe({
+            next:  () => this.finishSave(),
+            error: () => this.finishSave()
+          });
+        } else {
+          this.finishSave();
+        }
+      },
       error: () => { this.saving.set(false); this.formError.set('No se pudo guardar el pack. Intentá de nuevo.'); }
     });
+  }
+
+  private finishSave(): void {
+    this.saving.set(false);
+    this.formOpen.set(false);
+    this.pendingImageFile = null;
+    this.imagePreview.set(null);
+    this.load();
   }
 
   toggle(p: MerchantProduct): void {

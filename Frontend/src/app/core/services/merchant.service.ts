@@ -64,4 +64,16 @@ export class MerchantService {
   updateProfile(payload: UpdateMerchantProfilePayload): Observable<MerchantProfile> {
     return this.http.put<MerchantProfile>(this.base, payload);
   }
+
+  uploadPhoto(file: File): Observable<MerchantProfile> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.put<MerchantProfile>(`${this.base}/photo`, formData);
+  }
+
+  uploadPackImage(packId: number, file: File): Observable<MerchantProduct> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.put<MerchantProduct>(`${this.base}/products/${packId}/image`, formData);
+  }
 }
