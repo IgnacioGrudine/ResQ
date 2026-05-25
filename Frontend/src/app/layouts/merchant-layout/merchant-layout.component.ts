@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import {
   LucideLeaf,
@@ -6,16 +6,21 @@ import {
   LucidePackage,
   LucideClipboardList,
   LucideStar,
-  LucideStore
+  LucideStore,
+  LucideLogOut
 } from '@lucide/angular';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-merchant-layout',
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore
+    LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore, LucideLogOut
   ],
   templateUrl: './merchant-layout.component.html'
 })
-export class MerchantLayoutComponent {}
+export class MerchantLayoutComponent {
+  private readonly auth = inject(AuthService);
+  logout(): void { this.auth.logout(); }
+}
