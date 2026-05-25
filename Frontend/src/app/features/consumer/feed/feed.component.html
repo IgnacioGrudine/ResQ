@@ -13,7 +13,7 @@
         <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></svg>
         <input
           [(ngModel)]="searchInput"
-          (keydown.enter)="loadPacks()"
+          (ngModelChange)="onSearchChange($event)"
           type="search"
           placeholder="Buscar packs o comercios..."
           class="w-full pl-9 pr-9 py-2.5 bg-white rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-lime/60 placeholder-gray-400"

@@ -1,7 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { CatalogService, PackFilters } from '../../../core/services/catalog.service';
 import { Category, PackListItem } from '../../../core/models/catalog.models';
 import {
@@ -22,8 +25,11 @@ interface FilterCategory { id: number | null; name: string; }
   templateUrl: './feed.component.html'
 })
 export class FeedComponent implements OnInit {
-  private readonly catalog = inject(CatalogService);
-  private readonly router  = inject(Router);
+  private readonly catalog    = inject(CatalogService);
+  private readonly router     = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly searchSubject = new Subject<string>();
 
   readonly packs      = signal<PackListItem[]>([]);
   readonly categories = signal<FilterCategory[]>([{ id: null, name: 'Todos' }]);
@@ -54,9 +60,21 @@ export class FeedComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    // Debounced search: dispara solo cuando hay 0 chars (reset) o 3+
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      filter(v => v.length === 0 || v.length >= 3),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.loadPacks());
+
     this.loadCategories();
     this.loadPacks();
     this.requestLocation();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchSubject.next(value);
   }
 
   loadCategories(): void {
