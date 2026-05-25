@@ -16,6 +16,7 @@ public class MerchantProfile : BaseEntity
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public string ContactPhone { get; set; } = string.Empty;
+    public string? PhotoUrl { get; set; }
     public MpConnectionStatus MpConnectionStatus { get; set; } = MpConnectionStatus.Disconnected;
 
     public User User { get; set; } = null!;

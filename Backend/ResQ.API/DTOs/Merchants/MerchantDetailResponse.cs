@@ -12,6 +12,7 @@ public class MerchantDetailResponse
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public string ContactPhone { get; set; } = string.Empty;
+    public string? PhotoUrl { get; set; }
     public List<CategoryResponse> Categories { get; set; } = [];
     public decimal AverageRating { get; set; }
     public int ReviewCount { get; set; }

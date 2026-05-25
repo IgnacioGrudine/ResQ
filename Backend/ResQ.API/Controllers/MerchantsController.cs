@@ -18,6 +18,13 @@ public class MerchantsController(IMerchantService merchantService) : ControllerB
     public async Task<ActionResult<MerchantProfileResponse>> GetMyProfile(CancellationToken ct)
         => (await merchantService.GetMyProfileAsync(User.GetProfileId(), ct)).ToActionResult();
 
+    /// <summary>Uploads or replaces the authenticated merchant's profile photo. Accepted formats: JPG, PNG, WebP (max 5 MB).</summary>
+    [HttpPut("me/photo")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<MerchantProfileResponse>> UploadPhoto(
+        IFormFile file, CancellationToken ct)
+        => (await merchantService.UploadPhotoAsync(User.GetProfileId(), file, ct)).ToActionResult();
+
     /// <summary>Updates the authenticated merchant's profile data and categories.</summary>
     [HttpPut("me")]
     public async Task<ActionResult<MerchantProfileResponse>> UpdateMyProfile(

@@ -12,6 +12,7 @@ using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Repositories.Reviews;
 using ResQ.API.Services.Orders;
+using ResQ.API.Services.Storage;
 
 namespace ResQ.API.Services.Merchants;
 
@@ -21,7 +22,8 @@ public class MerchantService(
     IReviewRepository reviews,
     IOrderRepository orderRepository,
     IProductRepository productRepository,
-    IOrderService orderService) : IMerchantService
+    IOrderService orderService,
+    IImageStorageService imageStorage) : IMerchantService
 {
     // ─── Public catalog ───────────────────────────────────────────────────────
 
@@ -37,6 +39,7 @@ public class MerchantService(
             Latitude           = m.Latitude,
             Longitude          = m.Longitude,
             ContactPhone       = m.ContactPhone,
+            PhotoUrl           = m.PhotoUrl,
             Categories         = m.MerchantCategories.Select(mc => mc.Category.Name).ToList(),
             AverageRating      = m.Reviews.Any() ? Math.Round((decimal)m.Reviews.Average(r => r.Rating), 1) : 0,
             ReviewCount        = m.Reviews.Count,
@@ -63,6 +66,7 @@ public class MerchantService(
             Latitude       = merchant.Latitude,
             Longitude      = merchant.Longitude,
             ContactPhone   = merchant.ContactPhone,
+            PhotoUrl       = merchant.PhotoUrl,
             Categories     = merchant.MerchantCategories
                                  .Select(mc => new CategoryResponse { Id = mc.CategoryId, Name = mc.Category.Name })
                                  .ToList(),
@@ -201,6 +205,25 @@ public class MerchantService(
         }));
     }
 
+    // ─── Authenticated merchant — photo ──────────────────────────────────────
+
+    public async Task<Result<MerchantProfileResponse>> UploadPhotoAsync(
+        int merchantProfileId, IFormFile file, CancellationToken ct = default)
+    {
+        var merchant = await merchantProfiles.GetByIdWithCategoriesAsync(merchantProfileId, ct);
+        if (merchant is null)
+            return Result.Fail(new NotFoundError("Perfil de comercio no encontrado."));
+
+        var photoUrl = await imageStorage.UploadAsync(file, $"merchants/{merchantProfileId}", ct);
+
+        merchant.PhotoUrl  = photoUrl;
+        merchant.UpdatedAt = DateTime.UtcNow;
+        merchantProfiles.Update(merchant);
+        await merchantProfiles.SaveChangesAsync(ct);
+
+        return Result.Ok(MapMerchantProfile(merchant));
+    }
+
     // ─── Private helpers ──────────────────────────────────────────────────────
 
     private static ProductResponse MapProduct(Models.Catalog.Product p) => new()
@@ -227,6 +250,7 @@ public class MerchantService(
         Latitude           = m.Latitude,
         Longitude          = m.Longitude,
         ContactPhone       = m.ContactPhone,
+        PhotoUrl           = m.PhotoUrl,
         MpConnectionStatus = m.MpConnectionStatus,
         Categories         = m.MerchantCategories
                                .Select(mc => new CategoryResponse { Id = mc.CategoryId, Name = mc.Category.Name })

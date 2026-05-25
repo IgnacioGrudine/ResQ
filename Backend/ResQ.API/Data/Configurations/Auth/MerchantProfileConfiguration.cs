@@ -29,6 +29,9 @@ public class MerchantProfileConfiguration : IEntityTypeConfiguration<MerchantPro
             .IsRequired()
             .HasMaxLength(20);
 
+        builder.Property(mp => mp.PhotoUrl)
+            .HasMaxLength(500);
+
         builder.Property(mp => mp.Latitude)
             .IsRequired()
             .HasPrecision(10, 8);

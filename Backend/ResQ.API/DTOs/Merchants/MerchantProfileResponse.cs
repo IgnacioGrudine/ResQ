@@ -12,6 +12,7 @@ public class MerchantProfileResponse
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
     public string ContactPhone { get; set; } = string.Empty;
+    public string? PhotoUrl { get; set; }
     public MpConnectionStatus MpConnectionStatus { get; set; }
     public List<CategoryResponse> Categories { get; set; } = [];
 }
