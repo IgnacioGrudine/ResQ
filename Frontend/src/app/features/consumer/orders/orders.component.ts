@@ -2,14 +2,16 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ConsumerService } from '../../../core/services/consumer.service';
 import { Order, OrderStatus } from '../../../core/models/consumer.models';
-import { LucideShoppingBag } from '@lucide/angular';
+import { LucideShoppingBag, LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
 
-type FilterTab = 'all' | 'active' | 'completed' | 'cancelled';
+type FilterTab = 'active' | 'cancelled' | 'completed' | 'all';
+
+const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, LucideShoppingBag],
+  imports: [DecimalPipe, LucideShoppingBag, LucideChevronLeft, LucideChevronRight],
   templateUrl: './orders.component.html'
 })
 export class OrdersComponent implements OnInit {
@@ -17,7 +19,11 @@ export class OrdersComponent implements OnInit {
 
   readonly orders  = signal<Order[]>([]);
   readonly loading = signal(true);
-  activeTab: FilterTab = 'all';
+
+  private _activeTab: FilterTab = 'active';
+  page = 1;
+
+  get activeTab(): FilterTab { return this._activeTab; }
 
   ngOnInit(): void {
     this.consumer.getOrders().subscribe({
@@ -26,14 +32,32 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  setTab(tab: FilterTab): void {
+    this._activeTab = tab;
+    this.page = 1;
+  }
+
   get filteredOrders(): Order[] {
     const all = this.orders();
-    switch (this.activeTab) {
+    switch (this._activeTab) {
       case 'active':    return all.filter(o => o.orderStatus === 'Paid');
       case 'completed': return all.filter(o => o.orderStatus === 'PickedUp');
       case 'cancelled': return all.filter(o => o.orderStatus === 'Cancelled');
       default:          return all;
     }
+  }
+
+  get pagedOrders(): Order[] {
+    const start = (this.page - 1) * PAGE_SIZE;
+    return this.filteredOrders.slice(start, start + PAGE_SIZE);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredOrders.length / PAGE_SIZE));
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.page = p;
   }
 
   statusLabel(status: OrderStatus): string {

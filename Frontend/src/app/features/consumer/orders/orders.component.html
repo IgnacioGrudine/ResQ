@@ -8,12 +8,12 @@
     <!-- Tabs -->
     <div class="flex gap-2 mt-5 overflow-x-auto scrollbar-hide">
       @for (tab of [
-        { key: 'all',       label: 'Todas'       },
         { key: 'active',    label: 'Activas'      },
+        { key: 'cancelled', label: 'Canceladas'   },
         { key: 'completed', label: 'Completadas'  },
-        { key: 'cancelled', label: 'Canceladas'   }
+        { key: 'all',       label: 'Todas'        }
       ]; track tab.key) {
-        <button (click)="activeTab = $any(tab.key)"
+        <button (click)="setTab($any(tab.key))"
           class="shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all"
           [class]="activeTab === tab.key
             ? 'bg-white text-evergreen shadow-sm'
@@ -41,7 +41,7 @@
     }
 
     @else {
-      @for (order of filteredOrders; track order.id) {
+      @for (order of pagedOrders; track order.id) {
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
           <!-- Card header -->
           <div class="flex items-start justify-between px-5 pt-4 pb-3">
@@ -78,6 +78,27 @@
               <p class="text-xs text-gray-500 mt-1">Mostrá este código al retirar tu pedido</p>
             </div>
           }
+        </div>
+      }
+
+      <!-- ── Paginación ── -->
+      @if (totalPages > 1) {
+        <div class="flex items-center justify-between bg-white rounded-2xl shadow-sm px-5 py-3 mt-1">
+          <button (click)="setPage(page - 1)" [disabled]="page === 1"
+            class="flex items-center gap-1.5 text-sm font-medium text-gray-500 disabled:opacity-30 hover:text-evergreen transition-colors disabled:cursor-not-allowed">
+            <svg lucideChevronLeft class="w-4 h-4"></svg>
+            Anterior
+          </button>
+
+          <span class="text-sm text-gray-400">
+            Página <span class="font-bold text-gray-700">{{ page }}</span> de <span class="font-bold text-gray-700">{{ totalPages }}</span>
+          </span>
+
+          <button (click)="setPage(page + 1)" [disabled]="page === totalPages"
+            class="flex items-center gap-1.5 text-sm font-medium text-gray-500 disabled:opacity-30 hover:text-evergreen transition-colors disabled:cursor-not-allowed">
+            Siguiente
+            <svg lucideChevronRight class="w-4 h-4"></svg>
+          </button>
         </div>
       }
     }

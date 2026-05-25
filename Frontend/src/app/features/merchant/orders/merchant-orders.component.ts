@@ -3,14 +3,16 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { MerchantOrder, MerchantOrderStatus } from '../../../core/models/merchant.models';
-import { LucideClipboardList, LucideCheck, LucideTicket } from '@lucide/angular';
+import { LucideClipboardList, LucideCheck, LucideTicket, LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
 
-type FilterTab = 'all' | 'pending' | 'delivered' | 'cancelled';
+type FilterTab = 'pending' | 'cancelled' | 'delivered' | 'all';
+
+const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-merchant-orders',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucideClipboardList, LucideCheck, LucideTicket],
+  imports: [DecimalPipe, FormsModule, LucideClipboardList, LucideCheck, LucideTicket, LucideChevronLeft, LucideChevronRight],
   templateUrl: './merchant-orders.component.html'
 })
 export class MerchantOrdersComponent implements OnInit {
@@ -18,7 +20,11 @@ export class MerchantOrdersComponent implements OnInit {
 
   readonly orders  = signal<MerchantOrder[]>([]);
   readonly loading = signal(true);
-  activeTab: FilterTab = 'all';
+
+  private _activeTab: FilterTab = 'pending';
+  page = 1;
+
+  get activeTab(): FilterTab { return this._activeTab; }
 
   // Confirm-pickup box state
   codeInput = '';
@@ -41,14 +47,32 @@ export class MerchantOrdersComponent implements OnInit {
     });
   }
 
+  setTab(tab: FilterTab): void {
+    this._activeTab = tab;
+    this.page = 1;
+  }
+
   get filteredOrders(): MerchantOrder[] {
     const all = this.orders();
-    switch (this.activeTab) {
+    switch (this._activeTab) {
       case 'pending':   return all.filter(o => o.orderStatus === 'Paid');
       case 'delivered': return all.filter(o => o.orderStatus === 'PickedUp');
       case 'cancelled': return all.filter(o => o.orderStatus === 'Cancelled');
       default:          return all;
     }
+  }
+
+  get pagedOrders(): MerchantOrder[] {
+    const start = (this.page - 1) * PAGE_SIZE;
+    return this.filteredOrders.slice(start, start + PAGE_SIZE);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredOrders.length / PAGE_SIZE));
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.page = p;
   }
 
   get activeCount(): number {
