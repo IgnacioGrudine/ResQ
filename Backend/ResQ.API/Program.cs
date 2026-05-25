@@ -19,6 +19,8 @@ using ResQ.API.Services.Merchants;
 using ResQ.API.Services.Orders;
 using ResQ.API.Services.Password;
 using ResQ.API.Services.Products;
+using ResQ.API.Services.Storage;
+using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +68,18 @@ builder.Services.AddOpenApi(options =>
 builder.Services.AddDbContext<ResQDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ── MinIO ─────────────────────────────────────────────────────────────────────
+builder.Services.Configure<ResQ.API.Models.Settings.MinioSettings>(
+    builder.Configuration.GetSection("Minio"));
+
+var minioSettings = builder.Configuration.GetSection("Minio")
+    .Get<ResQ.API.Models.Settings.MinioSettings>()!;
+
+builder.Services.AddMinio(cfg => cfg
+    .WithEndpoint(minioSettings.Endpoint)
+    .WithCredentials(minioSettings.AccessKey, minioSettings.SecretKey)
+    .WithSSL(minioSettings.UseSSL));
+
 // ── JWT Settings ──────────────────────────────────────────────────────────────
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
@@ -109,6 +123,7 @@ builder.Services.AddScoped<IMerchantService, MerchantService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IConsumerService, ConsumerService>();
+builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
