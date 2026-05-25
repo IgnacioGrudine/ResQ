@@ -30,8 +30,12 @@
 
       <div class="flex items-start gap-4">
         <!-- Avatar -->
-        <div class="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-white font-bold text-xl shrink-0">
-          {{ initials(m.businessName) }}
+        <div class="w-16 h-16 rounded-2xl overflow-hidden shrink-0 bg-white/20 flex items-center justify-center">
+          @if (m.photoUrl) {
+            <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+          } @else {
+            <span class="text-white font-bold text-xl">{{ initials(m.businessName) }}</span>
+          }
         </div>
         <div class="flex-1 min-w-0">
           <h1 class="text-xl font-bold text-white leading-tight">{{ m.businessName }}</h1>

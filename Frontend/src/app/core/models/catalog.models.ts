@@ -49,6 +49,7 @@ export interface MerchantDetail {
   latitude: number;
   longitude: number;
   contactPhone: string;
+  photoUrl?: string;
   categories: Category[];
   averageRating: number;
   reviewCount: number;

@@ -72,8 +72,12 @@
 
         <div class="bg-white rounded-2xl p-5 shadow-sm">
           <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-full bg-evergreen flex items-center justify-center text-white font-bold text-sm shrink-0">
-              {{ initials(m.businessName) }}
+            <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-evergreen flex items-center justify-center">
+              @if (m.photoUrl) {
+                <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+              } @else {
+                <span class="text-white font-bold text-sm">{{ initials(m.businessName) }}</span>
+              }
             </div>
             <div class="flex-1 min-w-0">
               <h2 class="font-bold text-gray-800 truncate">{{ m.businessName }}</h2>
