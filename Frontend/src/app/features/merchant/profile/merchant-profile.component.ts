@@ -1,16 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MerchantProfile, UpdateMerchantProfilePayload } from '../../../core/models/merchant.models';
 import { Category } from '../../../core/models/catalog.models';
-import { LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck } from '@lucide/angular';
+import { LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck, LucideCamera } from '@lucide/angular';
 
 @Component({
   selector: 'app-merchant-profile',
   standalone: true,
-  imports: [FormsModule, LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck],
+  imports: [FormsModule, LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck, LucideCamera],
   templateUrl: './merchant-profile.component.html'
 })
 export class MerchantProfileComponent implements OnInit {
@@ -18,11 +18,15 @@ export class MerchantProfileComponent implements OnInit {
   private readonly catalog  = inject(CatalogService);
   private readonly auth     = inject(AuthService);
 
-  readonly profile    = signal<MerchantProfile | null>(null);
-  readonly categories = signal<Category[]>([]);
-  readonly loading    = signal(true);
-  readonly saving     = signal(false);
-  readonly saved      = signal(false);
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
+  readonly profile        = signal<MerchantProfile | null>(null);
+  readonly categories     = signal<Category[]>([]);
+  readonly loading        = signal(true);
+  readonly saving         = signal(false);
+  readonly saved          = signal(false);
+  readonly uploadingPhoto = signal(false);
+  readonly photoPreview   = signal<string | null>(null);
 
   readonly geoLoading = signal(false);
   readonly geoMsg     = signal<string | null>(null);
@@ -90,6 +94,33 @@ export class MerchantProfileComponent implements OnInit {
         setTimeout(() => this.saved.set(false), 2500);
       },
       error: () => this.saving.set(false)
+    });
+  }
+
+  triggerFileInput(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    // preview local inmediato antes de subir
+    const reader = new FileReader();
+    reader.onload = () => this.photoPreview.set(reader.result as string);
+    reader.readAsDataURL(file);
+
+    this.uploadingPhoto.set(true);
+    this.merchant.uploadPhoto(file).subscribe({
+      next: updated => {
+        this.profile.set(updated);
+        this.photoPreview.set(null);
+        this.uploadingPhoto.set(false);
+      },
+      error: () => {
+        this.photoPreview.set(null);
+        this.uploadingPhoto.set(false);
+      }
     });
   }
 

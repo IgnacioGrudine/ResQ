@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin } from '@lucide/angular';
+import { LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, LucideCamera } from '@lucide/angular';
 import { AuthService } from '../../../../core/services/auth.service';
+import { MerchantService } from '../../../../core/services/merchant.service';
 import { AuthLeftPanelComponent } from '../../../../layouts/auth-layout/auth-left-panel.component';
 import { ResqButtonComponent } from '../../../../shared/ui/button/resq-button.component';
 import { ResqInputComponent } from '../../../../shared/ui/input/resq-input.component';
@@ -15,19 +16,24 @@ const PHONE_PATTERN = /^\+?[\d\s\-()+]{7,20}$/;
 @Component({
   selector: 'app-register-merchant',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
+  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, LucideCamera, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
   templateUrl: './register-merchant.component.html'
 })
 export class RegisterMerchantComponent {
-  private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly fb              = inject(FormBuilder);
+  private readonly authService     = inject(AuthService);
+  private readonly merchantService = inject(MerchantService);
+  private readonly router          = inject(Router);
 
-  readonly loading = signal(false);
-  readonly apiError = signal('');
-  readonly geoLoading = signal(false);
-  readonly geoError = signal('');
-  readonly geoDetected = signal(false);
+  @ViewChild('photoInput') photoInput!: ElementRef<HTMLInputElement>;
+
+  readonly loading      = signal(false);
+  readonly apiError     = signal('');
+  readonly geoLoading   = signal(false);
+  readonly geoError     = signal('');
+  readonly geoDetected  = signal(false);
+  readonly photoPreview = signal<string | null>(null);
+  pendingPhoto: File | null = null;
 
   readonly form = this.fb.group({
     email:        ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
@@ -64,6 +70,19 @@ export class RegisterMerchantComponent {
     if (ctrl.hasError('pattern') && field === 'contactPhone')
       return 'El teléfono no tiene un formato válido.';
     return '';
+  }
+
+  triggerPhotoInput(): void {
+    this.photoInput.nativeElement.click();
+  }
+
+  onPhotoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.pendingPhoto = file;
+    const reader = new FileReader();
+    reader.onload = () => this.photoPreview.set(reader.result as string);
+    reader.readAsDataURL(file);
   }
 
   detectLocation(): void {
@@ -113,8 +132,15 @@ export class RegisterMerchantComponent {
       longitude:    v.longitude!
     }).subscribe({
       next: () => {
-        this.loading.set(false);
-        this.router.navigate(['/panel']);
+        if (this.pendingPhoto) {
+          this.merchantService.uploadPhoto(this.pendingPhoto).subscribe({
+            next:  () => { this.loading.set(false); this.router.navigate(['/panel']); },
+            error: () => { this.loading.set(false); this.router.navigate(['/panel']); }
+          });
+        } else {
+          this.loading.set(false);
+          this.router.navigate(['/panel']);
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
