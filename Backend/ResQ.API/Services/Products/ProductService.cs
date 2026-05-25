@@ -3,10 +3,11 @@ using ResQ.API.Common.Errors;
 using ResQ.API.DTOs.Products;
 using ResQ.API.Models.Catalog;
 using ResQ.API.Repositories.Catalog;
+using ResQ.API.Services.Storage;
 
 namespace ResQ.API.Services.Products;
 
-public class ProductService(IProductRepository products) : IProductService
+public class ProductService(IProductRepository products, IImageStorageService imageStorage) : IProductService
 {
     public async Task<Result<IEnumerable<ProductResponse>>> GetMyProductsAsync(int merchantProfileId, CancellationToken ct = default)
     {
@@ -84,6 +85,23 @@ public class ProductService(IProductRepository products) : IProductService
         products.Update(product);
 
         await products.SaveChangesAsync(ct);
+        return Result.Ok(MapProduct(product));
+    }
+
+    public async Task<Result<ProductResponse>> UploadImageAsync(
+        int merchantProfileId, int productId, IFormFile file, CancellationToken ct = default)
+    {
+        var product = await products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
+        if (product is null)
+            return Result.Fail(new NotFoundError("Pack no encontrado."));
+
+        var imageUrl = await imageStorage.UploadAsync(file, $"products/{merchantProfileId}", ct);
+
+        product.ImageUrl  = imageUrl;
+        product.UpdatedAt = DateTime.UtcNow;
+        products.Update(product);
+        await products.SaveChangesAsync(ct);
+
         return Result.Ok(MapProduct(product));
     }
 

@@ -10,4 +10,5 @@ public interface IProductService
     Task<Result<ProductResponse>> UpdateProductAsync(int merchantProfileId, int productId, UpdateProductRequest request, CancellationToken ct = default);
     Task<Result> DeleteProductAsync(int merchantProfileId, int productId, CancellationToken ct = default);
     Task<Result<ProductResponse>> ToggleProductAsync(int merchantProfileId, int productId, CancellationToken ct = default);
+    Task<Result<ProductResponse>> UploadImageAsync(int merchantProfileId, int productId, IFormFile file, CancellationToken ct = default);
 }

@@ -37,4 +37,11 @@ public class ProductsController(IProductService productService) : ControllerBase
     [HttpPatch("{id:int}/toggle")]
     public async Task<ActionResult<ProductResponse>> ToggleProduct(int id, CancellationToken ct)
         => (await productService.ToggleProductAsync(User.GetProfileId(), id, ct)).ToActionResult();
+
+    /// <summary>Uploads or replaces the image of a pack. Accepted formats: JPG, PNG, WebP (max 5 MB).</summary>
+    [HttpPut("{id:int}/image")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<ProductResponse>> UploadImage(
+        int id, IFormFile file, CancellationToken ct)
+        => (await productService.UploadImageAsync(User.GetProfileId(), id, file, ct)).ToActionResult();
 }
