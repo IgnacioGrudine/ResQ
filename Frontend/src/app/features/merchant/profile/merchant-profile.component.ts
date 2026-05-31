@@ -5,6 +5,7 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MerchantProfile, UpdateMerchantProfilePayload } from '../../../core/models/merchant.models';
 import { Category } from '../../../core/models/catalog.models';
+import { environment } from '../../../../environments/environment';
 import { LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck, LucideCamera } from '@lucide/angular';
 
 @Component({
@@ -20,20 +21,28 @@ export class MerchantProfileComponent implements OnInit {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  readonly profile        = signal<MerchantProfile | null>(null);
-  readonly categories     = signal<Category[]>([]);
-  readonly loading        = signal(true);
-  readonly saving         = signal(false);
-  readonly saved          = signal(false);
-  readonly uploadingPhoto = signal(false);
-  readonly photoPreview   = signal<string | null>(null);
+  // El input de dirección vive dentro de un @if (profile()), por lo que no existe
+  // al disparar ngAfterViewInit. Usamos un setter que se ejecuta cuando aparece en el DOM.
+  private addressInputEl?: HTMLInputElement;
+  @ViewChild('addressInput') set addressInputRef(ref: ElementRef<HTMLInputElement> | undefined) {
+    if (ref?.nativeElement && this.addressInputEl !== ref.nativeElement) {
+      this.addressInputEl = ref.nativeElement;
+      this.initPlacesAutocomplete();
+    }
+  }
 
-  readonly geoLoading = signal(false);
-  readonly geoMsg     = signal<string | null>(null);
+  readonly profile           = signal<MerchantProfile | null>(null);
+  readonly categories        = signal<Category[]>([]);
+  readonly loading           = signal(true);
+  readonly saving            = signal(false);
+  readonly saved             = signal(false);
+  readonly uploadingPhoto    = signal(false);
+  readonly photoPreview      = signal<string | null>(null);
+  readonly addressConfirmed  = signal(false);
 
   form = { businessName: '', address: '', contactPhone: '' };
   selectedCategoryIds = new Set<number>();
-  private latitude = 0;
+  private latitude  = 0;
   private longitude = 0;
 
   ngOnInit(): void {
@@ -44,11 +53,65 @@ export class MerchantProfileComponent implements OnInit {
         this.profile.set(p);
         this.form = { businessName: p.businessName, address: p.address, contactPhone: p.contactPhone };
         this.selectedCategoryIds = new Set(p.categories.map(c => c.id));
-        this.latitude = p.latitude;
+        this.latitude  = p.latitude;
         this.longitude = p.longitude;
+        // Si ya tiene coordenadas reales, marcar como confirmado
+        this.addressConfirmed.set(p.latitude !== 0 && p.longitude !== 0);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
+    });
+  }
+
+  private initPlacesAutocomplete(): void {
+    if ((window as any).google?.maps?.places?.Autocomplete) {
+      this.setupAutocomplete();
+      return;
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>('script[data-resq-maps]');
+    if (existing) {
+      existing.addEventListener('load', () => this.setupAutocomplete(), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=places&v=weekly`;
+    script.async = true;
+    script.defer = true;
+    script.dataset['resqMaps'] = 'true';
+    script.onload = () => this.setupAutocomplete();
+    document.head.appendChild(script);
+  }
+
+  private setupAutocomplete(): void {
+    if (!(window as any).google?.maps?.places?.Autocomplete) {
+      console.warn('[ResQ] Google Maps Places no disponible. Verificá que Maps JavaScript API y Places API estén habilitadas.');
+      return;
+    }
+    const input = this.addressInputEl;
+    if (!input) return;   // el input aún no se renderizó
+    const autocomplete = new (window as any).google.maps.places.Autocomplete(input, {
+      types: ['address'],
+      componentRestrictions: { country: 'ar' }
+    });
+
+    // Si el usuario edita a mano, se invalidan las coordenadas actuales
+    input.addEventListener('input', () => {
+      if (this.addressConfirmed()) {
+        this.addressConfirmed.set(false);
+        this.latitude  = 0;
+        this.longitude = 0;
+      }
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry?.location) return;
+      this.form.address = place.formatted_address ?? '';
+      this.latitude     = place.geometry.location.lat();
+      this.longitude    = place.geometry.location.lng();
+      this.addressConfirmed.set(true);
     });
   }
 
@@ -61,30 +124,15 @@ export class MerchantProfileComponent implements OnInit {
     return this.selectedCategoryIds.has(id);
   }
 
-  detectLocation(): void {
-    if (!navigator.geolocation) { this.geoMsg.set('Tu navegador no soporta geolocalización.'); return; }
-    this.geoLoading.set(true);
-    this.geoMsg.set(null);
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this.latitude = pos.coords.latitude;
-        this.longitude = pos.coords.longitude;
-        this.geoLoading.set(false);
-        this.geoMsg.set('Ubicación actualizada. Guardá los cambios para aplicar.');
-      },
-      () => { this.geoLoading.set(false); this.geoMsg.set('No se pudo obtener la ubicación.'); }
-    );
-  }
-
   saveProfile(): void {
     this.saving.set(true);
     const payload: UpdateMerchantProfilePayload = {
       businessName: this.form.businessName.trim(),
-      address: this.form.address.trim(),
+      address:      this.form.address.trim(),
       contactPhone: this.form.contactPhone.trim(),
-      latitude: this.latitude,
-      longitude: this.longitude,
-      categoryIds: [...this.selectedCategoryIds]
+      latitude:     this.latitude,
+      longitude:    this.longitude,
+      categoryIds:  [...this.selectedCategoryIds]
     };
     this.merchant.updateProfile(payload).subscribe({
       next: updated => {
@@ -105,7 +153,6 @@ export class MerchantProfileComponent implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    // preview local inmediato antes de subir
     const reader = new FileReader();
     reader.onload = () => this.photoPreview.set(reader.result as string);
     reader.readAsDataURL(file);
