@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Angular environment files with API keys (nunca commitear)
+Frontend/src/environments/environment.development.ts
+
 # Local dev secrets — never commit real connection strings or API keys
 appsettings.Development.json
 appsettings.*.json
