@@ -73,6 +73,16 @@
 
     <div class="max-w-2xl mx-auto px-4 -mt-4 flex flex-col gap-5 pb-10">
 
+      <!-- ── Mini-mapa ── -->
+      <a [href]="'https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block rounded-2xl overflow-hidden shadow-sm">
+        <img [src]="staticMapUrl()"
+             alt="Ver ubicación en Google Maps"
+             class="w-full h-36 object-cover" />
+      </a>
+
       <!-- ── Packs disponibles ── -->
       @if (m.activeProducts.length) {
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">

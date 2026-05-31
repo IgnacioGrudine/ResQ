@@ -109,6 +109,16 @@
             </div>
           }
 
+          <!-- ── Mini-mapa ── -->
+          <a [href]="'https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block mt-4 rounded-xl overflow-hidden">
+            <img [src]="staticMapUrl()"
+                 alt="Ver ubicación en Google Maps"
+                 class="w-full h-32 object-cover" />
+          </a>
+
           <button (click)="openMerchant(m.id)"
             class="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border border-evergreen text-evergreen rounded-xl text-sm font-semibold hover:bg-evergreen hover:text-white transition-colors">
             <svg lucideStore class="w-4 h-4"></svg>

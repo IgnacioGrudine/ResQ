@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { DecimalPipe } from '@angular/common';
 import { switchMap } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
+import { environment } from '../../../../environments/environment';
 import { PackListItem, MerchantDetail } from '../../../core/models/catalog.models';
 import {
   LucideArrowLeft,
@@ -37,6 +38,14 @@ export class PackDetailComponent implements OnInit {
   readonly merchant = signal<MerchantDetail | null>(null);
   readonly loading  = signal(true);
   readonly error    = signal<string | null>(null);
+
+  readonly staticMapUrl = computed(() => {
+    const m = this.merchant();
+    if (!m) return '';
+    const { latitude: lat, longitude: lng } = m;
+    const key = environment.googleMapsApiKey;
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=15&size=600x200&markers=color:red|${lat},${lng}&key=${key}`;
+  });
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
