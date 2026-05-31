@@ -1,17 +1,23 @@
-import { Component, ElementRef, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, signal, AfterViewInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, LucideCamera } from '@lucide/angular';
 import { AuthService } from '../../../../core/services/auth.service';
+import { environment } from '../../../../../environments/environment';
 import { MerchantService } from '../../../../core/services/merchant.service';
 import { AuthLeftPanelComponent } from '../../../../layouts/auth-layout/auth-left-panel.component';
 import { ResqButtonComponent } from '../../../../shared/ui/button/resq-button.component';
 import { ResqInputComponent } from '../../../../shared/ui/input/resq-input.component';
 
-const CUIT_PATTERN = /^\d{2}-\d{8}-\d{1}$/;
+const CUIT_PATTERN  = /^\d{2}-\d{8}-\d{1}$/;
 const PHONE_PATTERN = /^\+?[\d\s\-()+]{7,20}$/;
+
+/** Rechaza el valor 0 — la coordenada por defecto antes de confirmar con Google */
+function nonZeroValidator(control: { value: number }) {
+  return control.value === 0 ? { nonZero: true } : null;
+}
 
 @Component({
   selector: 'app-register-merchant',
@@ -19,19 +25,18 @@ const PHONE_PATTERN = /^\+?[\d\s\-()+]{7,20}$/;
   imports: [ReactiveFormsModule, RouterLink, DecimalPipe, LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, LucideCamera, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
   templateUrl: './register-merchant.component.html'
 })
-export class RegisterMerchantComponent {
+export class RegisterMerchantComponent implements AfterViewInit {
   private readonly fb              = inject(FormBuilder);
   private readonly authService     = inject(AuthService);
   private readonly merchantService = inject(MerchantService);
   private readonly router          = inject(Router);
 
-  @ViewChild('photoInput') photoInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('photoInput')  photoInput!:  ElementRef<HTMLInputElement>;
+  @ViewChild('addressInput') addressInput!: ElementRef<HTMLInputElement>;
 
   readonly loading      = signal(false);
   readonly apiError     = signal('');
-  readonly geoLoading   = signal(false);
-  readonly geoError     = signal('');
-  readonly geoDetected  = signal(false);
+  readonly geoDetected  = signal(false);   // true cuando el usuario selecciona una sugerencia de Places
   readonly photoPreview = signal<string | null>(null);
   pendingPhoto: File | null = null;
 
@@ -42,8 +47,8 @@ export class RegisterMerchantComponent {
     cuit:         ['', [Validators.required, Validators.pattern(CUIT_PATTERN)]],
     address:      ['', [Validators.required, Validators.maxLength(255)]],
     contactPhone: ['', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
-    latitude:     [0 as number, [Validators.required, Validators.min(-90), Validators.max(90)]],
-    longitude:    [0 as number, [Validators.required, Validators.min(-180), Validators.max(180)]]
+    latitude:     [0 as number, [Validators.required, Validators.min(-90),   Validators.max(90),  nonZeroValidator]],
+    longitude:    [0 as number, [Validators.required, Validators.min(-180),  Validators.max(180), nonZeroValidator]]
   });
 
   constructor() {
@@ -85,30 +90,66 @@ export class RegisterMerchantComponent {
     reader.readAsDataURL(file);
   }
 
-  detectLocation(): void {
-    if (!navigator.geolocation) {
-      this.geoError.set('Tu navegador no soporta geolocalización.');
+  ngAfterViewInit(): void {
+    this.initPlacesAutocomplete();
+  }
+
+  private initPlacesAutocomplete(): void {
+    // Si ya está cargado el SDK, usarlo directo
+    if ((window as any).google?.maps?.places?.Autocomplete) {
+      this.setupAutocomplete();
       return;
     }
 
-    this.geoLoading.set(true);
-    this.geoError.set('');
+    // Si el script ya fue inyectado por otro componente, esperar a que termine
+    const existing = document.querySelector<HTMLScriptElement>('script[data-resq-maps]');
+    if (existing) {
+      existing.addEventListener('load', () => this.setupAutocomplete(), { once: true });
+      return;
+    }
 
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this.form.patchValue({
-          latitude:  pos.coords.latitude,
-          longitude: pos.coords.longitude
-        });
-        this.geoDetected.set(true);
-        this.geoLoading.set(false);
-      },
-      () => {
-        this.geoError.set('No se pudo obtener la ubicación. Asegurate de dar permiso al navegador.');
-        this.geoLoading.set(false);
-      },
-      { timeout: 10000 }
-    );
+    // Inyectar el script del SDK — usamos carga sync con libraries=places
+    // (sin loading=async porque hace que la auth de la key falle al hacer ref a localhost)
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=places&v=weekly`;
+    script.async = true;
+    script.defer = true;
+    script.dataset['resqMaps'] = 'true';
+    script.onload = () => this.setupAutocomplete();
+    document.head.appendChild(script);
+  }
+
+  private setupAutocomplete(): void {
+    if (!(window as any).google?.maps?.places?.Autocomplete) {
+      console.warn('[ResQ] Google Maps Places no disponible. Verificá que Maps JavaScript API y Places API estén habilitadas.');
+      return;
+    }
+    const input = this.addressInput.nativeElement;
+    const autocomplete = new (window as any).google.maps.places.Autocomplete(input, {
+      types: ['address'],
+      componentRestrictions: { country: 'ar' }   // Solo Argentina
+    });
+
+    // Si el usuario edita a mano después de confirmar, resetear el estado
+    input.addEventListener('input', () => {
+      if (this.geoDetected()) this.geoDetected.set(false);
+    });
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry?.location) return;
+      this.form.patchValue({
+        address:   place.formatted_address ?? '',
+        latitude:  place.geometry.location.lat(),
+        longitude: place.geometry.location.lng()
+      });
+      this.geoDetected.set(true);
+    });
+  }
+
+  resetAddress(): void {
+    this.geoDetected.set(false);
+    this.form.patchValue({ address: '', latitude: 0, longitude: 0 });
   }
 
   onSubmit(): void {
