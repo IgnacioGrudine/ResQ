@@ -30,10 +30,12 @@ public class RegisterMerchantRequestValidator : AbstractValidator<RegisterMercha
             .MaximumLength(255).WithMessage("La dirección no puede superar los 255 caracteres.");
 
         RuleFor(x => x.Latitude)
-            .InclusiveBetween(-90m, 90m).WithMessage("La latitud debe estar entre -90 y 90.");
+            .InclusiveBetween(-90m, 90m).WithMessage("La latitud debe estar entre -90 y 90.")
+            .Must(lat => lat != 0m).WithMessage("La ubicación del comercio es requerida. Seleccioná una dirección válida.");
 
         RuleFor(x => x.Longitude)
-            .InclusiveBetween(-180m, 180m).WithMessage("La longitud debe estar entre -180 y 180.");
+            .InclusiveBetween(-180m, 180m).WithMessage("La longitud debe estar entre -180 y 180.")
+            .Must(lng => lng != 0m).WithMessage("La ubicación del comercio es requerida. Seleccioná una dirección válida.");
 
         RuleFor(x => x.ContactPhone)
             .NotEmpty().WithMessage("El teléfono de contacto es requerido.")

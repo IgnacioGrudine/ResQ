@@ -20,9 +20,11 @@ public class UpdateMerchantProfileRequestValidator : AbstractValidator<UpdateMer
             .MaximumLength(20);
 
         RuleFor(x => x.Latitude)
-            .InclusiveBetween(-90, 90).WithMessage("Latitud inválida.");
+            .InclusiveBetween(-90m, 90m).WithMessage("Latitud inválida.")
+            .Must(lat => lat != 0m).WithMessage("La ubicación del comercio es requerida. Seleccioná una dirección válida.");
 
         RuleFor(x => x.Longitude)
-            .InclusiveBetween(-180, 180).WithMessage("Longitud inválida.");
+            .InclusiveBetween(-180m, 180m).WithMessage("Longitud inválida.")
+            .Must(lng => lng != 0m).WithMessage("La ubicación del comercio es requerida. Seleccioná una dirección válida.");
     }
 }
