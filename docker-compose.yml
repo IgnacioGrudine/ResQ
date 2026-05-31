@@ -51,6 +51,8 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
     image: resq-frontend:dev
     container_name: resq-frontend
     restart: unless-stopped

@@ -4,12 +4,18 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
+# Build arg para inyectar la API Key de Google Maps en producción
+ARG GOOGLE_MAPS_API_KEY=""
+
 # Install deps with cached layer
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the Angular app for production
+# Copy source and replace the API key placeholder in the production environment file
 COPY . .
+RUN sed -i "s|__GOOGLE_MAPS_API_KEY__|${GOOGLE_MAPS_API_KEY}|g" src/environments/environment.ts
+
+# Build the Angular app for production
 RUN npm run build -- --configuration=production
 
 # ---------- Runtime stage ----------
