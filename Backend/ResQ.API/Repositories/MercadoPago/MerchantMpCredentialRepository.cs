@@ -16,4 +16,7 @@ public class MerchantMpCredentialRepository(ResQDbContext db)
         => await _set
             .Where(c => c.IsActive && c.AccessTokenExpiresAt < DateTime.UtcNow.AddDays(daysThreshold))
             .ToListAsync(ct);
+
+    public async Task AddRefreshLogAsync(MpTokenRefreshLog log, CancellationToken ct = default)
+        => await _db.Set<MpTokenRefreshLog>().AddAsync(log, ct);
 }

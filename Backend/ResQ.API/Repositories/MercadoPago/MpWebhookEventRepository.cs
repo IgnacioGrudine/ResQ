@@ -26,4 +26,8 @@ public class MpWebhookEventRepository(ResQDbContext db)
             return false;
         }
     }
+
+    public async Task<MpWebhookEvent?> GetByNotificationIdAsync(
+        long notificationId, CancellationToken ct = default)
+        => await _set.FirstOrDefaultAsync(e => e.MpNotificationId == notificationId, ct);
 }

@@ -7,4 +7,5 @@ public interface IMerchantMpCredentialRepository : IGenericRepository<MerchantMp
 {
     Task<MerchantMpCredential?> GetByMerchantIdAsync(int merchantId, CancellationToken ct = default);
     Task<IEnumerable<MerchantMpCredential>> GetExpiringSoonAsync(int daysThreshold, CancellationToken ct = default);
+    Task AddRefreshLogAsync(MpTokenRefreshLog log, CancellationToken ct = default);
 }

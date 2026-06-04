@@ -17,6 +17,8 @@ using ResQ.API.Services.Catalog;
 using ResQ.API.Services.Consumers;
 using ResQ.API.Services.Encryption;
 using ResQ.API.Services.Jwt;
+using Hangfire;
+using Hangfire.PostgreSql;
 using ResQ.API.Services.MercadoPago;
 using ResQ.API.Services.Merchants;
 using ResQ.API.Services.Orders;
@@ -89,6 +91,15 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 // ── Mercado Pago Settings ─────────────────────────────────────────────────────
 builder.Services.Configure<MpSettings>(builder.Configuration.GetSection("MercadoPago"));
 
+// ── Hangfire ──────────────────────────────────────────────────────────────────
+var hangfireConn = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddHangfire(cfg => cfg
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(opts => opts.UseNpgsqlConnection(hangfireConn)));
+builder.Services.AddHangfireServer();
+
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -143,6 +154,8 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IConsumerService, ConsumerService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddScoped<IMercadoPagoOAuthService, MercadoPagoOAuthService>();
+builder.Services.AddScoped<IMpWebhookProcessorService, MpWebhookProcessorService>();
+builder.Services.AddScoped<IMpTokenRefreshJob, MpTokenRefreshJob>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
@@ -163,7 +176,13 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/openapi/v1.json", "ResQ API v1");
         options.DocumentTitle = "ResQ API — Swagger";
     });
+    app.UseHangfireDashboard("/hangfire");
 }
+
+RecurringJob.AddOrUpdate<IMpTokenRefreshJob>(
+    "mp-token-refresh-daily",
+    job => job.ExecuteAsync(),
+    Cron.Daily);
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
