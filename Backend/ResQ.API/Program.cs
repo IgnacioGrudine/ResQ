@@ -142,6 +142,7 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IConsumerService, ConsumerService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
+builder.Services.AddScoped<IMercadoPagoOAuthService, MercadoPagoOAuthService>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
