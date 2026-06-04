@@ -41,6 +41,13 @@ services:
       Minio__BucketName: "resq-images"
       Minio__UseSSL: "false"
       Minio__PublicBaseUrl: "http://localhost:9000"
+      MercadoPago__ClientId: ${MP_CLIENT_ID}
+      MercadoPago__ClientSecret: ${MP_CLIENT_SECRET}
+      MercadoPago__PublicKey: ${MP_PUBLIC_KEY}
+      MercadoPago__AdminAccessToken: ${MP_ADMIN_ACCESS_TOKEN}
+      MercadoPago__RedirectUri: ${MP_REDIRECT_URI}
+      MercadoPago__NotificationUrl: ${MP_NOTIFICATION_URL}
+      Encryption__Key: ${ENCRYPTION_KEY}
     depends_on:
       postgres:
         condition: service_healthy
