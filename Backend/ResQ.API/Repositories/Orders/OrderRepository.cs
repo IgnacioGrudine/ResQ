@@ -30,4 +30,15 @@ public class OrderRepository(ResQDbContext db) : GenericRepository<Order>(db), I
             .Include(o => o.Consumer)
             .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
             .FirstOrDefaultAsync(o => o.MerchantId == merchantId && o.PickupCode == pickupCode, ct);
+
+    public async Task<Order?> GetByExternalReferenceAsync(string externalReference, CancellationToken ct = default)
+        => await _set
+            .FirstOrDefaultAsync(o => o.ExternalReference == externalReference, ct);
+
+    public async Task<Order?> GetByIdForConsumerAsync(int orderId, int consumerProfileId, CancellationToken ct = default)
+        => await _set
+            .AsNoTracking()
+            .Include(o => o.Merchant)
+            .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.ConsumerId == consumerProfileId, ct);
 }
