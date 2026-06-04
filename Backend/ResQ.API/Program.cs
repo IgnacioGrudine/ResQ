@@ -9,12 +9,15 @@ using FluentValidation.AspNetCore;
 using ResQ.API.Middleware;
 using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
+using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Repositories.Reviews;
 using ResQ.API.Services.Auth;
 using ResQ.API.Services.Catalog;
 using ResQ.API.Services.Consumers;
+using ResQ.API.Services.Encryption;
 using ResQ.API.Services.Jwt;
+using ResQ.API.Services.MercadoPago;
 using ResQ.API.Services.Merchants;
 using ResQ.API.Services.Orders;
 using ResQ.API.Services.Password;
@@ -83,6 +86,9 @@ builder.Services.AddMinio(cfg => cfg
 // ── JWT Settings ──────────────────────────────────────────────────────────────
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
+// ── Mercado Pago Settings ─────────────────────────────────────────────────────
+builder.Services.Configure<MpSettings>(builder.Configuration.GetSection("MercadoPago"));
+
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -102,6 +108,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// ── Encryption ────────────────────────────────────────────────────────────────
+builder.Services.AddSingleton<IEncryptionService, AesEncryptionService>();
+
+// ── Mercado Pago HttpClient ───────────────────────────────────────────────────
+builder.Services.AddHttpClient<IMercadoPagoHttpClient, MercadoPagoHttpClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.mercadopago.com");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // ── Repositories ──────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
@@ -113,6 +129,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IMerchantCategoryRepository, MerchantCategoryRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IMerchantMpCredentialRepository, MerchantMpCredentialRepository>();
+builder.Services.AddScoped<IMpWebhookEventRepository, MpWebhookEventRepository>();
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IPasswordService, PasswordService>();
