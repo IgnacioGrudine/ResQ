@@ -188,13 +188,45 @@
 
     </div>
 
-    <!-- ── Sticky CTA ── -->
-    <div class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-4 flex flex-col items-center gap-1 z-20">
-      <button disabled
-        class="w-full max-w-2xl py-3.5 bg-gray-200 text-gray-400 rounded-2xl font-bold text-base cursor-not-allowed flex items-center justify-center gap-2">
-        Pagar con Mercado Pago
-      </button>
-      <p class="text-xs text-gray-400">Próximamente disponible</p>
+    <!-- ── Sticky buy bar ── -->
+    <div class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-3 z-20">
+      <div class="max-w-2xl mx-auto flex flex-col gap-2">
+
+        <!-- Error message -->
+        @if (buyError()) {
+          <p class="text-xs text-red-500 text-center font-medium px-2">{{ buyError() }}</p>
+        }
+
+        <div class="flex items-center gap-3">
+          <!-- Quantity selector -->
+          <div class="flex items-center gap-1 border border-gray-200 rounded-xl overflow-hidden shrink-0">
+            <button (click)="decrementQty()" [disabled]="quantity() <= 1 || buying()"
+              class="w-9 h-10 flex items-center justify-center text-gray-400 hover:text-evergreen hover:bg-gray-50 disabled:opacity-40 transition-colors">
+              <svg lucideMinus class="w-4 h-4"></svg>
+            </button>
+            <span class="w-8 text-center text-sm font-bold text-gray-800">{{ quantity() }}</span>
+            <button (click)="incrementQty()" [disabled]="quantity() >= maxQty() || buying()"
+              class="w-9 h-10 flex items-center justify-center text-gray-400 hover:text-evergreen hover:bg-gray-50 disabled:opacity-40 transition-colors">
+              <svg lucidePlus class="w-4 h-4"></svg>
+            </button>
+          </div>
+
+          <!-- Buy button -->
+          <button (click)="buy()" [disabled]="buying() || (pack()?.stockQuantity ?? 0) === 0"
+            class="flex-1 py-3 bg-evergreen text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-hunter disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+            @if (buying()) {
+              <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+              Creando orden...
+            } @else if ((pack()?.stockQuantity ?? 0) === 0) {
+              Sin stock disponible
+            } @else {
+              <svg lucideShoppingCart class="w-4 h-4"></svg>
+              Pagar con Mercado Pago
+            }
+          </button>
+        </div>
+
+      </div>
     </div>
 
   </div>

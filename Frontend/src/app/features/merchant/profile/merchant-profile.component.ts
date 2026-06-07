@@ -3,21 +3,30 @@ import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MercadoPagoService } from '../../../core/services/mercadopago.service';
 import { MerchantProfile, UpdateMerchantProfilePayload } from '../../../core/models/merchant.models';
 import { Category } from '../../../core/models/catalog.models';
 import { environment } from '../../../../environments/environment';
-import { LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck, LucideCamera } from '@lucide/angular';
+import {
+  LucideStore, LucideMapPin, LucideSave, LucideLeaf, LucideCheck, LucideCamera,
+  LucideLink, LucideLink2Off, LucideAlertCircle
+} from '@lucide/angular';
 
 @Component({
   selector: 'app-merchant-profile',
   standalone: true,
-  imports: [FormsModule, LucideStore, LucideMapPin, LucideSave, LucideLogOut, LucideLeaf, LucideCheck, LucideCamera],
+  imports: [
+    FormsModule,
+    LucideStore, LucideMapPin, LucideSave, LucideLeaf, LucideCheck, LucideCamera,
+    LucideLink, LucideLink2Off, LucideAlertCircle
+  ],
   templateUrl: './merchant-profile.component.html'
 })
 export class MerchantProfileComponent implements OnInit {
-  private readonly merchant = inject(MerchantService);
-  private readonly catalog  = inject(CatalogService);
-  private readonly auth     = inject(AuthService);
+  private readonly merchant    = inject(MerchantService);
+  private readonly catalog     = inject(CatalogService);
+  private readonly auth        = inject(AuthService);
+  private readonly mpService   = inject(MercadoPagoService);
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
@@ -39,6 +48,11 @@ export class MerchantProfileComponent implements OnInit {
   readonly uploadingPhoto    = signal(false);
   readonly photoPreview      = signal<string | null>(null);
   readonly addressConfirmed  = signal(false);
+
+  // ── Mercado Pago ──
+  readonly mpConnecting      = signal(false);
+  readonly mpDisconnecting   = signal(false);
+  readonly mpError           = signal<string | null>(null);
 
   form = { businessName: '', address: '', contactPhone: '' };
   selectedCategoryIds = new Set<number>();
@@ -167,6 +181,36 @@ export class MerchantProfileComponent implements OnInit {
       error: () => {
         this.photoPreview.set(null);
         this.uploadingPhoto.set(false);
+      }
+    });
+  }
+
+  connectMp(): void {
+    this.mpConnecting.set(true);
+    this.mpError.set(null);
+    this.mpService.getAuthUrl().subscribe({
+      next: ({ authUrl }) => {
+        window.location.href = authUrl;
+      },
+      error: () => {
+        this.mpConnecting.set(false);
+        this.mpError.set('No se pudo iniciar la conexión con Mercado Pago. Intentá de nuevo.');
+      }
+    });
+  }
+
+  disconnectMp(): void {
+    this.mpDisconnecting.set(true);
+    this.mpError.set(null);
+    this.mpService.disconnect().subscribe({
+      next: () => {
+        this.mpDisconnecting.set(false);
+        // Reload profile so status badge updates
+        this.merchant.getProfile().subscribe(p => this.profile.set(p));
+      },
+      error: () => {
+        this.mpDisconnecting.set(false);
+        this.mpError.set('No se pudo desconectar la cuenta. Intentá de nuevo.');
       }
     });
   }

@@ -4,6 +4,7 @@ import { Location } from '@angular/common';
 import { DecimalPipe } from '@angular/common';
 import { switchMap } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
+import { OrderService } from '../../../core/services/order.service';
 import { environment } from '../../../../environments/environment';
 import { PackListItem, MerchantDetail } from '../../../core/models/catalog.models';
 import {
@@ -15,7 +16,10 @@ import {
   LucideStar,
   LucideChevronRight,
   LucidePackage,
-  LucideStore
+  LucideStore,
+  LucideShoppingCart,
+  LucideMinus,
+  LucidePlus
 } from '@lucide/angular';
 
 @Component({
@@ -24,20 +28,51 @@ import {
   imports: [
     DecimalPipe,
     LucideArrowLeft, LucideLeaf, LucideMapPin, LucideClock,
-    LucidePhone, LucideStar, LucideChevronRight, LucidePackage, LucideStore
+    LucidePhone, LucideStar, LucideChevronRight, LucidePackage, LucideStore,
+    LucideShoppingCart, LucideMinus, LucidePlus
   ],
   templateUrl: './pack-detail.component.html'
 })
 export class PackDetailComponent implements OnInit {
-  private readonly route    = inject(ActivatedRoute);
-  private readonly catalog  = inject(CatalogService);
-  private readonly router   = inject(Router);
-  private readonly location = inject(Location);
+  private readonly route        = inject(ActivatedRoute);
+  private readonly catalog      = inject(CatalogService);
+  private readonly orderService = inject(OrderService);
+  private readonly router       = inject(Router);
+  private readonly location     = inject(Location);
 
   readonly pack     = signal<PackListItem | null>(null);
   readonly merchant = signal<MerchantDetail | null>(null);
   readonly loading  = signal(true);
   readonly error    = signal<string | null>(null);
+
+  // ── Buy flow ──
+  readonly quantity  = signal(1);
+  readonly buying    = signal(false);
+  readonly buyError  = signal<string | null>(null);
+
+  readonly maxQty = computed(() => Math.min(this.pack()?.stockQuantity ?? 1, 10));
+
+  incrementQty(): void { if (this.quantity() < this.maxQty()) this.quantity.update(q => q + 1); }
+  decrementQty(): void { if (this.quantity() > 1) this.quantity.update(q => q - 1); }
+
+  buy(): void {
+    const pack = this.pack();
+    if (!pack) return;
+
+    this.buying.set(true);
+    this.buyError.set(null);
+
+    this.orderService.createOrder({ productId: pack.id, quantity: this.quantity() }).subscribe({
+      next: res => {
+        // Hard-navigate to MP Checkout Pro
+        window.location.href = res.mpCheckoutUrl;
+      },
+      error: err => {
+        this.buying.set(false);
+        this.buyError.set(err.error?.detail ?? 'No se pudo crear la orden. Intentá de nuevo.');
+      }
+    });
+  }
 
   readonly staticMapUrl = computed(() => {
     const m = this.merchant();

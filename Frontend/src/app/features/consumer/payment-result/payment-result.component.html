@@ -1,0 +1,135 @@
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+  <div class="bg-white rounded-2xl shadow-sm p-8 max-w-sm w-full text-center flex flex-col items-center gap-6">
+
+    <!-- ── SUCCESS: polling ── -->
+    @if (resultType() === 'success' && pageState() === 'polling') {
+      <div class="w-16 h-16 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Confirmando pago...</h1>
+        <p class="text-sm text-gray-400 mt-1">Estamos verificando tu pago con Mercado Pago. Puede tardar unos segundos.</p>
+      </div>
+    }
+
+    <!-- ── SUCCESS: paid ── -->
+    @else if (resultType() === 'success' && pageState() === 'paid') {
+      <div class="w-16 h-16 rounded-full bg-lime/60 flex items-center justify-center">
+        <svg lucideCheckCircle class="w-8 h-8 text-hunter"></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">¡Pago confirmado!</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          Tu pack de <span class="font-semibold">{{ order()?.merchantName }}</span> está listo para retirar.
+        </p>
+      </div>
+
+      <!-- Pickup code -->
+      @if (order(); as o) {
+        <div class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col items-center gap-3">
+          <div class="flex items-center gap-2 text-gray-400 text-xs font-semibold uppercase tracking-widest">
+            <svg lucideTicket class="w-4 h-4"></svg>
+            Código de retiro
+          </div>
+          <div class="text-4xl font-extrabold tracking-[0.35em] text-evergreen font-mono">
+            {{ o.pickupCode }}
+          </div>
+          <p class="text-xs text-gray-400 text-center">
+            Mostrá este código al comercio cuando vayas a retirar tu pedido.
+          </p>
+        </div>
+
+        <!-- Order summary -->
+        <div class="w-full text-left flex flex-col gap-2">
+          @for (item of o.items; track item.productName) {
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">{{ item.productName }} × {{ item.quantity }}</span>
+              <span class="font-medium text-gray-800">${{ item.unitPrice * item.quantity | number:'1.0-0' }}</span>
+            </div>
+          }
+          <div class="border-t border-gray-100 pt-2 flex justify-between text-sm font-bold">
+            <span>Total</span>
+            <span class="text-evergreen">${{ o.totalAmount | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      }
+
+      <button (click)="goOrders()"
+        class="w-full py-3 bg-evergreen text-white rounded-xl text-sm font-semibold hover:bg-hunter transition-colors">
+        Ver mis órdenes
+      </button>
+    }
+
+    <!-- ── SUCCESS: timeout ── -->
+    @else if (resultType() === 'success' && pageState() === 'timeout') {
+      <div class="w-16 h-16 rounded-full bg-yellow-50 flex items-center justify-center">
+        <svg lucideClock class="w-8 h-8 text-yellow-500"></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Pago en proceso</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          Mercado Pago aún no confirmó el pago. Revisá tus órdenes en unos minutos.
+        </p>
+      </div>
+      <button (click)="goOrders()"
+        class="w-full py-3 bg-evergreen text-white rounded-xl text-sm font-semibold hover:bg-hunter transition-colors">
+        Ver mis órdenes
+      </button>
+    }
+
+    <!-- ── FAILURE ── -->
+    @else if (resultType() === 'failure') {
+      <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+        <svg lucideXCircle class="w-8 h-8 text-red-500"></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Pago rechazado</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          El pago no pudo procesarse. Podés intentarlo de nuevo con otro medio de pago.
+        </p>
+      </div>
+      <div class="flex flex-col gap-2 w-full">
+        <button (click)="goHome()"
+          class="w-full py-3 bg-evergreen text-white rounded-xl text-sm font-semibold hover:bg-hunter transition-colors flex items-center justify-center gap-2">
+          <svg lucideRefreshCw class="w-4 h-4"></svg>
+          Intentar de nuevo
+        </button>
+        <button (click)="goOrders()"
+          class="w-full py-3 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
+          Ver mis órdenes
+        </button>
+      </div>
+    }
+
+    <!-- ── PENDING ── -->
+    @else if (resultType() === 'pending') {
+      <div class="w-16 h-16 rounded-full bg-yellow-50 flex items-center justify-center">
+        <svg lucideClock class="w-8 h-8 text-yellow-500"></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Pago pendiente</h1>
+        <p class="text-sm text-gray-500 mt-1">
+          Tu pago está siendo procesado. Te notificaremos cuando se confirme. Revisá tus órdenes en unos minutos.
+        </p>
+      </div>
+      <button (click)="goOrders()"
+        class="w-full py-3 bg-evergreen text-white rounded-xl text-sm font-semibold hover:bg-hunter transition-colors">
+        Ver mis órdenes
+      </button>
+    }
+
+    <!-- ── ERROR (generic) ── -->
+    @else if (pageState() === 'error') {
+      <div class="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
+        <svg lucideXCircle class="w-8 h-8 text-red-500"></svg>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-800">Algo salió mal</h1>
+        <p class="text-sm text-gray-500 mt-1">No pudimos obtener el estado de tu orden.</p>
+      </div>
+      <button (click)="goOrders()"
+        class="w-full py-3 bg-evergreen text-white rounded-xl text-sm font-semibold hover:bg-hunter transition-colors">
+        Ver mis órdenes
+      </button>
+    }
+
+  </div>
+</div>

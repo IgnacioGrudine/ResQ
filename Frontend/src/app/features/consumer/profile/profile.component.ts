@@ -4,12 +4,12 @@ import { DecimalPipe } from '@angular/common';
 import { ConsumerService } from '../../../core/services/consumer.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConsumerProfile } from '../../../core/models/consumer.models';
-import { LucideLogOut, LucideSave, LucideLeaf } from '@lucide/angular';
+import { LucideSave, LucideLeaf } from '@lucide/angular';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, LucideLogOut, LucideSave, LucideLeaf],
+  imports: [FormsModule, DecimalPipe, LucideSave, LucideLeaf],
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {

@@ -113,6 +113,65 @@
         </div>
       </div>
 
+      <!-- ── Mercado Pago ── -->
+      <div class="bg-white rounded-2xl shadow-sm p-5">
+        <div class="flex items-center gap-2 mb-1">
+          <svg lucideLink class="w-5 h-5 text-evergreen"></svg>
+          <h2 class="font-bold text-gray-700">Mercado Pago</h2>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">
+          Conectá tu cuenta de Mercado Pago para recibir pagos de tus packs directamente.
+        </p>
+
+        <!-- Status badge -->
+        @if (p.mpConnectionStatus === 'Connected') {
+          <div class="flex items-center gap-2 bg-lime/40 border border-palm rounded-xl px-4 py-2.5 mb-4">
+            <svg lucideCheck class="w-4 h-4 text-fern flex-shrink-0"></svg>
+            <p class="text-sm font-medium text-evergreen">Cuenta conectada</p>
+          </div>
+        } @else if (p.mpConnectionStatus === 'TokenExpired') {
+          <div class="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-2.5 mb-4">
+            <svg lucideAlertCircle class="w-4 h-4 text-yellow-500 flex-shrink-0"></svg>
+            <p class="text-sm font-medium text-yellow-700">Sesión expirada — volvé a conectar tu cuenta</p>
+          </div>
+        } @else {
+          <div class="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-2.5 mb-4">
+            <svg lucideLink2Off class="w-4 h-4 text-gray-400 flex-shrink-0"></svg>
+            <p class="text-sm text-gray-400">Sin cuenta conectada</p>
+          </div>
+        }
+
+        <!-- Error -->
+        @if (mpError()) {
+          <p class="text-xs text-red-500 mb-3 px-1">{{ mpError() }}</p>
+        }
+
+        <!-- Actions -->
+        @if (p.mpConnectionStatus === 'Connected') {
+          <button (click)="disconnectMp()" [disabled]="mpDisconnecting()"
+            class="w-full py-2.5 border border-red-200 text-red-500 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+            @if (mpDisconnecting()) {
+              <div class="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin"></div>
+              Desconectando...
+            } @else {
+              <svg lucideLink2Off class="w-4 h-4"></svg>
+              Desconectar cuenta
+            }
+          </button>
+        } @else {
+          <button (click)="connectMp()" [disabled]="mpConnecting()"
+            class="w-full py-2.5 bg-[#009EE3] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0082bd] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+            @if (mpConnecting()) {
+              <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+              Conectando...
+            } @else {
+              <svg lucideLink class="w-4 h-4"></svg>
+              Conectar con Mercado Pago
+            }
+          </button>
+        }
+      </div>
+
       <!-- Save -->
       <button (click)="saveProfile()" [disabled]="saving()"
         class="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"

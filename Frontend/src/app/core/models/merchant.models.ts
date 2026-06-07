@@ -1,7 +1,8 @@
 import { Category } from './catalog.models';
 
 // Responses map the enum to its name; requests expect the numeric value.
-export type ProductType = 'SurprisePack' | 'ExplicitItem';
+export type ProductType         = 'SurprisePack' | 'ExplicitItem';
+export type MpConnectionStatus  = 'Disconnected' | 'Connected' | 'TokenExpired';
 export const ProductTypeValue = { SurprisePack: 1, ExplicitItem: 2 } as const;
 
 export type MerchantOrderStatus = 'Pending' | 'Paid' | 'PickedUp' | 'Cancelled';
@@ -82,15 +83,16 @@ export interface MerchantReview {
 
 // ── Profile ──
 export interface MerchantProfile {
-  id: number;
-  businessName: string;
-  cuit: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  contactPhone: string;
-  photoUrl?: string;
-  categories: Category[];
+  id:                  number;
+  businessName:        string;
+  cuit:                string;
+  address:             string;
+  latitude:            number;
+  longitude:           number;
+  contactPhone:        string;
+  photoUrl?:           string;
+  mpConnectionStatus:  MpConnectionStatus;
+  categories:          Category[];
 }
 
 export interface UpdateMerchantProfilePayload {

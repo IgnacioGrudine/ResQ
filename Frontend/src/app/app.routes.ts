@@ -114,6 +114,37 @@ export const routes: Routes = [
         .then(m => m.MerchantDetailComponent)
   },
 
+  // ── Mercado Pago OAuth callback ─────────────────────────────────
+  {
+    path: 'mp/callback',
+    loadComponent: () =>
+      import('./features/auth/mp-callback/mp-callback.component')
+        .then(m => m.MpCallbackComponent)
+  },
+
+  // ── Payment result pages ────────────────────────────────────────
+  {
+    path: 'pago/exitoso',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/consumer/payment-result/payment-result.component')
+        .then(m => m.PaymentResultComponent)
+  },
+  {
+    path: 'pago/fallido',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/consumer/payment-result/payment-result.component')
+        .then(m => m.PaymentResultComponent)
+  },
+  {
+    path: 'pago/pendiente',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/consumer/payment-result/payment-result.component')
+        .then(m => m.PaymentResultComponent)
+  },
+
   {
     path: '**',
     redirectTo: ''
