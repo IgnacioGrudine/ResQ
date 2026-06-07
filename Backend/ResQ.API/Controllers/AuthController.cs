@@ -7,6 +7,12 @@ using ResQ.API.Services.Auth;
 
 namespace ResQ.API.Controllers;
 
+/// <summary>
+/// Handles authentication for both consumers and merchants: registration, login,
+/// token refresh, and logout. Access tokens are returned in the response body;
+/// refresh tokens are managed exclusively via an HttpOnly cookie named
+/// <c>resq_refresh_token</c> to prevent JavaScript access.
+/// </summary>
 [ApiController]
 [Route("api/auth")]
 public class AuthController(
@@ -76,12 +82,31 @@ public class AuthController(
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Appends the refresh token as an HttpOnly cookie on the current HTTP response,
+    /// with expiry aligned to the configured <see cref="JwtSettings.RefreshTokenExpirationDays"/>.
+    /// </summary>
+    /// <param name="token">The plaintext refresh token to store in the cookie.</param>
     private void SetRefreshCookie(string token) =>
         Response.Cookies.Append(RefreshCookieName, token, BuildCookieOptions());
 
+    /// <summary>
+    /// Overwrites the refresh token cookie with an empty value and an expiry in the past,
+    /// effectively deleting it from the browser.
+    /// </summary>
     private void ClearRefreshCookie() =>
         Response.Cookies.Append(RefreshCookieName, string.Empty, BuildCookieOptions(clear: true));
 
+    /// <summary>
+    /// Builds the <see cref="CookieOptions"/> used for the refresh token cookie.
+    /// In non-development environments the <c>Secure</c> flag is set so the cookie is
+    /// only sent over HTTPS.
+    /// </summary>
+    /// <param name="clear">
+    /// When <see langword="true"/>, sets the expiry to one day in the past to delete the cookie.
+    /// When <see langword="false"/> (default), sets the expiry to the configured refresh token lifetime.
+    /// </param>
+    /// <returns>A configured <see cref="CookieOptions"/> instance.</returns>
     private CookieOptions BuildCookieOptions(bool clear = false) => new()
     {
         HttpOnly = true,
@@ -93,6 +118,13 @@ public class AuthController(
         Path     = "/api/auth"
     };
 
+    /// <summary>
+    /// Maps the internal <see cref="AuthResponse"/> (which includes the raw refresh token)
+    /// to the <see cref="ClientAuthResponse"/> DTO that is safe to return to the client.
+    /// The refresh token is intentionally excluded from the client-facing DTO.
+    /// </summary>
+    /// <param name="r">The internal auth response produced by <see cref="IAuthService"/>.</param>
+    /// <returns>A <see cref="ClientAuthResponse"/> containing only client-safe fields.</returns>
     private static ClientAuthResponse ToClientResponse(AuthResponse r) => new()
     {
         AccessToken          = r.AccessToken,

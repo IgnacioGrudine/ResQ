@@ -18,6 +18,14 @@ public static class ResultExtensions
     /// <paramref name="map"/> converts the internal service value to the client DTO.
     /// <paramref name="onSuccess"/> runs side-effects (e.g. setting cookies) before the response is sent.
     /// </summary>
+    /// <typeparam name="TIn">The type produced by the service layer.</typeparam>
+    /// <typeparam name="TOut">The DTO type returned to the client.</typeparam>
+    /// <param name="result">The FluentResults result from the service call.</param>
+    /// <param name="map">Projection function that converts <typeparamref name="TIn"/> to <typeparamref name="TOut"/>.</param>
+    /// <param name="onSuccess">Optional side-effect to run (e.g. set a cookie) when the result is successful.</param>
+    /// <returns>
+    /// 200 OK with the mapped value on success, or an appropriate error <see cref="ProblemDetails"/> response on failure.
+    /// </returns>
     public static ActionResult<TOut> ToActionResult<TIn, TOut>(
         this Result<TIn> result,
         Func<TIn, TOut> map,
@@ -33,6 +41,11 @@ public static class ResultExtensions
     /// <summary>
     /// For GET / PUT endpoints that return the same type (no mapping needed). Returns 200 OK on success.
     /// </summary>
+    /// <typeparam name="T">The type produced by the service layer and returned to the client.</typeparam>
+    /// <param name="result">The FluentResults result from the service call.</param>
+    /// <returns>
+    /// 200 OK with the result value on success, or an appropriate error <see cref="ProblemDetails"/> response on failure.
+    /// </returns>
     public static ActionResult<T> ToActionResult<T>(this Result<T> result)
     {
         if (result.IsSuccess)
@@ -45,6 +58,14 @@ public static class ResultExtensions
     /// For POST endpoints that create a resource: maps TService → TClient and returns 201 Created on success.
     /// <paramref name="onSuccess"/> runs side-effects (e.g. setting cookies) before the response is sent.
     /// </summary>
+    /// <typeparam name="TIn">The type produced by the service layer.</typeparam>
+    /// <typeparam name="TOut">The DTO type returned to the client.</typeparam>
+    /// <param name="result">The FluentResults result from the service call.</param>
+    /// <param name="map">Projection function that converts <typeparamref name="TIn"/> to <typeparamref name="TOut"/>.</param>
+    /// <param name="onSuccess">Optional side-effect to run (e.g. set a cookie) when the result is successful.</param>
+    /// <returns>
+    /// 201 Created with the mapped value on success, or an appropriate error <see cref="ProblemDetails"/> response on failure.
+    /// </returns>
     public static ActionResult<TOut> ToCreatedResult<TIn, TOut>(
         this Result<TIn> result,
         Func<TIn, TOut> map,
@@ -61,6 +82,11 @@ public static class ResultExtensions
     /// For void-success endpoints (DELETE, logout): returns 204 No Content on success.
     /// <paramref name="onSuccess"/> runs side-effects (e.g. clearing cookies) before the response is sent.
     /// </summary>
+    /// <param name="result">The FluentResults result from the service call.</param>
+    /// <param name="onSuccess">Optional side-effect to run (e.g. clear a cookie) when the result is successful.</param>
+    /// <returns>
+    /// 204 No Content on success, or an appropriate error <see cref="ProblemDetails"/> response on failure.
+    /// </returns>
     public static IActionResult ToActionResult(this Result result, Action? onSuccess = null)
     {
         if (result.IsFailed)
@@ -72,6 +98,17 @@ public static class ResultExtensions
 
     // ─── Private helpers (centralise the IError → ActionResult switch) ────────
 
+    /// <summary>
+    /// Inspects the first error in <paramref name="result"/> and maps it to the corresponding
+    /// HTTP status code and <see cref="ProblemDetails"/> body. Used internally by all public
+    /// extension methods to avoid duplicating the error-type switch.
+    /// </summary>
+    /// <typeparam name="T">The result value type (not used on the error path; required by the return type).</typeparam>
+    /// <param name="result">A failed <see cref="ResultBase"/> whose first error determines the HTTP response.</param>
+    /// <returns>
+    /// An <see cref="ActionResult{T}"/> with the appropriate HTTP status (400, 401, 403, 404, or 409)
+    /// and a <see cref="ProblemDetails"/> body describing the error.
+    /// </returns>
     private static ActionResult<T> ToErrorResponse<T>(this ResultBase result)
     {
         var firstError   = result.Errors.FirstOrDefault();
@@ -129,6 +166,16 @@ public static class ResultExtensions
         };
     }
 
+    /// <summary>
+    /// Void-result variant of <see cref="ToErrorResponse{T}"/>. Maps the first error in
+    /// <paramref name="result"/> to the corresponding HTTP status code and <see cref="ProblemDetails"/> body.
+    /// Used by <see cref="ToActionResult(Result, Action)"/> for endpoints that return no body on success.
+    /// </summary>
+    /// <param name="result">A failed <see cref="ResultBase"/> whose first error determines the HTTP response.</param>
+    /// <returns>
+    /// An <see cref="IActionResult"/> with the appropriate HTTP status (400, 401, 403, 404, or 409)
+    /// and a <see cref="ProblemDetails"/> body describing the error.
+    /// </returns>
     private static IActionResult ToErrorResponse(this ResultBase result)
     {
         var firstError   = result.Errors.FirstOrDefault();

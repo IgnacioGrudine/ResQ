@@ -7,14 +7,42 @@ using ResQ.API.Services.Storage;
 
 namespace ResQ.API.Services.Products;
 
+/// <summary>
+/// Manages the full lifecycle of a merchant's surprise food packs (products):
+/// listing, creation, updating, deletion, visibility toggling, and image upload.
+/// </summary>
+/// <remarks>
+/// All write operations are scoped to the authenticated merchant's profile ID to prevent
+/// cross-merchant data access. Ownership is enforced at the repository level via
+/// <c>GetByIdForMerchantAsync</c>, which returns <c>null</c> when the product does not
+/// belong to the requesting merchant.
+/// </remarks>
 public class ProductService(IProductRepository products, IImageStorageService imageStorage) : IProductService
 {
+    /// <summary>
+    /// Returns all products (active and inactive) belonging to the authenticated merchant.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> containing an enumerable of <see cref="ProductResponse"/>.
+    /// </returns>
     public async Task<Result<IEnumerable<ProductResponse>>> GetMyProductsAsync(int merchantProfileId, CancellationToken ct = default)
     {
         var result = await products.GetByMerchantIdAsync(merchantProfileId, ct);
         return Result.Ok(result.Select(MapProduct));
     }
 
+    /// <summary>
+    /// Creates a new surprise food pack for the authenticated merchant and persists it
+    /// with an initial active state.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="request">The creation payload containing all pack details.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{ProductResponse}"/> with the newly created pack.
+    /// </returns>
     public async Task<Result<ProductResponse>> CreateProductAsync(
         int merchantProfileId, CreateProductRequest request, CancellationToken ct = default)
     {
@@ -40,6 +68,17 @@ public class ProductService(IProductRepository products, IImageStorageService im
         return Result.Ok(MapProduct(product));
     }
 
+    /// <summary>
+    /// Updates all editable fields of an existing pack owned by the authenticated merchant.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="productId">The ID of the pack to update.</param>
+    /// <param name="request">The update payload containing the new field values.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{ProductResponse}"/> with the updated pack,
+    /// or a <c>NotFoundError</c> if the pack does not exist or does not belong to this merchant.
+    /// </returns>
     public async Task<Result<ProductResponse>> UpdateProductAsync(
         int merchantProfileId, int productId, UpdateProductRequest request, CancellationToken ct = default)
     {
@@ -63,6 +102,16 @@ public class ProductService(IProductRepository products, IImageStorageService im
         return Result.Ok(MapProduct(product));
     }
 
+    /// <summary>
+    /// Permanently deletes a pack owned by the authenticated merchant.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="productId">The ID of the pack to delete.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result"/>,
+    /// or a <c>NotFoundError</c> if the pack does not exist or does not belong to this merchant.
+    /// </returns>
     public async Task<Result> DeleteProductAsync(int merchantProfileId, int productId, CancellationToken ct = default)
     {
         var product = await products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
@@ -74,6 +123,17 @@ public class ProductService(IProductRepository products, IImageStorageService im
         return Result.Ok();
     }
 
+    /// <summary>
+    /// Toggles the <c>IsActive</c> flag of a pack owned by the authenticated merchant,
+    /// making it visible or hidden in the public catalog.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="productId">The ID of the pack to toggle.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{ProductResponse}"/> with the updated pack (reflecting the new <c>IsActive</c> value),
+    /// or a <c>NotFoundError</c> if the pack does not exist or does not belong to this merchant.
+    /// </returns>
     public async Task<Result<ProductResponse>> ToggleProductAsync(int merchantProfileId, int productId, CancellationToken ct = default)
     {
         var product = await products.GetByIdForMerchantAsync(productId, merchantProfileId, ct);
@@ -88,6 +148,22 @@ public class ProductService(IProductRepository products, IImageStorageService im
         return Result.Ok(MapProduct(product));
     }
 
+    /// <summary>
+    /// Uploads an image for a specific pack to MinIO object storage and persists the
+    /// resulting public URL on the product entity.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="productId">The ID of the pack whose image should be updated.</param>
+    /// <param name="file">The image file to upload. Validated for allowed content type and size by <see cref="IImageStorageService"/>.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{ProductResponse}"/> with the updated pack (including the new image URL),
+    /// or a <c>NotFoundError</c> if the pack does not exist or does not belong to this merchant.
+    /// </returns>
+    /// <remarks>
+    /// Images are stored under the <c>products/{merchantProfileId}</c> folder in the configured MinIO bucket.
+    /// Uploading a new image overwrites the <c>ImageUrl</c> field but does not delete the previously stored object.
+    /// </remarks>
     public async Task<Result<ProductResponse>> UploadImageAsync(
         int merchantProfileId, int productId, IFormFile file, CancellationToken ct = default)
     {
@@ -105,6 +181,11 @@ public class ProductService(IProductRepository products, IImageStorageService im
         return Result.Ok(MapProduct(product));
     }
 
+    /// <summary>
+    /// Maps a <see cref="Product"/> entity to a <see cref="ProductResponse"/> DTO.
+    /// </summary>
+    /// <param name="p">The product entity to map.</param>
+    /// <returns>A populated <see cref="ProductResponse"/> DTO.</returns>
     private static ProductResponse MapProduct(Product p) => new()
     {
         Id              = p.Id,

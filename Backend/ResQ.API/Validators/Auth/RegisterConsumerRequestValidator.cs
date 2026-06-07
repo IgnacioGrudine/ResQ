@@ -3,6 +3,17 @@ using ResQ.API.DTOs.Auth;
 
 namespace ResQ.API.Validators.Auth;
 
+/// <summary>
+/// FluentValidation validator for <see cref="RegisterConsumerRequest"/>.
+/// Enforces the following business rules for consumer registration:
+/// <list type="bullet">
+///   <item>Email must be present, valid, and at most 255 characters.</item>
+///   <item>Password must be between 8 and 100 characters.</item>
+///   <item>First name and last name are required and capped at 100 characters each.</item>
+///   <item>Phone number, when provided, must be at most 20 characters and match
+///         a permissive international phone format (<c>^\+?[\d\s\-()+]{7,20}$</c>).</item>
+/// </list>
+/// </summary>
 public class RegisterConsumerRequestValidator : AbstractValidator<RegisterConsumerRequest>
 {
     public RegisterConsumerRequestValidator()

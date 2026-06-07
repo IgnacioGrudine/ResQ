@@ -5,8 +5,26 @@ using ResQ.API.Repositories.Common;
 
 namespace ResQ.API.Repositories.Auth;
 
+/// <summary>
+/// EF Core implementation of <see cref="IRefreshTokenRepository"/>.
+/// Provides data access for the <see cref="RefreshToken"/> entity, extending generic CRUD
+/// with a query that loads the token together with the owning user and their roles,
+/// as required for the token-refresh flow.
+/// </summary>
 public class RefreshTokenRepository(ResQDbContext db) : GenericRepository<RefreshToken>(db), IRefreshTokenRepository
 {
+    /// <summary>
+    /// Retrieves a refresh token by its opaque string value, eagerly loading the associated
+    /// <c>User</c> and the user's <c>UserRoles</c> navigation properties.
+    /// This data is required to validate the token and issue a new JWT without
+    /// an additional round-trip to the database.
+    /// </summary>
+    /// <param name="token">The opaque refresh token string to look up.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// The <see cref="RefreshToken"/> with <c>User</c> and <c>UserRoles</c> loaded,
+    /// or <c>null</c> if no matching token is found.
+    /// </returns>
     public async Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken ct = default)
         => await _set
             .Include(rt => rt.User)

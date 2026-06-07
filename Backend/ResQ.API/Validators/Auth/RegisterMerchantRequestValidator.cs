@@ -3,6 +3,22 @@ using ResQ.API.DTOs.Auth;
 
 namespace ResQ.API.Validators.Auth;
 
+/// <summary>
+/// FluentValidation validator for <see cref="RegisterMerchantRequest"/>.
+/// Enforces the following business rules for merchant registration:
+/// <list type="bullet">
+///   <item>Email must be present, valid, and at most 255 characters.</item>
+///   <item>Password must be between 8 and 100 characters.</item>
+///   <item>Business name is required and capped at 150 characters.</item>
+///   <item>CUIT must be present and match the Argentine format <c>XX-XXXXXXXX-X</c>.</item>
+///   <item>Address is required and at most 255 characters.</item>
+///   <item>Latitude must be between -90 and 90 and must not be exactly 0
+///         (a zero value indicates the user did not select a valid map location).</item>
+///   <item>Longitude must be between -180 and 180 and must not be exactly 0.</item>
+///   <item>Contact phone is required, at most 20 characters, and must match the
+///         permissive international phone format (<c>^\+?[\d\s\-()+]{7,20}$</c>).</item>
+/// </list>
+/// </summary>
 public class RegisterMerchantRequestValidator : AbstractValidator<RegisterMerchantRequest>
 {
     public RegisterMerchantRequestValidator()

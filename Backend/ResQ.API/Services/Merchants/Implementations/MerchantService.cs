@@ -16,6 +16,10 @@ using ResQ.API.Services.Storage;
 
 namespace ResQ.API.Services.Merchants;
 
+/// <summary>
+/// Manages merchant-facing operations: public catalog exposure, authenticated profile management,
+/// order confirmation, dashboard metrics, review retrieval, and profile photo upload.
+/// </summary>
 public class MerchantService(
     IMerchantProfileRepository merchantProfiles,
     IMerchantCategoryRepository merchantCategories,
@@ -27,6 +31,14 @@ public class MerchantService(
 {
     // ─── Public catalog ───────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Returns a summary list of all merchants available in the public catalog,
+    /// including their categories, average rating, and minimum pack price.
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> containing an enumerable of <see cref="MerchantListItemResponse"/>.
+    /// </returns>
     public async Task<Result<IEnumerable<MerchantListItemResponse>>> GetCatalogAsync(CancellationToken ct = default)
     {
         var merchants = await merchantProfiles.GetAllWithCatalogDataAsync(ct);
@@ -52,6 +64,16 @@ public class MerchantService(
 
     // ─── Public detail ────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Returns the full public profile of a single merchant, including their active packs,
+    /// categories, aggregated rating, and the 10 most recent reviews.
+    /// </summary>
+    /// <param name="merchantId">The merchant profile ID.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{MerchantDetailResponse}"/>,
+    /// or a <c>NotFoundError</c> if no merchant with the given ID exists.
+    /// </returns>
     public async Task<Result<MerchantDetailResponse>> GetByIdAsync(int merchantId, CancellationToken ct = default)
     {
         var merchant = await merchantProfiles.GetByIdWithPublicDetailAsync(merchantId, ct);
@@ -89,6 +111,16 @@ public class MerchantService(
 
     // ─── Authenticated merchant — own profile ─────────────────────────────────
 
+    /// <summary>
+    /// Retrieves the authenticated merchant's own profile, including their assigned categories
+    /// and Mercado Pago connection status.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{MerchantProfileResponse}"/>,
+    /// or a <c>NotFoundError</c> if the profile does not exist.
+    /// </returns>
     public async Task<Result<MerchantProfileResponse>> GetMyProfileAsync(int merchantProfileId, CancellationToken ct = default)
     {
         var merchant = await merchantProfiles.GetByIdWithCategoriesAsync(merchantProfileId, ct);
@@ -98,6 +130,23 @@ public class MerchantService(
         return Result.Ok(MapMerchantProfile(merchant));
     }
 
+    /// <summary>
+    /// Updates the authenticated merchant's editable profile fields and replaces their
+    /// category assignments when a non-empty category list is provided.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="request">The update payload with business details and an optional list of category IDs.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{MerchantProfileResponse}"/> with the refreshed profile,
+    /// or a <c>NotFoundError</c> if the profile does not exist.
+    /// </returns>
+    /// <remarks>
+    /// Category replacement is all-or-nothing: if <c>request.CategoryIds</c> is non-empty,
+    /// all existing <c>MerchantCategory</c> rows for this merchant are deleted and replaced
+    /// with the new set. Duplicate IDs in the request are de-duplicated via <c>Distinct()</c>.
+    /// If <c>request.CategoryIds</c> is empty, the current categories are left unchanged.
+    /// </remarks>
     public async Task<Result<MerchantProfileResponse>> UpdateMyProfileAsync(
         int merchantProfileId, UpdateMerchantProfileRequest request, CancellationToken ct = default)
     {
@@ -131,15 +180,53 @@ public class MerchantService(
 
     // ─── Authenticated merchant — orders ─────────────────────────────────────
 
+    /// <summary>
+    /// Returns a summary list of all orders received by the authenticated merchant.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> with an enumerable of <see cref="MerchantOrderSummaryResponse"/>.
+    /// Delegates to <see cref="IOrderService.GetMerchantOrdersAsync"/>.
+    /// </returns>
     public Task<Result<IEnumerable<MerchantOrderSummaryResponse>>> GetMyOrdersAsync(int merchantProfileId, CancellationToken ct = default)
         => orderService.GetMerchantOrdersAsync(merchantProfileId, ct);
 
+    /// <summary>
+    /// Confirms a consumer's pack pickup by validating the provided pickup code against
+    /// orders belonging to the authenticated merchant.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="pickupCode">The alphanumeric or QR-encoded pickup code presented by the consumer.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{MerchantOrderSummaryResponse}"/> with the confirmed order,
+    /// or a business error if the code is invalid, expired, or already used.
+    /// Delegates to <see cref="IOrderService.ConfirmPickupAsync"/>.
+    /// </returns>
     public Task<Result<MerchantOrderSummaryResponse>> ConfirmPickupAsync(
         int merchantProfileId, string pickupCode, CancellationToken ct = default)
         => orderService.ConfirmPickupAsync(merchantProfileId, pickupCode, ct);
 
     // ─── Authenticated merchant — dashboard ──────────────────────────────────
 
+    /// <summary>
+    /// Computes and returns the merchant's operational dashboard metrics, including
+    /// today's income, weekly sales chart data, total packs sold, food rescued in kg,
+    /// and average rating.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{MerchantDashboardResponse}"/> with aggregated metrics,
+    /// or a <c>NotFoundError</c> if the merchant profile does not exist.
+    /// </returns>
+    /// <remarks>
+    /// All aggregations are performed in memory after loading the necessary data from the
+    /// database. The weekly sales chart covers the last 7 days ending today (UTC), with
+    /// day labels localised to Spanish short names. Food rescued is estimated at 1 kg per
+    /// pack sold. Cancelled orders are excluded from all financial and sustainability metrics.
+    /// </remarks>
     public async Task<Result<MerchantDashboardResponse>> GetDashboardAsync(int merchantProfileId, CancellationToken ct = default)
     {
         var merchant = await merchantProfiles.GetByIdAsync(merchantProfileId, ct);
@@ -192,6 +279,14 @@ public class MerchantService(
 
     // ─── Authenticated merchant — reviews ────────────────────────────────────
 
+    /// <summary>
+    /// Returns all reviews written for the authenticated merchant's business.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> containing an enumerable of <see cref="ReviewResponse"/>.
+    /// </returns>
     public async Task<Result<IEnumerable<ReviewResponse>>> GetMyReviewsAsync(int merchantProfileId, CancellationToken ct = default)
     {
         var result = await reviews.GetByMerchantIdAsync(merchantProfileId, ct);
@@ -207,6 +302,21 @@ public class MerchantService(
 
     // ─── Authenticated merchant — photo ──────────────────────────────────────
 
+    /// <summary>
+    /// Uploads a new profile photo for the authenticated merchant to MinIO object storage
+    /// and persists the resulting public URL on the merchant profile.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="file">The image file to upload. Validated for allowed content type and size by <see cref="IImageStorageService"/>.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{MerchantProfileResponse}"/> with the updated profile (including the new photo URL),
+    /// or a <c>NotFoundError</c> if the merchant profile does not exist.
+    /// </returns>
+    /// <remarks>
+    /// Images are stored under the <c>merchants/{merchantProfileId}</c> folder in the configured MinIO bucket.
+    /// Uploading a new photo overwrites the <c>PhotoUrl</c> field but does not delete the previously stored object.
+    /// </remarks>
     public async Task<Result<MerchantProfileResponse>> UploadPhotoAsync(
         int merchantProfileId, IFormFile file, CancellationToken ct = default)
     {
@@ -226,6 +336,11 @@ public class MerchantService(
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Maps a <see cref="Models.Catalog.Product"/> entity to a <see cref="ProductResponse"/> DTO.
+    /// </summary>
+    /// <param name="p">The product entity to map.</param>
+    /// <returns>A populated <see cref="ProductResponse"/> DTO.</returns>
     private static ProductResponse MapProduct(Models.Catalog.Product p) => new()
     {
         Id              = p.Id,
@@ -241,6 +356,12 @@ public class MerchantService(
         IsActive        = p.IsActive
     };
 
+    /// <summary>
+    /// Maps a <see cref="Models.Auth.MerchantProfile"/> entity to a <see cref="MerchantProfileResponse"/> DTO,
+    /// including the merchant's associated categories.
+    /// </summary>
+    /// <param name="m">The merchant profile entity with <c>MerchantCategories</c> and their <c>Category</c> navigation properties loaded.</param>
+    /// <returns>A populated <see cref="MerchantProfileResponse"/> DTO.</returns>
     private static MerchantProfileResponse MapMerchantProfile(Models.Auth.MerchantProfile m) => new()
     {
         Id                 = m.Id,

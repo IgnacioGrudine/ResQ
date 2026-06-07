@@ -13,6 +13,11 @@ using ResQ.API.Services.Encryption;
 
 namespace ResQ.API.Services.MercadoPago;
 
+/// <summary>
+/// Implements the Mercado Pago OAuth2 authorization-code flow for the ResQ marketplace model.
+/// Each merchant connects their own MP account; ResQ collects a <c>marketplace_fee</c> on every payment.
+/// Tokens are encrypted with AES-256 before being persisted to the database.
+/// </summary>
 public class MercadoPagoOAuthService(
     IOptions<MpSettings> mpOptions,
     IMercadoPagoHttpClient mpClient,
@@ -25,6 +30,19 @@ public class MercadoPagoOAuthService(
 
     // ─── Build auth URL ───────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Builds the Mercado Pago authorization URL that the merchant must visit to grant
+    /// ResQ access to their MP account.
+    /// </summary>
+    /// <remarks>
+    /// The <paramref name="merchantProfileId"/> is passed as the OAuth <c>state</c> parameter so
+    /// that the callback endpoint can identify which merchant completed the flow without
+    /// requiring the merchant to be authenticated at callback time.
+    /// </remarks>
+    /// <param name="merchantProfileId">The ResQ internal profile ID of the merchant.</param>
+    /// <returns>
+    /// The fully constructed authorization URL pointing to <c>https://auth.mercadopago.com.ar/authorization</c>.
+    /// </returns>
     public string BuildAuthorizationUrl(int merchantProfileId)
     {
         var query = new Dictionary<string, string>
@@ -44,6 +62,18 @@ public class MercadoPagoOAuthService(
 
     // ─── Handle OAuth callback ────────────────────────────────────────────────
 
+    /// <summary>
+    /// Handles the OAuth callback from Mercado Pago after the merchant approves the authorization.
+    /// Exchanges the authorization code for access/refresh tokens, encrypts them, persists the
+    /// credentials, and updates the merchant's connection status to <see cref="MpConnectionStatus.Connected"/>.
+    /// </summary>
+    /// <param name="code">The short-lived authorization code returned by Mercado Pago.</param>
+    /// <param name="merchantProfileId">The ResQ merchant profile ID extracted from the OAuth <c>state</c> parameter.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// <see cref="Result.Ok"/> on success; a failed result with <c>NotFoundError</c> if the merchant
+    /// does not exist, or <c>BadRequestError</c> if the code exchange fails.
+    /// </returns>
     public async Task<Result> HandleCallbackAsync(
         string code, int merchantProfileId, CancellationToken ct = default)
     {
@@ -68,6 +98,18 @@ public class MercadoPagoOAuthService(
 
     // ─── Refresh tokens (shared by HandleCallback and Hangfire job) ───────────
 
+    /// <summary>
+    /// Refreshes the access and refresh tokens for a merchant using the stored refresh token.
+    /// Called both manually and by the <see cref="MpTokenRefreshJob"/> Hangfire daily job.
+    /// On failure, marks the credential as inactive and sets the merchant status to
+    /// <see cref="MpConnectionStatus.TokenExpired"/>.
+    /// </summary>
+    /// <param name="merchantProfileId">The ResQ merchant profile ID whose tokens should be refreshed.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// <see cref="Result.Ok"/> on success; a failed result with <c>NotFoundError</c> if no active
+    /// credential is found, or <c>BadRequestError</c> if Mercado Pago rejects the refresh request.
+    /// </returns>
     public async Task<Result> RefreshTokensAsync(
         int merchantProfileId, CancellationToken ct = default)
     {
@@ -108,6 +150,21 @@ public class MercadoPagoOAuthService(
 
     // ─── Disconnect (HU-06) ───────────────────────────────────────────────────
 
+    /// <summary>
+    /// Disconnects the merchant from Mercado Pago by deactivating their stored credentials,
+    /// setting the connection status to <see cref="MpConnectionStatus.Disconnected"/>, and
+    /// deactivating all active products belonging to the merchant.
+    /// </summary>
+    /// <remarks>
+    /// Products are deactivated because they cannot accept payments once the merchant's MP
+    /// account is disconnected. The merchant must reconnect and manually reactivate their packs.
+    /// </remarks>
+    /// <param name="merchantProfileId">The ResQ merchant profile ID to disconnect.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// <see cref="Result.Ok"/> on success; a failed result with <c>NotFoundError</c> if the
+    /// merchant profile does not exist.
+    /// </returns>
     public async Task<Result> DisconnectAsync(
         int merchantProfileId, CancellationToken ct = default)
     {
@@ -141,6 +198,17 @@ public class MercadoPagoOAuthService(
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Exchanges an OAuth2 authorization code for access and refresh tokens by calling
+    /// <c>POST /oauth/token</c> on the Mercado Pago API.
+    /// </summary>
+    /// <param name="code">The short-lived authorization code received in the OAuth callback.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful result containing the deserialized <see cref="MpTokenApiResponse"/>,
+    /// or a failed result with a <c>BadRequestError</c> if MP rejects the request or the
+    /// response cannot be deserialized.
+    /// </returns>
     private async Task<Result<MpTokenApiResponse>> ExchangeCodeAsync(
         string code, CancellationToken ct)
     {
@@ -169,6 +237,17 @@ public class MercadoPagoOAuthService(
             : Result.Ok(tokens);
     }
 
+    /// <summary>
+    /// Inserts a new <see cref="MerchantMpCredential"/> row or updates the existing one
+    /// with the freshly issued tokens. Tokens are encrypted with AES-256 before persisting.
+    /// </summary>
+    /// <remarks>
+    /// Using an upsert pattern (rather than delete + insert) preserves the primary key and
+    /// audit timestamps of the existing credential record.
+    /// </remarks>
+    /// <param name="merchantProfileId">The ResQ merchant profile ID that owns the credentials.</param>
+    /// <param name="tokens">The deserialized token response from the Mercado Pago API.</param>
+    /// <param name="ct">Cancellation token.</param>
     private async Task UpsertCredentialAsync(
         int merchantProfileId, MpTokenApiResponse tokens, CancellationToken ct)
     {
@@ -201,6 +280,13 @@ public class MercadoPagoOAuthService(
         }
     }
 
+    /// <summary>
+    /// Marks the stored credential as inactive and updates the merchant's connection status
+    /// to <see cref="MpConnectionStatus.TokenExpired"/> when a token refresh attempt fails.
+    /// </summary>
+    /// <param name="merchantProfileId">The ResQ merchant profile ID whose credential has expired.</param>
+    /// <param name="credential">The credential entity to deactivate.</param>
+    /// <param name="ct">Cancellation token.</param>
     private async Task MarkTokenExpiredAsync(
         int merchantProfileId, MerchantMpCredential credential, CancellationToken ct)
     {
@@ -221,6 +307,10 @@ public class MercadoPagoOAuthService(
 
     // ─── Internal DTO for MP token API response ───────────────────────────────
 
+    /// <summary>
+    /// Internal record that maps the JSON response body returned by <c>POST /oauth/token</c>
+    /// on the Mercado Pago API. Not exposed outside this service.
+    /// </summary>
     private sealed record MpTokenApiResponse(
         [property: JsonPropertyName("access_token")]  string AccessToken,
         [property: JsonPropertyName("expires_in")]    int    ExpiresIn,

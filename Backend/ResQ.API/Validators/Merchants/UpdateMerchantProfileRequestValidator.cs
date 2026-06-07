@@ -3,6 +3,18 @@ using ResQ.API.DTOs.Merchants;
 
 namespace ResQ.API.Validators.Merchants;
 
+/// <summary>
+/// FluentValidation validator for <see cref="UpdateMerchantProfileRequest"/>.
+/// Enforces the following business rules when a merchant updates their profile:
+/// <list type="bullet">
+///   <item>Business name is required and capped at 200 characters.</item>
+///   <item>Address is required and capped at 500 characters.</item>
+///   <item>Contact phone is required and capped at 20 characters.</item>
+///   <item>Latitude must be between -90 and 90 and must not be exactly 0
+///         (a zero value indicates the user did not select a valid map location).</item>
+///   <item>Longitude must be between -180 and 180 and must not be exactly 0.</item>
+/// </list>
+/// </summary>
 public class UpdateMerchantProfileRequestValidator : AbstractValidator<UpdateMerchantProfileRequest>
 {
     public UpdateMerchantProfileRequestValidator()

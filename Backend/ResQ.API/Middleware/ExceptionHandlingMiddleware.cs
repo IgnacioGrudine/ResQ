@@ -12,6 +12,12 @@ public class ExceptionHandlingMiddleware(
     ILogger<ExceptionHandlingMiddleware> logger,
     IWebHostEnvironment env)
 {
+    /// <summary>
+    /// Executes the next middleware in the pipeline and intercepts any unhandled exception
+    /// that propagates up the call stack. Logs the exception and delegates to
+    /// <see cref="HandleExceptionAsync"/> to write a standardised 500 response.
+    /// </summary>
+    /// <param name="context">The current HTTP request context.</param>
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -27,6 +33,14 @@ public class ExceptionHandlingMiddleware(
         }
     }
 
+    /// <summary>
+    /// Writes a <see cref="ProblemDetails"/> JSON response with HTTP 500 status.
+    /// In the Development environment the response includes the exception message and stack trace
+    /// to aid debugging; in all other environments a generic message is returned to avoid
+    /// leaking implementation details to clients.
+    /// </summary>
+    /// <param name="context">The current HTTP request context, used to write the response.</param>
+    /// <param name="ex">The unhandled exception that was caught by <see cref="InvokeAsync"/>.</param>
     private async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
         context.Response.ContentType = "application/problem+json";

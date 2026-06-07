@@ -3,6 +3,19 @@ using ResQ.API.DTOs.Products;
 
 namespace ResQ.API.Validators.Products;
 
+/// <summary>
+/// FluentValidation validator for <see cref="UpdateProductRequest"/>.
+/// Enforces the same business rules as <see cref="CreateProductRequestValidator"/>
+/// when a merchant edits an existing pack:
+/// <list type="bullet">
+///   <item>Name is required and capped at 200 characters.</item>
+///   <item>Original price must be greater than zero.</item>
+///   <item>Sale price must be greater than zero and strictly less than the original price.</item>
+///   <item>Stock quantity must be zero or greater (never negative).</item>
+///   <item>Pickup window start time is required.</item>
+///   <item>Pickup window end time is required and must be later than the start time.</item>
+/// </list>
+/// </summary>
 public class UpdateProductRequestValidator : AbstractValidator<UpdateProductRequest>
 {
     public UpdateProductRequestValidator()
