@@ -6,7 +6,9 @@ using Microsoft.Extensions.Options;
 using ResQ.API.Common.Errors;
 using ResQ.API.DTOs.Orders;
 using ResQ.API.DTOs.Shared;
+using ResQ.API.Models.Catalog;
 using ResQ.API.Models.Enums;
+using ResQ.API.Models.MercadoPago;
 using ResQ.API.Models.Orders;
 using ResQ.API.Models.Settings;
 using ResQ.API.Repositories.Catalog;
@@ -30,86 +32,34 @@ public class OrderService(
     private readonly MpSettings _mp = mpOptions.Value;
     private const decimal PlatformFeeRate = 0.10m;
 
-    // ─── Create order + MP preference ────────────────────────────────────────
+    // ─── Internal value object ────────────────────────────────────────────────
+
+    private record OrderAmounts(decimal Total, decimal PlatformFee, decimal MerchantEarnings);
+
+    // ─── Public: Create ───────────────────────────────────────────────────────
 
     public async Task<Result<OrderCreatedResponse>> CreateOrderAsync(
         int consumerProfileId, CreateOrderRequest request, CancellationToken ct = default)
     {
-        var product = await products.GetByIdWithMerchantAsync(request.ProductId, ct);
-        if (product is null)
-            return Result.Fail(new NotFoundError("Producto no encontrado."));
+        var productResult = await ValidateProductAsync(request.ProductId, request.Quantity, ct);
+        if (productResult.IsFailed) return productResult.ToResult<OrderCreatedResponse>();
+        var product = productResult.Value;
 
-        if (!product.IsActive)
-            return Result.Fail(new BadRequestError("El producto no está disponible."));
+        var credentialResult = await ValidateAndRefreshCredentialAsync(product.MerchantId, ct);
+        if (credentialResult.IsFailed) return credentialResult.ToResult<OrderCreatedResponse>();
+        var credential = credentialResult.Value;
 
-        if (product.StockQuantity < request.Quantity)
-            return Result.Fail(new BadRequestError(
-                $"Stock insuficiente. Disponible: {product.StockQuantity}."));
+        var amounts = CalculateAmounts(product.SalePrice, request.Quantity);
+        var order   = BuildOrder(consumerProfileId, product, request.Quantity, amounts);
 
-        var credential = await credentialRepo.GetByMerchantIdAsync(product.MerchantId, ct);
-        if (credential is null || !credential.IsActive)
-            return Result.Fail(new BadRequestError(
-                "El comercio no tiene Mercado Pago vinculado."));
+        await PersistOrderAsync(order, product, request.Quantity, ct);
 
-        // Inline token renewal if expiring within 1 day
-        if (credential.AccessTokenExpiresAt <= DateTime.UtcNow.AddDays(1))
-        {
-            var refreshResult = await oauthService.RefreshTokensAsync(product.MerchantId, ct);
-            if (refreshResult.IsFailed)
-                return Result.Fail(new BadRequestError(
-                    "No se pudo renovar el token de MP del comercio."));
-
-            credential = await credentialRepo.GetByMerchantIdAsync(product.MerchantId, ct);
-        }
-
-        var totalAmount      = product.SalePrice * request.Quantity;
-        var platformFee      = Math.Round(totalAmount * PlatformFeeRate, 2);
-        var merchantEarnings = totalAmount - platformFee;
-
-        var order = new Order
-        {
-            ConsumerId        = consumerProfileId,
-            MerchantId        = product.MerchantId,
-            TotalAmount       = totalAmount,
-            PlatformFee       = platformFee,
-            MerchantEarnings  = merchantEarnings,
-            ExternalReference = Guid.NewGuid().ToString(),
-            OrderStatus       = OrderStatus.Pending,
-            PickupCode        = GeneratePickupCode(),
-            CreatedAt         = DateTime.UtcNow,
-            // EF Core cascades the insert of OrderDetail automatically
-            OrderDetails      =
-            [
-                new OrderDetail
-                {
-                    ProductId = product.Id,
-                    Quantity  = request.Quantity,
-                    UnitPrice = product.SalePrice,
-                    CreatedAt = DateTime.UtcNow
-                }
-            ]
-        };
-
-        await orders.AddAsync(order, ct);
-
-        product.StockQuantity -= request.Quantity;
-        product.UpdatedAt      = DateTime.UtcNow;
-        products.Update(product);
-
-        await orders.SaveChangesAsync(ct);
-
-        // Create preference in MP using the merchant's decrypted token
-        var accessToken = encryption.Decrypt(credential!.AccessToken);
+        var accessToken = encryption.Decrypt(credential.AccessToken);
         var prefResult  = await CreateMpPreferenceAsync(order, product.Name, accessToken, ct);
-        if (prefResult.IsFailed)
-            return prefResult.ToResult<OrderCreatedResponse>();
+        if (prefResult.IsFailed) return prefResult.ToResult<OrderCreatedResponse>();
 
         var (prefId, checkoutUrl) = prefResult.Value;
-
-        order.MpPreferenceId = prefId;
-        order.UpdatedAt      = DateTime.UtcNow;
-        orders.Update(order);
-        await orders.SaveChangesAsync(ct);
+        await FinalizeOrderAsync(order, prefId, ct);
 
         return Result.Ok(new OrderCreatedResponse
         {
@@ -119,7 +69,7 @@ public class OrderService(
         });
     }
 
-    // ─── Read ─────────────────────────────────────────────────────────────────
+    // ─── Public: Read ─────────────────────────────────────────────────────────
 
     public async Task<Result<IEnumerable<OrderSummaryResponse>>> GetConsumerOrdersAsync(
         int consumerProfileId, CancellationToken ct = default)
@@ -143,6 +93,8 @@ public class OrderService(
         var result = await orders.GetByMerchantIdAsync(merchantProfileId, ct);
         return Result.Ok(result.Select(MapMerchantOrder));
     }
+
+    // ─── Public: Pickup ───────────────────────────────────────────────────────
 
     public async Task<Result<MerchantOrderSummaryResponse>> ConfirmPickupAsync(
         int merchantProfileId, string pickupCode, CancellationToken ct = default)
@@ -170,7 +122,98 @@ public class OrderService(
         return Result.Ok(MapMerchantOrder(order));
     }
 
-    // ─── Private helpers ──────────────────────────────────────────────────────
+    // ─── CreateOrder steps ────────────────────────────────────────────────────
+
+    private async Task<Result<Product>> ValidateProductAsync(
+        int productId, int quantity, CancellationToken ct)
+    {
+        var product = await products.GetByIdWithMerchantAsync(productId, ct);
+
+        if (product is null)
+            return Result.Fail(new NotFoundError("Producto no encontrado."));
+        if (!product.IsActive)
+            return Result.Fail(new BadRequestError("El producto no está disponible."));
+        if (product.StockQuantity < quantity)
+            return Result.Fail(new BadRequestError(
+                $"Stock insuficiente. Disponible: {product.StockQuantity}."));
+
+        return Result.Ok(product);
+    }
+
+    private async Task<Result<MerchantMpCredential>> ValidateAndRefreshCredentialAsync(
+        int merchantId, CancellationToken ct)
+    {
+        var credential = await credentialRepo.GetByMerchantIdAsync(merchantId, ct);
+
+        if (credential is null || !credential.IsActive)
+            return Result.Fail(new BadRequestError(
+                "El comercio no tiene Mercado Pago vinculado."));
+
+        if (credential.AccessTokenExpiresAt <= DateTime.UtcNow.AddDays(1))
+        {
+            var refreshResult = await oauthService.RefreshTokensAsync(merchantId, ct);
+            if (refreshResult.IsFailed)
+                return Result.Fail(new BadRequestError(
+                    "No se pudo renovar el token de MP del comercio."));
+
+            credential = await credentialRepo.GetByMerchantIdAsync(merchantId, ct);
+        }
+
+        return Result.Ok(credential!);
+    }
+
+    private static OrderAmounts CalculateAmounts(decimal salePrice, int quantity)
+    {
+        var total = salePrice * quantity;
+        var fee   = Math.Round(total * PlatformFeeRate, 2);
+        return new OrderAmounts(total, fee, total - fee);
+    }
+
+    private static Order BuildOrder(
+        int consumerProfileId, Product product, int quantity, OrderAmounts amounts) => new()
+    {
+        ConsumerId        = consumerProfileId,
+        MerchantId        = product.MerchantId,
+        TotalAmount       = amounts.Total,
+        PlatformFee       = amounts.PlatformFee,
+        MerchantEarnings  = amounts.MerchantEarnings,
+        ExternalReference = Guid.NewGuid().ToString(),
+        OrderStatus       = OrderStatus.Pending,
+        PickupCode        = GeneratePickupCode(),
+        CreatedAt         = DateTime.UtcNow,
+        OrderDetails      =
+        [
+            new OrderDetail
+            {
+                ProductId = product.Id,
+                Quantity  = quantity,
+                UnitPrice = product.SalePrice,
+                CreatedAt = DateTime.UtcNow
+            }
+        ]
+    };
+
+    private async Task PersistOrderAsync(
+        Order order, Product product, int quantity, CancellationToken ct)
+    {
+        await orders.AddAsync(order, ct);
+
+        product.StockQuantity -= quantity;
+        product.UpdatedAt      = DateTime.UtcNow;
+        products.Update(product);
+
+        await orders.SaveChangesAsync(ct);
+    }
+
+    private async Task FinalizeOrderAsync(Order order, string prefId, CancellationToken ct)
+    {
+        order.MpPreferenceId = prefId;
+        order.UpdatedAt      = DateTime.UtcNow;
+        orders.Update(order);
+        await orders.SaveChangesAsync(ct);
+    }
+
+    // ─── MP preference ────────────────────────────────────────────────────────
 
     private async Task<Result<(string PreferenceId, string CheckoutUrl)>> CreateMpPreferenceAsync(
         Order order, string productName, string accessToken, CancellationToken ct)
@@ -178,14 +221,14 @@ public class OrderService(
         var frontendBase = new Uri(_mp.RedirectUri).GetLeftPart(UriPartial.Authority);
 
         var body = new MpPreferenceRequest(
-            Items: [new MpItem(productName, 1, "ARS", order.TotalAmount)],
-            MarketplaceFee: order.PlatformFee,
+            Items:             [new MpItem(productName, 1, "ARS", order.TotalAmount)],
+            MarketplaceFee:    order.PlatformFee,
             ExternalReference: order.ExternalReference,
             BackUrls: new MpBackUrls(
                 Success: $"{frontendBase}/pago/exitoso?orderId={order.Id}",
                 Failure: $"{frontendBase}/pago/fallido?orderId={order.Id}",
                 Pending: $"{frontendBase}/pago/pendiente?orderId={order.Id}"),
-            AutoReturn: "approved",
+            AutoReturn:      "approved",
             NotificationUrl: _mp.NotificationUrl
         );
 
@@ -204,11 +247,11 @@ public class OrderService(
         if (pref is null)
             return Result.Fail(new BadRequestError("Respuesta inválida de MP al crear preferencia."));
 
-        // Sandbox URL in non-production environments, real URL in production
         var checkoutUrl = env.IsProduction() ? pref.InitPoint : pref.SandboxInitPoint;
-
         return Result.Ok((pref.Id, checkoutUrl));
     }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private static string GeneratePickupCode()
     {
