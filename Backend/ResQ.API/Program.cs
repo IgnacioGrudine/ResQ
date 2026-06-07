@@ -154,6 +154,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IConsumerService, ConsumerService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddScoped<IMercadoPagoOAuthService, MercadoPagoOAuthService>();
+builder.Services.AddScoped<IMpWebhookIngestionService, MpWebhookIngestionService>();
 builder.Services.AddScoped<IMpWebhookProcessorService, MpWebhookProcessorService>();
 builder.Services.AddScoped<IMpTokenRefreshJob, MpTokenRefreshJob>();
 
