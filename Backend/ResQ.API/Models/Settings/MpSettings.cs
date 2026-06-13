@@ -52,4 +52,23 @@ public class MpSettings
     /// Sourced from <c>MpSettings:NotificationUrl</c>.
     /// </summary>
     public string NotificationUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Base URL of the ResQ frontend, used to build back_urls for Checkout Pro.
+    /// Separate from <see cref="RedirectUri"/> so that the OAuth callback (which requires
+    /// a publicly reachable HTTPS URL in development) does not pollute the consumer-facing
+    /// payment redirect URLs, which always point to the local frontend.
+    /// Sourced from <c>MpSettings:FrontendBaseUrl</c>.
+    /// </summary>
+    public string FrontendBaseUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When <c>true</c>, the OAuth token exchange and refresh requests include the
+    /// <c>test_token=true</c> parameter, instructing Mercado Pago to issue sandbox-mode
+    /// access tokens for the merchant. Must be <c>false</c> in production so MP returns
+    /// live tokens; setting it to <c>true</c> allows merchants to connect using a test
+    /// user in development environments.
+    /// Sourced from <c>MpSettings:UseTestMode</c>.
+    /// </summary>
+    public bool UseTestMode { get; set; }
 }

@@ -27,25 +27,68 @@ namespace ResQ.API.Services.MercadoPago;
 /// The ResQ webhook endpoint URL that Mercado Pago calls with payment status updates.
 /// Must be publicly accessible (not localhost).
 /// </param>
+/// <param name="StatementDescriptor">
+/// Short label (max 11 chars) shown on the buyer's card statement to help identify the charge.
+/// </param>
+/// <param name="BinaryMode">
+/// When <c>true</c>, Mercado Pago only resolves payments as <c>approved</c> or <c>rejected</c>,
+/// blocking the intermediate <c>pending</c> state. Use <c>false</c> to keep cash payments enabled.
+/// </param>
+/// <param name="PaymentMethods">
+/// Optional payment-method restrictions applied to the checkout (excluded methods,
+/// excluded types, installment caps).
+/// </param>
 internal sealed record MpPreferenceRequest(
     [property: JsonPropertyName("items")]              List<MpItem>    Items,
     [property: JsonPropertyName("marketplace_fee")]    decimal         MarketplaceFee,
     [property: JsonPropertyName("external_reference")] string          ExternalReference,
     [property: JsonPropertyName("back_urls")]          MpBackUrls      BackUrls,
-    [property: JsonPropertyName("auto_return")]        string          AutoReturn,
-    [property: JsonPropertyName("notification_url")]   string          NotificationUrl
+    [property: JsonPropertyName("auto_return")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+                                                       string?         AutoReturn,
+    [property: JsonPropertyName("notification_url")]   string          NotificationUrl,
+    [property: JsonPropertyName("statement_descriptor")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+                                                       string?         StatementDescriptor,
+    [property: JsonPropertyName("binary_mode")]        bool            BinaryMode,
+    [property: JsonPropertyName("payment_methods")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+                                                       MpPaymentMethods? PaymentMethods
+);
+
+/// <summary>
+/// Payment method restrictions for a Checkout Pro preference.
+/// Used to exclude specific payment methods or payment types from the checkout UI
+/// and to cap the maximum installments offered to the buyer.
+/// </summary>
+/// <param name="ExcludedPaymentTypes">List of payment type codes to exclude (e.g., <c>"ticket"</c>, <c>"atm"</c>).</param>
+/// <param name="Installments">Maximum number of installments allowed.</param>
+internal sealed record MpPaymentMethods(
+    [property: JsonPropertyName("excluded_payment_types")] List<MpPaymentMethodId> ExcludedPaymentTypes,
+    [property: JsonPropertyName("installments")]           int                     Installments
+);
+
+/// <summary>Wrapper for the payment-method identifier used inside payment-method restriction lists.</summary>
+internal sealed record MpPaymentMethodId(
+    [property: JsonPropertyName("id")] string Id
 );
 
 /// <summary>
 /// Represents a single line item within a <see cref="MpPreferenceRequest"/>.
 /// Each pack in an order maps to one <see cref="MpItem"/>.
 /// </summary>
+/// <param name="Id">Unique identifier for the item (e.g., the order ID). Required by Checkout Pro marketplace.</param>
 /// <param name="Title">Display name of the item shown on the Mercado Pago checkout page.</param>
+/// <param name="Description">Short description of the item shown on the Mercado Pago checkout page.</param>
+/// <param name="CategoryId">MP category code (e.g., <c>"food"</c>). Required by Checkout Pro marketplace.</param>
 /// <param name="Quantity">Number of units being purchased.</param>
 /// <param name="CurrencyId">ISO 4217 currency code. Always <c>"ARS"</c> for Argentine Peso.</param>
 /// <param name="UnitPrice">Price per unit in the specified currency.</param>
 internal sealed record MpItem(
+    [property: JsonPropertyName("id")]          string  Id,
     [property: JsonPropertyName("title")]       string  Title,
+    [property: JsonPropertyName("description")] string  Description,
+    [property: JsonPropertyName("category_id")] string  CategoryId,
     [property: JsonPropertyName("quantity")]    int     Quantity,
     [property: JsonPropertyName("currency_id")] string  CurrencyId,
     [property: JsonPropertyName("unit_price")]  decimal UnitPrice

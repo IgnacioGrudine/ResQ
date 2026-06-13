@@ -16,6 +16,7 @@ using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Services.Encryption;
 using ResQ.API.Services.MercadoPago;
+using Microsoft.Extensions.Logging;
 
 namespace ResQ.API.Services.Orders;
 
@@ -27,7 +28,8 @@ public class OrderService(
     IMercadoPagoHttpClient mpClient,
     IMercadoPagoOAuthService oauthService,
     IOptions<MpSettings> mpOptions,
-    IHostEnvironment env) : IOrderService
+    IHostEnvironment env,
+    ILogger<OrderService> logger) : IOrderService
 {
     private readonly MpSettings _mp = mpOptions.Value;
     private const decimal PlatformFeeRate = 0.10m;
@@ -357,37 +359,61 @@ public class OrderService(
     private async Task<Result<(string PreferenceId, string CheckoutUrl)>> CreateMpPreferenceAsync(
         Order order, string productName, string accessToken, CancellationToken ct)
     {
-        var frontendBase = new Uri(_mp.RedirectUri).GetLeftPart(UriPartial.Authority);
+        var frontendBase = _mp.FrontendBaseUrl.TrimEnd('/');
 
         var body = new MpPreferenceRequest(
-            Items:             [new MpItem(productName, 1, "ARS", order.TotalAmount)],
+            Items: [new MpItem(
+                Id:          order.Id.ToString(),
+                Title:       productName,
+                Description: $"Pack sorpresa ResQ — orden #{order.Id}",
+                CategoryId:  "food",
+                Quantity:    1,
+                CurrencyId:  "ARS",
+                UnitPrice:   order.TotalAmount)],
+            // marketplace_fee must be > 0 even in dev/sandbox: MP requires a positive
+            // commission to activate the marketplace split flow. Passing 0 makes MP
+            // treat the preference as a regular (non-marketplace) payment and then
+            // reject the checkout because the merchant has no direct collection rights.
             MarketplaceFee:    order.PlatformFee,
             ExternalReference: order.ExternalReference,
             BackUrls: new MpBackUrls(
                 Success: $"{frontendBase}/pago/exitoso?orderId={order.Id}",
                 Failure: $"{frontendBase}/pago/fallido?orderId={order.Id}",
                 Pending: $"{frontendBase}/pago/pendiente?orderId={order.Id}"),
-            AutoReturn:      "approved",
-            NotificationUrl: _mp.NotificationUrl
+            AutoReturn:          env.IsProduction() ? "approved" : null,
+            NotificationUrl:     _mp.NotificationUrl,
+            StatementDescriptor: "RESQ",
+            BinaryMode:          false,            // Allow "pending" status (required for cash payments)
+            // In non-production environments, exclude cash-based payment types
+            // (ticket vouchers, ATM transfers) since they cannot be completed
+            // synchronously and are not useful for end-to-end testing.
+            PaymentMethods: env.IsProduction() ? null : new MpPaymentMethods(
+                ExcludedPaymentTypes: [new MpPaymentMethodId("ticket"), new MpPaymentMethodId("atm")],
+                Installments:         12)
         );
 
-        var content  = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+        var requestJson = JsonSerializer.Serialize(body);
+        logger.LogInformation("[MP] Sending preference request: {Body}", requestJson);
+
+        var content  = new StringContent(requestJson, Encoding.UTF8, "application/json");
         var response = await mpClient.PostAsync("/checkout/preferences", content, accessToken, ct);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            var error = await response.Content.ReadAsStringAsync(ct);
-            return Result.Fail(new BadRequestError($"Error al crear preferencia en MP: {error}"));
-        }
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
+        logger.LogInformation("[MP] Preference response ({Status}): {Body}", (int)response.StatusCode, responseBody);
 
-        var pref = JsonSerializer.Deserialize<MpPreferenceApiResponse>(
-            await response.Content.ReadAsStringAsync(ct));
+        if (!response.IsSuccessStatusCode)
+            return Result.Fail(new BadRequestError($"Error al crear preferencia en MP: {responseBody}"));
+
+        var pref = JsonSerializer.Deserialize<MpPreferenceApiResponse>(responseBody);
 
         if (pref is null)
             return Result.Fail(new BadRequestError("Respuesta inválida de MP al crear preferencia."));
 
-        var checkoutUrl = env.IsProduction() ? pref.InitPoint : pref.SandboxInitPoint;
-        return Result.Ok((pref.Id, checkoutUrl));
+        // Always use init_point. MP determines test vs. live mode from the credentials,
+        // not the checkout URL, so init_point works for both environments when the
+        // underlying access token is correctly issued. The legacy sandbox_init_point
+        // (sandbox.mercadopago.com.ar) is deprecated.
+        return Result.Ok((pref.Id, pref.InitPoint));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

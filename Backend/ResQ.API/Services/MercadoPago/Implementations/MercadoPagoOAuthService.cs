@@ -119,13 +119,18 @@ public class MercadoPagoOAuthService(
 
         var refreshToken = encryption.Decrypt(credential.RefreshToken);
 
-        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        var form = new Dictionary<string, string>
         {
             ["grant_type"]    = "refresh_token",
             ["client_id"]     = _mp.ClientId,
             ["client_secret"] = _mp.ClientSecret,
             ["refresh_token"] = refreshToken
-        });
+        };
+
+        if (_mp.UseTestMode)
+            form["test_token"] = "true";
+
+        var content = new FormUrlEncodedContent(form);
 
         var response = await mpClient.PostAsync("/oauth/token", content, ct: ct);
 
@@ -212,14 +217,22 @@ public class MercadoPagoOAuthService(
     private async Task<Result<MpTokenApiResponse>> ExchangeCodeAsync(
         string code, CancellationToken ct)
     {
-        var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        var form = new Dictionary<string, string>
         {
             ["grant_type"]    = "authorization_code",
             ["client_id"]     = _mp.ClientId,
             ["client_secret"] = _mp.ClientSecret,
             ["code"]          = code,
             ["redirect_uri"]  = _mp.RedirectUri
-        });
+        };
+
+        // In non-production environments, request a sandbox access token. Without this flag
+        // MP issues a live-mode token even when the authorizing merchant is a test user, which
+        // causes Checkout Pro to reject every payment with "Unauthorized use of live credentials".
+        if (_mp.UseTestMode)
+            form["test_token"] = "true";
+
+        var content = new FormUrlEncodedContent(form);
 
         var response = await mpClient.PostAsync("/oauth/token", content, ct: ct);
 

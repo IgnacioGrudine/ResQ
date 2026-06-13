@@ -2,6 +2,8 @@ using System.Net;
 using System.Text;
 using FluentResults;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using ResQ.API.DTOs.Orders;
@@ -44,7 +46,8 @@ public class OrderServiceTests
         _mpClient.Object,
         _oauthService.Object,
         _mpOptions,
-        _env.Object);
+        _env.Object,
+        NullLogger<OrderService>.Instance);
 
     private static Product BuildActiveProduct(int id = 1, int merchantId = 10, int stock = 5) => new()
     {
