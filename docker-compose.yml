@@ -47,6 +47,8 @@ services:
       MercadoPago__AdminAccessToken: ${MP_ADMIN_ACCESS_TOKEN}
       MercadoPago__RedirectUri: ${MP_REDIRECT_URI}
       MercadoPago__NotificationUrl: ${MP_NOTIFICATION_URL}
+      MercadoPago__FrontendBaseUrl: ${MP_FRONTEND_BASE_URL}
+      MercadoPago__UseTestMode: ${MP_USE_TEST_MODE:-false}
       Encryption__Key: ${ENCRYPTION_KEY}
     depends_on:
       postgres:
