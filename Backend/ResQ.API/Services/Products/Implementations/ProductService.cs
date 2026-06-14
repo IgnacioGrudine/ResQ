@@ -2,6 +2,8 @@ using FluentResults;
 using ResQ.API.Common.Errors;
 using ResQ.API.DTOs.Products;
 using ResQ.API.Models.Catalog;
+using ResQ.API.Models.Enums;
+using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Services.Storage;
 
@@ -16,8 +18,16 @@ namespace ResQ.API.Services.Products;
 /// cross-merchant data access. Ownership is enforced at the repository level via
 /// <c>GetByIdForMerchantAsync</c>, which returns <c>null</c> when the product does not
 /// belong to the requesting merchant.
+/// <para>
+/// Publishing a pack (creating one, or activating an existing one) requires the merchant
+/// to have a live Mercado Pago connection, since a valid access token is needed to create
+/// checkout preferences. This rule is enforced via <see cref="EnsureMpConnectedAsync"/>.
+/// </para>
 /// </remarks>
-public class ProductService(IProductRepository products, IImageStorageService imageStorage) : IProductService
+public class ProductService(
+    IProductRepository products,
+    IMerchantProfileRepository merchants,
+    IImageStorageService imageStorage) : IProductService
 {
     /// <summary>
     /// Returns all products (active and inactive) belonging to the authenticated merchant.
@@ -46,6 +56,10 @@ public class ProductService(IProductRepository products, IImageStorageService im
     public async Task<Result<ProductResponse>> CreateProductAsync(
         int merchantProfileId, CreateProductRequest request, CancellationToken ct = default)
     {
+        var gate = await EnsureMpConnectedAsync(merchantProfileId, ct);
+        if (gate.IsFailed)
+            return Result.Fail<ProductResponse>(gate.Errors);
+
         var product = new Product
         {
             MerchantId      = merchantProfileId,
@@ -140,6 +154,15 @@ public class ProductService(IProductRepository products, IImageStorageService im
         if (product is null)
             return Result.Fail(new NotFoundError("Pack no encontrado."));
 
+        // Activating a pack makes it visible in the catalog, so it must be payable.
+        // Deactivating is always allowed (e.g. when the merchant disconnects Mercado Pago).
+        if (!product.IsActive)
+        {
+            var gate = await EnsureMpConnectedAsync(merchantProfileId, ct);
+            if (gate.IsFailed)
+                return Result.Fail<ProductResponse>(gate.Errors);
+        }
+
         product.IsActive  = !product.IsActive;
         product.UpdatedAt = DateTime.UtcNow;
         products.Update(product);
@@ -179,6 +202,31 @@ public class ProductService(IProductRepository products, IImageStorageService im
         await products.SaveChangesAsync(ct);
 
         return Result.Ok(MapProduct(product));
+    }
+
+    /// <summary>
+    /// Verifies that the merchant has an active Mercado Pago connection before allowing
+    /// a pack to be published. Payments require a valid access token to create checkout
+    /// preferences, so a pack cannot go live while the merchant is disconnected.
+    /// </summary>
+    /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result"/> when the merchant's Mercado Pago account is connected;
+    /// a <c>NotFoundError</c> if the merchant profile does not exist;
+    /// a <c>BadRequestError</c> if the Mercado Pago account is not connected.
+    /// </returns>
+    private async Task<Result> EnsureMpConnectedAsync(int merchantProfileId, CancellationToken ct)
+    {
+        var merchant = await merchants.GetByIdAsync(merchantProfileId, ct);
+        if (merchant is null)
+            return Result.Fail(new NotFoundError("Comercio no encontrado."));
+
+        if (merchant.MpConnectionStatus != MpConnectionStatus.Connected)
+            return Result.Fail(new BadRequestError(
+                "Necesitás vincular tu cuenta de Mercado Pago antes de publicar packs."));
+
+        return Result.Ok();
     }
 
     /// <summary>
