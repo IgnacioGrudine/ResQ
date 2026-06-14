@@ -25,6 +25,9 @@ public class MerchantProfileRepository(ResQDbContext db) : GenericRepository<Mer
     public async Task<MerchantProfile?> GetByUserIdAsync(int userId, CancellationToken ct = default)
         => await _set.FirstOrDefaultAsync(mp => mp.UserId == userId, ct);
 
+    public async Task<bool> ExistsByCuitAsync(string cuit, CancellationToken ct = default)
+        => await _set.AnyAsync(mp => mp.Cuit == cuit, ct);
+
     /// <summary>
     /// Retrieves all merchant profiles that have at least one active product with available stock,
     /// eagerly loading categories (via <c>MerchantCategories → Category</c>), active products

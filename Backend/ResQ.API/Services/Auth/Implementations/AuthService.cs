@@ -96,6 +96,9 @@ public class AuthService(
         if (await users.ExistsByEmailAsync(request.Email, ct))
             return Result.Fail(new ConflictError("El email ya está registrado."));
 
+        if (await merchantProfiles.ExistsByCuitAsync(request.Cuit, ct))
+            return Result.Fail(new ConflictError("El CUIT ingresado ya está registrado en la plataforma."));
+
         var user = await CreateUserAsync(request.Email, request.Password, ct);
 
         await userRoles.AddAsync(new UserRole

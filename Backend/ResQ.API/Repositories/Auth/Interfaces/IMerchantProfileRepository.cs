@@ -15,6 +15,14 @@ public interface IMerchantProfileRepository : IGenericRepository<MerchantProfile
     Task<MerchantProfile?> GetByUserIdAsync(int userId, CancellationToken ct = default);
 
     /// <summary>
+    /// Returns <c>true</c> if a merchant profile with the given CUIT already exists.
+    /// Used during registration to detect duplicates before hitting the DB unique constraint.
+    /// </summary>
+    /// <param name="cuit">The CUIT string to check (format XX-XXXXXXXX-X).</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task<bool> ExistsByCuitAsync(string cuit, CancellationToken ct = default);
+
+    /// <summary>
     /// Returns all merchant profiles that have at least one active product, eagerly loading
     /// the product and category data required to render the public catalog.
     /// </summary>
