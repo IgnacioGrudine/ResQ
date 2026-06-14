@@ -7,12 +7,12 @@
   }
 
   @else if (profile(); as p) {
-    <!-- ── Header ── -->
-    <div class="bg-evergreen px-4 md:px-8 pt-6 pb-16 text-center">
+
+    <!-- ── Header verde ── -->
+    <div class="bg-evergreen px-4 md:px-8 pt-6 pb-20 text-center">
 
       <!-- Avatar clickeable -->
       <div class="relative w-20 h-20 mx-auto cursor-pointer group" (click)="triggerFileInput()">
-
         @if (photoPreview() || p.photoUrl) {
           <img [src]="photoPreview() ?? p.photoUrl" alt="Foto del comercio"
             class="w-20 h-20 rounded-full object-cover border-2 border-white/30">
@@ -21,15 +21,11 @@
             {{ initials(p.businessName) }}
           </div>
         }
-
-        <!-- Overlay hover -->
         @if (!uploadingPhoto()) {
           <div class="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <svg lucideCamera class="w-6 h-6 text-white"></svg>
           </div>
         }
-
-        <!-- Spinner de carga -->
         @if (uploadingPhoto()) {
           <div class="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
             <div class="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
@@ -37,7 +33,6 @@
         }
       </div>
 
-      <!-- Input oculto -->
       <input #fileInput type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
         (change)="onFileSelected($event)">
 
@@ -45,203 +40,274 @@
       <p class="text-white/60 text-sm mt-0.5">CUIT {{ p.cuit }}</p>
     </div>
 
-    <div class="max-w-2xl mx-auto px-4 md:px-8 -mt-10 pb-10 flex flex-col gap-4">
+    <div class="max-w-2xl mx-auto px-4 md:px-8 -mt-12 pb-10 flex flex-col gap-4">
 
-      <!-- ── Business data ── -->
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <div class="flex items-center gap-2 mb-5">
-          <svg lucideStore class="w-5 h-5 text-evergreen"></svg>
-          <h2 class="font-bold text-gray-700">Datos del comercio</h2>
+      <!-- ── Stats ── -->
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+          <div class="flex justify-center mb-1">
+            <svg lucidePackage class="w-4 h-4 text-evergreen/60"></svg>
+          </div>
+          <p class="text-xl font-bold text-evergreen">{{ activePacks }}</p>
+          <p class="text-xs text-gray-400 mt-0.5 leading-tight">Packs<br>activos</p>
         </div>
-
-        <div class="flex flex-col gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre del comercio</label>
-            <input [(ngModel)]="form.businessName" type="text"
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+        <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+          <div class="flex justify-center mb-1">
+            <svg lucideStar class="w-4 h-4 text-evergreen/60"></svg>
           </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Dirección</label>
-            <input #addressInput [(ngModel)]="form.address" type="text"
-              autocomplete="off"
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
-            <p class="text-xs text-gray-400 mt-1.5">Escribí la dirección y seleccioná una sugerencia de Google.</p>
+          <p class="text-xl font-bold text-evergreen">{{ avgRating | number:'1.1-1' }}</p>
+          <p class="text-xs text-gray-400 mt-0.5 leading-tight">Califi-<br>cación</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+          <div class="flex justify-center mb-1">
+            <svg lucideWallet class="w-4 h-4 text-evergreen/60"></svg>
           </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Teléfono de contacto</label>
-            <input [(ngModel)]="form.contactPhone" type="tel"
-              class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
-          </div>
-
-          <!-- Ubicación: estado de confirmación -->
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Ubicación en el mapa</label>
-            @if (addressConfirmed()) {
-              <div class="flex items-center gap-2 bg-lime/40 border border-palm rounded-xl px-4 py-2.5">
-                <svg lucideCheck class="w-4 h-4 text-fern flex-shrink-0"></svg>
-                <p class="text-sm font-medium text-evergreen">Ubicación confirmada por Google</p>
-              </div>
-            } @else {
-              <div class="flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-2.5">
-                <svg lucideMapPin class="w-4 h-4 text-gray-400 flex-shrink-0"></svg>
-                <p class="text-sm text-gray-400">Seleccioná una sugerencia en el campo de dirección.</p>
-              </div>
-            }
-          </div>
+          <p class="text-xl font-bold text-evergreen">{{ totalSales }}</p>
+          <p class="text-xs text-gray-400 mt-0.5 leading-tight">Ventas<br>totales</p>
         </div>
       </div>
 
-      <!-- ── Categories ── -->
-      <div class="bg-white rounded-2xl shadow-sm p-5">
-        <h2 class="font-bold text-gray-700 mb-1">Categorías</h2>
-        <p class="text-sm text-gray-400 mb-4">Elegí los rubros que mejor describen tu comercio.</p>
-        <div class="flex flex-wrap gap-2">
-          @for (cat of categories(); track cat.id) {
-            <button type="button" (click)="toggleCategory(cat.id)"
-              class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-colors"
-              [class]="isSelected(cat.id)
-                ? 'bg-evergreen text-white border-evergreen'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-evergreen'">
-              @if (isSelected(cat.id)) {
-                <svg lucideCheck class="w-3.5 h-3.5"></svg>
-              }
-              {{ cat.name }}
-            </button>
-          }
-        </div>
-      </div>
-
-      <!-- ── Mercado Pago ── -->
+      <!-- ── Tab card ── -->
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
 
-        <!-- Header con logo MP -->
-        <div class="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-gray-100">
-          <div class="w-10 h-10 rounded-xl bg-[#009EE3]/10 flex items-center justify-center flex-shrink-0">
-            <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-[#009EE3]" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5l-3.5-3.5 1.41-1.41L11 13.67l4.59-4.58L17 10.5l-6 6z" fill="currentColor"/>
-            </svg>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h2 class="font-bold text-gray-800">Mercado Pago</h2>
-            <p class="text-xs text-gray-400">Recibí pagos por tus packs sorpresa</p>
-          </div>
-
-          <!-- Status pill compact -->
-          @if (p.mpConnectionStatus === 'Connected') {
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime/40 border border-palm text-xs font-semibold text-evergreen flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-fern"></span>
-              Conectado
-            </span>
-          } @else if (p.mpConnectionStatus === 'TokenExpired') {
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-50 border border-yellow-200 text-xs font-semibold text-yellow-700 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-              Expirado
-            </span>
-          } @else {
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-500 flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
-              Sin conectar
-            </span>
-          }
+        <!-- Tab bar -->
+        <div class="flex border-b border-gray-100">
+          <button type="button" (click)="setTab('perfil')"
+            class="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-semibold transition-colors border-b-2"
+            [class]="activeTab() === 'perfil'
+              ? 'text-evergreen border-evergreen'
+              : 'text-gray-400 border-transparent hover:text-gray-600'">
+            <svg lucideStore class="w-4 h-4"></svg>
+            Perfil
+          </button>
+          <button type="button" (click)="setTab('categorias')"
+            class="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-semibold transition-colors border-b-2"
+            [class]="activeTab() === 'categorias'
+              ? 'text-evergreen border-evergreen'
+              : 'text-gray-400 border-transparent hover:text-gray-600'">
+            <svg lucideTag class="w-4 h-4"></svg>
+            Categorías
+          </button>
+          <button type="button" (click)="setTab('pagos')"
+            class="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-sm font-semibold transition-colors border-b-2"
+            [class]="activeTab() === 'pagos'
+              ? 'text-evergreen border-evergreen'
+              : 'text-gray-400 border-transparent hover:text-gray-600'">
+            <svg lucideWallet class="w-4 h-4"></svg>
+            Pagos
+          </button>
         </div>
 
-        <div class="p-5">
+        <!-- ── Tab: Perfil ── -->
+        @if (activeTab() === 'perfil') {
+          <div class="p-5 flex flex-col gap-4">
 
-          <!-- Estado: Conectado -->
-          @if (p.mpConnectionStatus === 'Connected') {
-            <div class="bg-lime/20 border border-palm/40 rounded-xl p-4 mb-4">
-              <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-fern/20 flex items-center justify-center flex-shrink-0">
-                  <svg lucideCheck class="w-4 h-4 text-fern"></svg>
-                </div>
-                <div class="flex-1">
-                  <p class="text-sm font-semibold text-evergreen">Todo listo para recibir pagos</p>
-                  <p class="text-xs text-gray-500 mt-0.5">Tus packs sorpresa aparecen en el catálogo y los consumidores ya pueden pagarlos.</p>
-                </div>
-              </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre del comercio</label>
+              <input [(ngModel)]="form.businessName" type="text"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
             </div>
 
-            <button (click)="requestDisconnect()" [disabled]="mpDisconnecting()"
-              class="w-full py-2.5 border border-red-200 text-red-500 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
-              @if (mpDisconnecting()) {
-                <div class="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin"></div>
-                Desconectando...
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Dirección</label>
+              <input #addressInput [(ngModel)]="form.address" type="text" autocomplete="off"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+              @if (addressConfirmed()) {
+                <div class="flex items-center gap-1.5 mt-1.5">
+                  <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0"></svg>
+                  <p class="text-xs text-fern font-medium">Ubicación confirmada por Google</p>
+                </div>
               } @else {
-                <svg lucideLink2Off class="w-4 h-4"></svg>
-                Desvincular cuenta
+                <p class="text-xs text-gray-400 mt-1.5">Escribí la dirección y seleccioná una sugerencia de Google.</p>
               }
-            </button>
-          }
-
-          <!-- Estado: Token expirado -->
-          @else if (p.mpConnectionStatus === 'TokenExpired') {
-            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
-              <div class="flex items-start gap-3">
-                <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
-                  <svg lucideAlertCircle class="w-4 h-4 text-yellow-600"></svg>
-                </div>
-                <div class="flex-1">
-                  <p class="text-sm font-semibold text-yellow-800">La sesión expiró</p>
-                  <p class="text-xs text-yellow-700 mt-0.5">Tus packs están pausados. Volvé a conectar tu cuenta para reactivarlos.</p>
-                </div>
-              </div>
             </div>
 
-            <button (click)="connectMp()" [disabled]="mpConnecting()"
-              class="w-full py-2.5 bg-[#009EE3] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0082bd] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
-              @if (mpConnecting()) {
+            <div>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Teléfono de contacto</label>
+              <input [(ngModel)]="form.contactPhone" type="tel"
+                class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
+            </div>
+
+            <button type="button" (click)="saveProfileData()" [disabled]="saving()"
+              class="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all mt-1"
+              [class]="saved()
+                ? 'bg-fern text-white'
+                : 'bg-hunter text-white hover:bg-evergreen disabled:opacity-60 disabled:cursor-not-allowed'">
+              @if (saving()) {
                 <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
-                Redirigiendo...
+                Guardando...
+              } @else if (saved()) {
+                <svg lucideCheck class="w-4 h-4"></svg>
+                Guardado
               } @else {
-                <svg lucideLink class="w-4 h-4"></svg>
-                Reconectar cuenta
+                <svg lucideSave class="w-4 h-4"></svg>
+                Guardar datos
               }
             </button>
-          }
+          </div>
+        }
 
-          <!-- Estado: Desconectado -->
-          @else {
-            <p class="text-sm text-gray-500 mb-3">
-              Conectá tu cuenta para que los consumidores puedan pagar tus packs y vos recibas el dinero directo en Mercado Pago.
-            </p>
+        <!-- ── Tab: Categorías ── -->
+        @else if (activeTab() === 'categorias') {
+          <div class="p-5 flex flex-col gap-4">
+            <p class="text-sm text-gray-500">Elegí los rubros que mejor describen tu comercio.</p>
+            <div class="flex flex-wrap gap-2">
+              @for (cat of categories(); track cat.id) {
+                <button type="button" (click)="toggleCategory(cat.id)"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-colors"
+                  [class]="isSelected(cat.id)
+                    ? 'bg-evergreen text-white border-evergreen'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-evergreen'">
+                  @if (isSelected(cat.id)) {
+                    <svg lucideCheck class="w-3.5 h-3.5"></svg>
+                  }
+                  {{ cat.name }}
+                </button>
+              }
+            </div>
 
-            <ul class="space-y-2 mb-5">
-              <li class="flex items-start gap-2 text-xs text-gray-600">
-                <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0 mt-0.5"></svg>
-                <span>Cobros automáticos por cada pack vendido</span>
-              </li>
-              <li class="flex items-start gap-2 text-xs text-gray-600">
-                <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0 mt-0.5"></svg>
-                <span>Comisión transparente del 10% (vos cobrás el 90%)</span>
-              </li>
-              <li class="flex items-start gap-2 text-xs text-gray-600">
-                <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0 mt-0.5"></svg>
-                <span>Podés desvincular en cualquier momento</span>
-              </li>
-            </ul>
-
-            <button (click)="connectMp()" [disabled]="mpConnecting()"
-              class="w-full py-3 bg-[#009EE3] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0082bd] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm">
-              @if (mpConnecting()) {
+            <button type="button" (click)="saveCategories()" [disabled]="savingCats()"
+              class="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all mt-1"
+              [class]="savedCats()
+                ? 'bg-fern text-white'
+                : 'bg-hunter text-white hover:bg-evergreen disabled:opacity-60 disabled:cursor-not-allowed'">
+              @if (savingCats()) {
                 <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
-                Redirigiendo a Mercado Pago...
+                Guardando...
+              } @else if (savedCats()) {
+                <svg lucideCheck class="w-4 h-4"></svg>
+                Guardado
               } @else {
-                <svg lucideLink class="w-4 h-4"></svg>
-                Conectar con Mercado Pago
+                <svg lucideSave class="w-4 h-4"></svg>
+                Guardar categorías
               }
             </button>
-          }
+          </div>
+        }
 
-          <!-- Error -->
-          @if (mpError()) {
-            <p class="text-xs text-red-500 mt-3 px-1 text-center">{{ mpError() }}</p>
-          }
-        </div>
+        <!-- ── Tab: Pagos (Mercado Pago) ── -->
+        @else {
+          <div class="p-5 flex flex-col gap-4">
+
+            <!-- Header MP -->
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#009EE3]/10 flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" class="w-6 h-6 text-[#009EE3]" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5l-3.5-3.5 1.41-1.41L11 13.67l4.59-4.58L17 10.5l-6 6z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h2 class="font-bold text-gray-800">Mercado Pago</h2>
+                <p class="text-xs text-gray-400">Recibí pagos por tus packs sorpresa</p>
+              </div>
+              @if (p.mpConnectionStatus === 'Connected') {
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime/40 border border-palm text-xs font-semibold text-evergreen flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-fern"></span>
+                  Conectado
+                </span>
+              } @else if (p.mpConnectionStatus === 'TokenExpired') {
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-50 border border-yellow-200 text-xs font-semibold text-yellow-700 flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                  Expirado
+                </span>
+              } @else {
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 border border-gray-200 text-xs font-semibold text-gray-500 flex-shrink-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                  Sin conectar
+                </span>
+              }
+            </div>
+
+            <!-- Estado: Conectado -->
+            @if (p.mpConnectionStatus === 'Connected') {
+              <div class="bg-lime/20 border border-palm/40 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-fern/20 flex items-center justify-center flex-shrink-0">
+                    <svg lucideCheck class="w-4 h-4 text-fern"></svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold text-evergreen">Todo listo para recibir pagos</p>
+                    <p class="text-xs text-gray-500 mt-0.5">Tus packs sorpresa aparecen en el catálogo y los consumidores ya pueden pagarlos.</p>
+                  </div>
+                </div>
+              </div>
+              <button type="button" (click)="requestDisconnect()" [disabled]="mpDisconnecting()"
+                class="w-full py-2.5 border border-red-200 text-red-500 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+                @if (mpDisconnecting()) {
+                  <div class="w-4 h-4 border-2 border-red-300 border-t-red-500 rounded-full animate-spin"></div>
+                  Desconectando...
+                } @else {
+                  <svg lucideLink2Off class="w-4 h-4"></svg>
+                  Desvincular cuenta
+                }
+              </button>
+            }
+
+            <!-- Estado: Token expirado -->
+            @else if (p.mpConnectionStatus === 'TokenExpired') {
+              <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                    <svg lucideAlertCircle class="w-4 h-4 text-yellow-600"></svg>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-sm font-semibold text-yellow-800">La sesión expiró</p>
+                    <p class="text-xs text-yellow-700 mt-0.5">Tus packs están pausados. Volvé a conectar tu cuenta para reactivarlos.</p>
+                  </div>
+                </div>
+              </div>
+              <button type="button" (click)="connectMp()" [disabled]="mpConnecting()"
+                class="w-full py-2.5 bg-[#009EE3] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0082bd] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+                @if (mpConnecting()) {
+                  <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                  Redirigiendo...
+                } @else {
+                  <svg lucideLink class="w-4 h-4"></svg>
+                  Reconectar cuenta
+                }
+              </button>
+            }
+
+            <!-- Estado: Desconectado -->
+            @else {
+              <p class="text-sm text-gray-500">
+                Conectá tu cuenta para que los consumidores puedan pagar tus packs y vos recibas el dinero directo en Mercado Pago.
+                <strong class="text-gray-600">No podés publicar packs sin vincularlo.</strong>
+              </p>
+              <ul class="space-y-2">
+                <li class="flex items-start gap-2 text-xs text-gray-600">
+                  <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0 mt-0.5"></svg>
+                  <span>Cobros automáticos por cada pack vendido</span>
+                </li>
+                <li class="flex items-start gap-2 text-xs text-gray-600">
+                  <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0 mt-0.5"></svg>
+                  <span>Comisión transparente del 10% (vos cobrás el 90%)</span>
+                </li>
+                <li class="flex items-start gap-2 text-xs text-gray-600">
+                  <svg lucideCheck class="w-3.5 h-3.5 text-fern flex-shrink-0 mt-0.5"></svg>
+                  <span>Podés desvincular en cualquier momento</span>
+                </li>
+              </ul>
+              <button type="button" (click)="connectMp()" [disabled]="mpConnecting()"
+                class="w-full py-3 bg-[#009EE3] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0082bd] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm">
+                @if (mpConnecting()) {
+                  <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+                  Redirigiendo a Mercado Pago...
+                } @else {
+                  <svg lucideLink class="w-4 h-4"></svg>
+                  Conectar con Mercado Pago
+                }
+              </button>
+            }
+
+            @if (mpError()) {
+              <p class="text-xs text-red-500 text-center px-1">{{ mpError() }}</p>
+            }
+          </div>
+        }
       </div>
 
-      <!-- ── Modal de confirmación de desvinculación ── -->
+      <!-- ── Modal desvinculación ── -->
       @if (showDisconnectConfirm()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50" (click)="cancelDisconnect()">
           <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6" (click)="$event.stopPropagation()">
@@ -253,11 +319,11 @@
               Tus packs sorpresa van a pausarse y dejar de aparecer en el catálogo hasta que vuelvas a conectar una cuenta.
             </p>
             <div class="flex gap-2">
-              <button (click)="cancelDisconnect()"
+              <button type="button" (click)="cancelDisconnect()"
                 class="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-colors">
                 Cancelar
               </button>
-              <button (click)="confirmDisconnect()"
+              <button type="button" (click)="confirmDisconnect()"
                 class="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors">
                 Desvincular
               </button>
@@ -266,28 +332,11 @@
         </div>
       }
 
-      <!-- Save -->
-      <button (click)="saveProfile()" [disabled]="saving()"
-        class="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all"
-        [class]="saved()
-          ? 'bg-fern text-white'
-          : 'bg-hunter text-white hover:bg-evergreen disabled:opacity-60 disabled:cursor-not-allowed'">
-        @if (saving()) {
-          <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
-          Guardando...
-        } @else if (saved()) {
-          Guardado
-        } @else {
-          <svg lucideSave class="w-4 h-4"></svg>
-          Guardar cambios
-        }
-      </button>
-
+      <!-- ── Footer ── -->
       <div class="flex items-center justify-center gap-1.5 text-gray-300 text-xs pt-2">
         <svg lucideLeaf class="w-3.5 h-3.5"></svg>
         ResQ &mdash; Menos desperdicio, más impacto
       </div>
-
     </div>
   }
 </div>

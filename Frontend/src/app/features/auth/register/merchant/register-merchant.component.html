@@ -15,15 +15,31 @@
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-8 lg:my-auto">
 
       <!-- Header -->
-      <div class="flex items-center gap-3 mb-7">
-        <a routerLink="/register"
-           class="w-8 h-8 flex items-center justify-center rounded-full bg-lime text-evergreen hover:bg-palm hover:text-white transition-colors text-sm font-bold">
-          ←
-        </a>
+      <div class="flex items-center gap-3 mb-5">
+        @if (step() === 1) {
+          <a routerLink="/register"
+             class="w-8 h-8 flex items-center justify-center rounded-full bg-lime text-evergreen hover:bg-palm hover:text-white transition-colors text-sm font-bold">
+            ←
+          </a>
+        }
         <div>
           <h1 class="text-2xl font-bold text-evergreen">Registrar comercio</h1>
-          <p class="text-gray-500 text-sm flex items-center gap-1.5"><svg lucideStore class="w-4 h-4"></svg> Perfil de comercio</p>
+          <p class="text-gray-500 text-sm flex items-center gap-1.5">
+            <svg lucideStore class="w-4 h-4"></svg>
+            @if (step() === 1) { Paso 1 de 3 · Datos del comercio }
+            @else if (step() === 2) { Paso 2 de 3 · Categorías }
+            @else { Paso 3 de 3 · Cobros con Mercado Pago }
+          </p>
         </div>
+      </div>
+
+      <!-- Stepper (3 barras) -->
+      <div class="flex items-center gap-2 mb-7">
+        <div class="flex-1 h-1.5 rounded-full bg-fern"></div>
+        <div class="flex-1 h-1.5 rounded-full transition-colors"
+          [class]="step() >= 2 ? 'bg-fern' : 'bg-gray-200'"></div>
+        <div class="flex-1 h-1.5 rounded-full transition-colors"
+          [class]="step() === 3 ? 'bg-fern' : 'bg-gray-200'"></div>
       </div>
 
       <!-- API Error -->
@@ -34,9 +50,115 @@
         </div>
       }
 
+      <!-- ══ Paso 3: Vinculación con Mercado Pago ══ -->
+      @if (step() === 3) {
+        <div class="flex flex-col gap-5">
+          <div class="flex items-center gap-3 bg-lime/40 border border-palm rounded-xl px-4 py-3">
+            <svg lucideCheck class="w-5 h-5 text-fern flex-shrink-0"></svg>
+            <p class="text-sm font-medium text-evergreen">¡Casi listo! Vinculá tu cuenta para poder vender.</p>
+          </div>
+
+          <div class="text-center py-2">
+            <div class="w-16 h-16 rounded-2xl bg-[#009EE3]/10 flex items-center justify-center mx-auto mb-3">
+              <svg lucideWallet class="w-8 h-8 text-[#009EE3]"></svg>
+            </div>
+            <h2 class="text-lg font-bold text-gray-800">Conectá Mercado Pago</h2>
+            <p class="text-sm text-gray-500 mt-1 max-w-sm mx-auto">
+              Vinculá tu cuenta para cobrar tus packs. El dinero llega directo a tu Mercado Pago.
+              <strong class="text-gray-600">No vas a poder publicar packs hasta vincularla.</strong>
+            </p>
+          </div>
+
+          <ul class="flex flex-col gap-2.5">
+            <li class="flex items-start gap-2.5 text-sm text-gray-600">
+              <svg lucideShieldCheck class="w-4 h-4 text-fern flex-shrink-0 mt-0.5"></svg>
+              <span>Cobros automáticos y seguros por cada venta</span>
+            </li>
+            <li class="flex items-start gap-2.5 text-sm text-gray-600">
+              <svg lucideShieldCheck class="w-4 h-4 text-fern flex-shrink-0 mt-0.5"></svg>
+              <span>Comisión transparente del 10% — vos cobrás el 90%</span>
+            </li>
+            <li class="flex items-start gap-2.5 text-sm text-gray-600">
+              <svg lucideShieldCheck class="w-4 h-4 text-fern flex-shrink-0 mt-0.5"></svg>
+              <span>Podés desvincular cuando quieras desde tu perfil</span>
+            </li>
+          </ul>
+
+          @if (mpError()) {
+            <div class="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <svg lucideTriangleAlert class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></svg>
+              <p class="text-red-700 text-sm">{{ mpError() }}</p>
+            </div>
+          }
+
+          <button type="button" (click)="connectMp()" [disabled]="mpConnecting()"
+            class="w-full py-3 bg-[#009EE3] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0082bd] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm">
+            @if (mpConnecting()) {
+              <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
+              Redirigiendo a Mercado Pago...
+            } @else {
+              <svg lucideLink class="w-4 h-4"></svg>
+              Conectar con Mercado Pago
+            }
+          </button>
+
+          <button type="button" (click)="skipForNow()"
+            class="w-full text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+            Lo haré más tarde
+          </button>
+        </div>
+      }
+
+      <!-- ══ Paso 2: Categorías ══ -->
+      @if (step() === 2) {
+        <div class="flex flex-col gap-5">
+          <div class="flex items-center gap-3 bg-lime/40 border border-palm rounded-xl px-4 py-3">
+            <svg lucideCheck class="w-5 h-5 text-fern flex-shrink-0"></svg>
+            <p class="text-sm font-medium text-evergreen">¡Tu comercio fue registrado! Elegí tus categorías.</p>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <svg lucideTag class="w-4 h-4 text-evergreen"></svg>
+              <p class="text-sm font-semibold text-gray-700">¿Qué tipo de comercio sos?</p>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">Elegí los rubros que mejor describen lo que ofrecés. Podés cambiarlos después.</p>
+            <div class="flex flex-wrap gap-2">
+              @for (cat of categories(); track cat.id) {
+                <button type="button" (click)="toggleCategory(cat.id)"
+                  class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-colors"
+                  [class]="isCatSelected(cat.id)
+                    ? 'bg-evergreen text-white border-evergreen'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-evergreen'">
+                  @if (isCatSelected(cat.id)) {
+                    <svg lucideCheck class="w-3.5 h-3.5"></svg>
+                  }
+                  {{ cat.name }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <resq-button
+            [loading]="savingCats()"
+            [fullWidth]="true"
+            (click)="saveCategoriesAndContinue()"
+          >
+            Continuar
+          </resq-button>
+
+          <button type="button" (click)="step.set(3)"
+            class="w-full text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors">
+            Saltear por ahora
+          </button>
+        </div>
+      }
+
+      <!-- ══ Paso 1: Datos del comercio ══ -->
+      @if (step() === 1) {
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-5" novalidate>
 
-        <!-- ── Sección: Acceso ── -->
+        <!-- Datos de acceso -->
         <div class="flex flex-col gap-4">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Datos de acceso</p>
 
@@ -62,7 +184,7 @@
 
         <div class="border-t border-gray-100"></div>
 
-        <!-- ── Sección: Comercio ── -->
+        <!-- Datos del comercio -->
         <div class="flex flex-col gap-4">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Datos del comercio</p>
 
@@ -83,7 +205,6 @@
             formControlName="cuit"
           />
 
-          <!-- Campo dirección con Google Places Autocomplete -->
           <div class="flex flex-col gap-1.5">
             <label class="text-sm font-medium text-evergreen">
               Dirección <span class="text-red-500 ml-0.5">*</span>
@@ -120,12 +241,11 @@
 
         <div class="border-t border-gray-100"></div>
 
-        <!-- ── Sección: Ubicación ── -->
+        <!-- Ubicación -->
         <div class="flex flex-col gap-3">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Ubicación del comercio</p>
 
           @if (geoDetected()) {
-            <!-- Estado: dirección confirmada por Google -->
             <div class="flex items-center gap-3 bg-lime/50 border border-palm rounded-xl px-4 py-3">
               <svg lucideCheck class="w-5 h-5 text-fern flex-shrink-0"></svg>
               <div class="text-sm">
@@ -135,14 +255,12 @@
                   {{ form.get('longitude')?.value | number:'1.4-6' }}
                 </p>
               </div>
-              <button type="button"
-                      (click)="resetAddress()"
-                      class="ml-auto text-xs text-fern hover:text-hunter underline font-medium transition-colors">
+              <button type="button" (click)="resetAddress()"
+                class="ml-auto text-xs text-fern hover:text-hunter underline font-medium transition-colors">
                 Cambiar
               </button>
             </div>
           } @else {
-            <!-- Estado: esperando selección -->
             <div class="flex items-center gap-3 bg-gray-50 border border-dashed border-gray-300 rounded-xl px-4 py-3">
               <svg lucideMapPin class="w-5 h-5 text-gray-400 flex-shrink-0"></svg>
               <p class="text-sm text-gray-400">
@@ -152,7 +270,7 @@
           }
         </div>
 
-        <!-- ── Sección: Foto del comercio ── -->
+        <!-- Foto del comercio -->
         <div class="flex flex-col gap-3">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Foto del comercio (opcional)</p>
           <div class="flex items-center gap-4">
@@ -187,7 +305,7 @@
           [fullWidth]="true"
           [disabled]="form.invalid || loading()"
         >
-          Registrar mi comercio
+          Continuar
         </resq-button>
 
       </form>
@@ -196,6 +314,7 @@
         ¿Ya tenés cuenta?
         <a routerLink="/login" class="text-fern font-semibold hover:text-hunter transition-colors">Iniciá sesión</a>
       </p>
+      }
 
     </div>
 

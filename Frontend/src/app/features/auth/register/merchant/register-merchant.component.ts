@@ -1,12 +1,19 @@
-import { Component, ElementRef, ViewChild, inject, signal, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, inject, signal, AfterViewInit, OnInit } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, LucideCamera } from '@lucide/angular';
+import {
+  LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin,
+  LucideCamera, LucideLink, LucideShieldCheck, LucideWallet, LucideTag
+} from '@lucide/angular';
 import { AuthService } from '../../../../core/services/auth.service';
-import { environment } from '../../../../../environments/environment';
 import { MerchantService } from '../../../../core/services/merchant.service';
+import { CatalogService } from '../../../../core/services/catalog.service';
+import { MercadoPagoService } from '../../../../core/services/mercadopago.service';
+import { Category } from '../../../../core/models/catalog.models';
+import { UpdateMerchantProfilePayload } from '../../../../core/models/merchant.models';
+import { environment } from '../../../../../environments/environment';
 import { AuthLeftPanelComponent } from '../../../../layouts/auth-layout/auth-left-panel.component';
 import { ResqButtonComponent } from '../../../../shared/ui/button/resq-button.component';
 import { ResqInputComponent } from '../../../../shared/ui/input/resq-input.component';
@@ -14,7 +21,6 @@ import { ResqInputComponent } from '../../../../shared/ui/input/resq-input.compo
 const CUIT_PATTERN  = /^\d{2}-\d{8}-\d{1}$/;
 const PHONE_PATTERN = /^\+?[\d\s\-()+]{7,20}$/;
 
-/** Rechaza el valor 0 — la coordenada por defecto antes de confirmar con Google */
 function nonZeroValidator(control: { value: number }) {
   return control.value === 0 ? { nonZero: true } : null;
 }
@@ -22,23 +28,39 @@ function nonZeroValidator(control: { value: number }) {
 @Component({
   selector: 'app-register-merchant',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, DecimalPipe, LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin, LucideCamera, AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent],
+  imports: [
+    ReactiveFormsModule, RouterLink, DecimalPipe,
+    LucideLeaf, LucideStore, LucideTriangleAlert, LucideCheck, LucideMapPin,
+    LucideCamera, LucideLink, LucideShieldCheck, LucideWallet, LucideTag,
+    AuthLeftPanelComponent, ResqButtonComponent, ResqInputComponent
+  ],
   templateUrl: './register-merchant.component.html'
 })
-export class RegisterMerchantComponent implements AfterViewInit {
-  private readonly fb              = inject(FormBuilder);
-  private readonly authService     = inject(AuthService);
-  private readonly merchantService = inject(MerchantService);
-  private readonly router          = inject(Router);
+export class RegisterMerchantComponent implements OnInit, AfterViewInit {
+  private readonly fb             = inject(FormBuilder);
+  private readonly authService    = inject(AuthService);
+  private readonly merchantService= inject(MerchantService);
+  private readonly catalogService = inject(CatalogService);
+  private readonly mpService      = inject(MercadoPagoService);
+  private readonly router         = inject(Router);
 
-  @ViewChild('photoInput')  photoInput!:  ElementRef<HTMLInputElement>;
+  @ViewChild('photoInput')   photoInput!:   ElementRef<HTMLInputElement>;
   @ViewChild('addressInput') addressInput!: ElementRef<HTMLInputElement>;
 
+  /** Wizard step: 1 = datos, 2 = categorías, 3 = Mercado Pago. */
+  readonly step         = signal<1 | 2 | 3>(1);
   readonly loading      = signal(false);
   readonly apiError     = signal('');
-  readonly geoDetected  = signal(false);   // true cuando el usuario selecciona una sugerencia de Places
+  readonly geoDetected  = signal(false);
   readonly photoPreview = signal<string | null>(null);
   pendingPhoto: File | null = null;
+
+  readonly categories    = signal<Category[]>([]);
+  readonly savingCats    = signal(false);
+  selectedCategoryIds    = new Set<number>();
+
+  readonly mpConnecting = signal(false);
+  readonly mpError      = signal('');
 
   readonly form = this.fb.group({
     email:        ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
@@ -47,12 +69,11 @@ export class RegisterMerchantComponent implements AfterViewInit {
     cuit:         ['', [Validators.required, Validators.pattern(CUIT_PATTERN)]],
     address:      ['', [Validators.required, Validators.maxLength(255)]],
     contactPhone: ['', [Validators.required, Validators.pattern(PHONE_PATTERN)]],
-    latitude:     [0 as number, [Validators.required, Validators.min(-90),   Validators.max(90),  nonZeroValidator]],
-    longitude:    [0 as number, [Validators.required, Validators.min(-180),  Validators.max(180), nonZeroValidator]]
+    latitude:     [0 as number, [Validators.required, Validators.min(-90),  Validators.max(90),  nonZeroValidator]],
+    longitude:    [0 as number, [Validators.required, Validators.min(-180), Validators.max(180), nonZeroValidator]]
   });
 
   constructor() {
-    // Auto-format CUIT as XX-XXXXXXXX-X while user types
     this.form.get('cuit')!.valueChanges.subscribe(val => {
       if (!val) return;
       const digits = val.replace(/\D/g, '').slice(0, 11);
@@ -61,6 +82,14 @@ export class RegisterMerchantComponent implements AfterViewInit {
       if (digits.length > 10) formatted = `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
       if (formatted !== val) this.form.get('cuit')!.setValue(formatted, { emitEvent: false });
     });
+  }
+
+  ngOnInit(): void {
+    this.catalogService.getCategories().subscribe(cats => this.categories.set(cats));
+  }
+
+  ngAfterViewInit(): void {
+    this.initPlacesAutocomplete();
   }
 
   fieldError(field: string): string {
@@ -77,9 +106,7 @@ export class RegisterMerchantComponent implements AfterViewInit {
     return '';
   }
 
-  triggerPhotoInput(): void {
-    this.photoInput.nativeElement.click();
-  }
+  triggerPhotoInput(): void { this.photoInput.nativeElement.click(); }
 
   onPhotoSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -90,26 +117,16 @@ export class RegisterMerchantComponent implements AfterViewInit {
     reader.readAsDataURL(file);
   }
 
-  ngAfterViewInit(): void {
-    this.initPlacesAutocomplete();
-  }
-
   private initPlacesAutocomplete(): void {
-    // Si ya está cargado el SDK, usarlo directo
     if ((window as any).google?.maps?.places?.Autocomplete) {
       this.setupAutocomplete();
       return;
     }
-
-    // Si el script ya fue inyectado por otro componente, esperar a que termine
     const existing = document.querySelector<HTMLScriptElement>('script[data-resq-maps]');
     if (existing) {
       existing.addEventListener('load', () => this.setupAutocomplete(), { once: true });
       return;
     }
-
-    // Inyectar el script del SDK — usamos carga sync con libraries=places
-    // (sin loading=async porque hace que la auth de la key falle al hacer ref a localhost)
     const script = document.createElement('script');
     script.src = `https://maps.googleapis.com/maps/api/js?key=${environment.googleMapsApiKey}&libraries=places&v=weekly`;
     script.async = true;
@@ -120,21 +137,15 @@ export class RegisterMerchantComponent implements AfterViewInit {
   }
 
   private setupAutocomplete(): void {
-    if (!(window as any).google?.maps?.places?.Autocomplete) {
-      console.warn('[ResQ] Google Maps Places no disponible. Verificá que Maps JavaScript API y Places API estén habilitadas.');
-      return;
-    }
+    if (!(window as any).google?.maps?.places?.Autocomplete) return;
     const input = this.addressInput.nativeElement;
     const autocomplete = new (window as any).google.maps.places.Autocomplete(input, {
       types: ['address'],
-      componentRestrictions: { country: 'ar' }   // Solo Argentina
+      componentRestrictions: { country: 'ar' }
     });
-
-    // Si el usuario edita a mano después de confirmar, resetear el estado
     input.addEventListener('input', () => {
       if (this.geoDetected()) this.geoDetected.set(false);
     });
-
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       if (!place.geometry?.location) return;
@@ -152,15 +163,17 @@ export class RegisterMerchantComponent implements AfterViewInit {
     this.form.patchValue({ address: '', latitude: 0, longitude: 0 });
   }
 
-  onSubmit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
+  toggleCategory(id: number): void {
+    if (this.selectedCategoryIds.has(id)) this.selectedCategoryIds.delete(id);
+    else this.selectedCategoryIds.add(id);
+  }
 
+  isCatSelected(id: number): boolean { return this.selectedCategoryIds.has(id); }
+
+  onSubmit(): void {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.loading.set(true);
     this.apiError.set('');
-
     const v = this.form.getRawValue();
     this.authService.registerMerchant({
       email:        v.email!,
@@ -175,12 +188,11 @@ export class RegisterMerchantComponent implements AfterViewInit {
       next: () => {
         if (this.pendingPhoto) {
           this.merchantService.uploadPhoto(this.pendingPhoto).subscribe({
-            next:  () => { this.loading.set(false); this.router.navigate(['/panel']); },
-            error: () => { this.loading.set(false); this.router.navigate(['/panel']); }
+            next:  () => this.goToCatStep(),
+            error: () => this.goToCatStep()
           });
         } else {
-          this.loading.set(false);
-          this.router.navigate(['/panel']);
+          this.goToCatStep();
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -189,4 +201,40 @@ export class RegisterMerchantComponent implements AfterViewInit {
       }
     });
   }
+
+  private goToCatStep(): void {
+    this.loading.set(false);
+    this.step.set(2);
+  }
+
+  saveCategoriesAndContinue(): void {
+    this.savingCats.set(true);
+    const v = this.form.getRawValue();
+    const payload: UpdateMerchantProfilePayload = {
+      businessName: v.businessName!,
+      address:      v.address!,
+      contactPhone: v.contactPhone!,
+      latitude:     v.latitude!,
+      longitude:    v.longitude!,
+      categoryIds:  [...this.selectedCategoryIds]
+    };
+    this.merchantService.updateProfile(payload).subscribe({
+      next:  () => { this.savingCats.set(false); this.step.set(3); },
+      error: () => { this.savingCats.set(false); this.step.set(3); }
+    });
+  }
+
+  connectMp(): void {
+    this.mpConnecting.set(true);
+    this.mpError.set('');
+    this.mpService.getAuthUrl().subscribe({
+      next: ({ authUrl }) => { window.location.href = authUrl; },
+      error: () => {
+        this.mpConnecting.set(false);
+        this.mpError.set('No se pudo iniciar la conexión con Mercado Pago. Intentá de nuevo.');
+      }
+    });
+  }
+
+  skipForNow(): void { this.router.navigate(['/panel']); }
 }

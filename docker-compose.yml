@@ -40,7 +40,7 @@ services:
       Minio__SecretKey: ${MINIO_SECRET_KEY:-resq_minio_secret}
       Minio__BucketName: "resq-images"
       Minio__UseSSL: "false"
-      Minio__PublicBaseUrl: "http://localhost:9000"
+      Minio__PublicBaseUrl: "${MP_FRONTEND_BASE_URL}/storage"
       MercadoPago__ClientId: ${MP_CLIENT_ID}
       MercadoPago__ClientSecret: ${MP_CLIENT_SECRET}
       MercadoPago__PublicKey: ${MP_PUBLIC_KEY}

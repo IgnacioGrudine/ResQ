@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { MerchantProduct, ProductPayload } from '../../../core/models/merchant.models';
 import {
@@ -11,7 +12,8 @@ import {
   LucideX,
   LucideClock,
   LucideCamera,
-  LucideImage
+  LucideImage,
+  LucideLink
 } from '@lucide/angular';
 
 interface PackForm {
@@ -29,7 +31,7 @@ interface PackForm {
 @Component({
   selector: 'app-merchant-packs',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage],
+  imports: [DecimalPipe, FormsModule, RouterLink, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink],
   templateUrl: './packs.component.html'
 })
 export class PacksComponent implements OnInit {
@@ -39,6 +41,9 @@ export class PacksComponent implements OnInit {
 
   readonly packs   = signal<MerchantProduct[]>([]);
   readonly loading = signal(true);
+
+  /** Whether the merchant has a live Mercado Pago connection. Packs cannot be published without it. */
+  readonly mpConnected = signal(false);
 
   // Form modal state
   readonly formOpen    = signal(false);
@@ -55,6 +60,9 @@ export class PacksComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.merchant.getProfile().subscribe({
+      next: p => this.mpConnected.set(p.mpConnectionStatus === 'Connected')
+    });
   }
 
   load(): void {
@@ -75,6 +83,8 @@ export class PacksComponent implements OnInit {
   }
 
   openCreate(): void {
+    // Hard rule: no MP connection → no publishing. The UI also hides this entry point.
+    if (!this.mpConnected()) return;
     this.editingId = null;
     this.form = this.emptyForm();
     this.formError.set(null);
@@ -181,6 +191,8 @@ export class PacksComponent implements OnInit {
   }
 
   toggle(p: MerchantProduct): void {
+    // Activating requires MP; deactivating is always allowed. Mirrors the backend gate.
+    if (!p.isActive && !this.mpConnected()) return;
     this.merchant.toggleProduct(p.id).subscribe({
       next: updated => this.packs.update(list => list.map(x => x.id === updated.id ? updated : x))
     });

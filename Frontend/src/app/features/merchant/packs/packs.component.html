@@ -7,8 +7,8 @@
         <h1 class="text-xl font-bold text-white">Mis Packs</h1>
         <p class="text-white/60 text-sm mt-0.5">Gestioná los packs sorpresa de tu comercio</p>
       </div>
-      <button (click)="openCreate()"
-        class="shrink-0 flex items-center gap-2 bg-lime text-hunter font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-lime/90 transition-colors">
+      <button (click)="openCreate()" [disabled]="!mpConnected()"
+        class="shrink-0 flex items-center gap-2 bg-lime text-hunter font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-lime/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
         <svg lucidePlus class="w-4 h-4"></svg>
         <span class="hidden sm:inline">Agregar pack</span>
       </button>
@@ -16,6 +16,26 @@
   </div>
 
   <div class="max-w-5xl mx-auto px-4 md:px-8 -mt-5 pb-10">
+
+    <!-- ── Gate: Mercado Pago no vinculado ── -->
+    @if (!loading() && !mpConnected()) {
+      <div class="bg-white rounded-2xl shadow-sm border border-yellow-200 p-5 mb-3 flex items-start gap-4">
+        <div class="w-10 h-10 rounded-xl bg-[#009EE3]/10 flex items-center justify-center flex-shrink-0">
+          <svg lucideLink class="w-5 h-5 text-[#009EE3]"></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 class="font-bold text-gray-800">Vinculá Mercado Pago para publicar packs</h2>
+          <p class="text-sm text-gray-500 mt-0.5">
+            Necesitás conectar tu cuenta de Mercado Pago antes de crear o activar packs, así los consumidores pueden pagarte.
+          </p>
+          <a routerLink="/panel/profile"
+            class="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-[#009EE3] text-white rounded-xl text-sm font-semibold hover:bg-[#0082bd] transition-colors">
+            <svg lucideLink class="w-4 h-4"></svg>
+            Conectar con Mercado Pago
+          </a>
+        </div>
+      </div>
+    }
 
     @if (loading()) {
       <div class="flex justify-center pt-16">
@@ -27,7 +47,9 @@
       <div class="bg-white rounded-2xl shadow-sm p-10 text-center">
         <svg lucidePackage class="w-12 h-12 text-gray-200 mx-auto mb-3"></svg>
         <p class="text-gray-400 text-sm">Todavía no publicaste ningún pack.</p>
-        <button (click)="openCreate()" class="mt-4 text-evergreen font-semibold text-sm">Crear mi primer pack</button>
+        @if (mpConnected()) {
+          <button (click)="openCreate()" class="mt-4 text-evergreen font-semibold text-sm">Crear mi primer pack</button>
+        }
       </div>
     }
 
@@ -81,8 +103,8 @@
 
             <!-- Actions -->
             <div class="flex items-center border-t border-gray-50">
-              <button (click)="toggle(p)"
-                class="flex-1 py-3 text-sm font-semibold transition-colors"
+              <button (click)="toggle(p)" [disabled]="!p.isActive && !mpConnected()"
+                class="flex-1 py-3 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 [class]="p.isActive ? 'text-gray-500 hover:bg-gray-50' : 'text-fern hover:bg-fern/5'">
                 {{ p.isActive ? 'Desactivar' : 'Activar' }}
               </button>
