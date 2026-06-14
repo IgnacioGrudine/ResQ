@@ -2,8 +2,10 @@ using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Moq;
 using ResQ.API.DTOs.Products;
+using ResQ.API.Models.Auth;
 using ResQ.API.Models.Catalog;
 using ResQ.API.Models.Enums;
+using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Services.Products;
 using ResQ.API.Services.Storage;
@@ -13,9 +15,15 @@ namespace ResQ.Tests.Services;
 public class ProductServiceTests
 {
     private readonly Mock<IProductRepository> _products = new();
+    private readonly Mock<IMerchantProfileRepository> _merchants = new();
     private readonly Mock<IImageStorageService> _imageStorage = new();
 
-    private ProductService CreateSut() => new(_products.Object, _imageStorage.Object);
+    private ProductService CreateSut() => new(_products.Object, _merchants.Object, _imageStorage.Object);
+
+    /// <summary>Makes the merchant gate pass: the given merchant has a live Mercado Pago connection.</summary>
+    private void SetupConnectedMerchant(int merchantId, MpConnectionStatus status = MpConnectionStatus.Connected) =>
+        _merchants.Setup(m => m.GetByIdAsync(merchantId, It.IsAny<CancellationToken>()))
+                  .ReturnsAsync(new MerchantProfile { Id = merchantId, MpConnectionStatus = status });
 
     private static Product BuildProduct(int id = 1, int merchantId = 10, bool isActive = true) => new()
     {
@@ -96,6 +104,7 @@ public class ProductServiceTests
             PickupTimeEnd   = new TimeOnly(22, 0)
         };
 
+        SetupConnectedMerchant(merchantId);
         _products.Setup(p => p.AddAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()))
                  .Returns(Task.CompletedTask);
         _products.Setup(p => p.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -113,6 +122,35 @@ public class ProductServiceTests
         _products.Verify(p => p.AddAsync(
             It.Is<Product>(pr => pr.MerchantId == merchantId && pr.Name == request.Name),
             It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateProductAsync_WhenMpNotConnected_ReturnsBadRequestAndDoesNotPersist()
+    {
+        // Arrange
+        var merchantId = 10;
+        SetupConnectedMerchant(merchantId, MpConnectionStatus.Disconnected);
+
+        var request = new CreateProductRequest
+        {
+            Name            = "Menú del día",
+            ProductType     = ProductType.SurprisePack,
+            OriginalPrice   = 2000m,
+            SalePrice       = 800m,
+            StockQuantity   = 3,
+            PickupTimeStart = new TimeOnly(19, 0),
+            PickupTimeEnd   = new TimeOnly(22, 0)
+        };
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.CreateProductAsync(merchantId, request);
+
+        // Assert
+        Assert.True(result.IsFailed);
+        Assert.Contains("Mercado Pago", result.Errors[0].Message);
+        _products.Verify(p => p.AddAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -253,6 +291,7 @@ public class ProductServiceTests
     {
         // Arrange
         var product = BuildProduct(1, 10, isActive: false);
+        SetupConnectedMerchant(10);
         _products.Setup(p => p.GetByIdForMerchantAsync(1, 10, It.IsAny<CancellationToken>()))
                  .ReturnsAsync(product);
         _products.Setup(p => p.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -265,6 +304,47 @@ public class ProductServiceTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.True(result.Value.IsActive);
+    }
+
+    [Fact]
+    public async Task ToggleProductAsync_WhenActivatingAndMpNotConnected_ReturnsBadRequestAndStaysInactive()
+    {
+        // Arrange
+        var product = BuildProduct(1, 10, isActive: false);
+        SetupConnectedMerchant(10, MpConnectionStatus.Disconnected);
+        _products.Setup(p => p.GetByIdForMerchantAsync(1, 10, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(product);
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.ToggleProductAsync(10, 1);
+
+        // Assert
+        Assert.True(result.IsFailed);
+        Assert.Contains("Mercado Pago", result.Errors[0].Message);
+        Assert.False(product.IsActive);
+        _products.Verify(p => p.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ToggleProductAsync_WhenDeactivating_DoesNotRequireMpConnection()
+    {
+        // Arrange — an active pack can always be turned off, even if MP is disconnected.
+        var product = BuildProduct(1, 10, isActive: true);
+        SetupConnectedMerchant(10, MpConnectionStatus.Disconnected);
+        _products.Setup(p => p.GetByIdForMerchantAsync(1, 10, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(product);
+        _products.Setup(p => p.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.ToggleProductAsync(10, 1);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.IsActive);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

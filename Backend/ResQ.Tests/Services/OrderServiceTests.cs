@@ -70,11 +70,11 @@ public class OrderServiceTests
     };
 
     private static HttpResponseMessage BuildMpSuccessResponse(
-        string prefId = "PREF123", string sandboxUrl = "https://sandbox.mp.com/pay") =>
+        string prefId = "PREF123", string initPoint = "https://mp.com/pay") =>
         new(HttpStatusCode.OK)
         {
             Content = new StringContent(
-                $$$"""{"id":"{{{prefId}}}","init_point":"https://mp.com/pay","sandbox_init_point":"{{{sandboxUrl}}}"}""",
+                $$$"""{"id":"{{{prefId}}}","init_point":"{{{initPoint}}}","sandbox_init_point":"https://sandbox.mp.com/pay"}""",
                 Encoding.UTF8,
                 "application/json")
         };
@@ -290,7 +290,7 @@ public class OrderServiceTests
                .Returns(Task.CompletedTask);
         _orders.Setup(o => o.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
         _mpClient.Setup(c => c.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
-                 .ReturnsAsync(BuildMpSuccessResponse("PREF999", "https://sandbox.mp.com/pref999"));
+                 .ReturnsAsync(BuildMpSuccessResponse("PREF999", "https://mp.com/pref999"));
         _env.Setup(e => e.EnvironmentName).Returns("Development");
 
         var sut = CreateSut();
@@ -301,7 +301,7 @@ public class OrderServiceTests
         // Assert
         Assert.True(result.IsSuccess);
         Assert.Equal("PREF999", result.Value.MpPreferenceId);
-        Assert.Equal("https://sandbox.mp.com/pref999", result.Value.MpCheckoutUrl);
+        Assert.Equal("https://mp.com/pref999", result.Value.MpCheckoutUrl);
         Assert.Equal(8, product.StockQuantity); // 10 - 2
     }
 
