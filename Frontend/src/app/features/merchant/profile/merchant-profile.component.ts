@@ -50,9 +50,10 @@ export class MerchantProfileComponent implements OnInit {
   readonly addressConfirmed  = signal(false);
 
   // ── Mercado Pago ──
-  readonly mpConnecting      = signal(false);
-  readonly mpDisconnecting   = signal(false);
-  readonly mpError           = signal<string | null>(null);
+  readonly mpConnecting          = signal(false);
+  readonly mpDisconnecting       = signal(false);
+  readonly mpError               = signal<string | null>(null);
+  readonly showDisconnectConfirm = signal(false);
 
   form = { businessName: '', address: '', contactPhone: '' };
   selectedCategoryIds = new Set<number>();
@@ -199,7 +200,17 @@ export class MerchantProfileComponent implements OnInit {
     });
   }
 
-  disconnectMp(): void {
+  requestDisconnect(): void {
+    this.mpError.set(null);
+    this.showDisconnectConfirm.set(true);
+  }
+
+  cancelDisconnect(): void {
+    this.showDisconnectConfirm.set(false);
+  }
+
+  confirmDisconnect(): void {
+    this.showDisconnectConfirm.set(false);
     this.mpDisconnecting.set(true);
     this.mpError.set(null);
     this.mpService.disconnect().subscribe({
