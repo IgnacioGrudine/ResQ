@@ -1,5 +1,4 @@
 using ResQ.API.DTOs.Shared;
-using ResQ.API.Models.Enums;
 
 namespace ResQ.API.DTOs.Merchants;
 
@@ -52,8 +51,9 @@ public class MerchantProfileResponse
 
     /// <summary>
     /// Current status of the merchant's Mercado Pago OAuth connection.
+    /// Serialized as the enum name (e.g., <c>"Connected"</c>) so the frontend can compare it as a string.
     /// </summary>
-    public MpConnectionStatus MpConnectionStatus { get; set; }
+    public string MpConnectionStatus { get; set; } = string.Empty;
 
     /// <summary>
     /// List of food categories associated with this merchant.

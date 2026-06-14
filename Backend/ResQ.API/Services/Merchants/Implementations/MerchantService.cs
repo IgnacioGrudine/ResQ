@@ -372,7 +372,7 @@ public class MerchantService(
         Longitude          = m.Longitude,
         ContactPhone       = m.ContactPhone,
         PhotoUrl           = m.PhotoUrl,
-        MpConnectionStatus = m.MpConnectionStatus,
+        MpConnectionStatus = m.MpConnectionStatus.ToString(),
         Categories         = m.MerchantCategories
                                .Select(mc => new CategoryResponse { Id = mc.CategoryId, Name = mc.Category.Name })
                                .ToList()
