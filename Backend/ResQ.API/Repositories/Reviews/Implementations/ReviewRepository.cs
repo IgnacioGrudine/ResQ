@@ -30,4 +30,12 @@ public class ReviewRepository(ResQDbContext db) : GenericRepository<Review>(db),
             .Where(r => r.MerchantId == merchantId)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(ct);
+
+    /// <summary>
+    /// Returns <c>true</c> if any review record references the given order ID.
+    /// Mirrors the UNIQUE constraint on <c>OrderId</c> at the application layer to
+    /// produce a clear domain error before hitting the database constraint.
+    /// </summary>
+    public Task<bool> ExistsForOrderAsync(int orderId, CancellationToken ct = default)
+        => _set.AnyAsync(r => r.OrderId == orderId, ct);
 }

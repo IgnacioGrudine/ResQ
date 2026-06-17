@@ -29,6 +29,7 @@ public class OrderRepository(ResQDbContext db) : GenericRepository<Order>(db), I
             .AsNoTracking()
             .Include(o => o.Merchant)
             .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+            .Include(o => o.Review)
             .Where(o => o.ConsumerId == consumerId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(ct);
@@ -104,5 +105,6 @@ public class OrderRepository(ResQDbContext db) : GenericRepository<Order>(db), I
             .AsNoTracking()
             .Include(o => o.Merchant)
             .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+            .Include(o => o.Review)
             .FirstOrDefaultAsync(o => o.Id == orderId && o.ConsumerId == consumerProfileId, ct);
 }

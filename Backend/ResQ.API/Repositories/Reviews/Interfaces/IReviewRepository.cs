@@ -16,4 +16,15 @@ public interface IReviewRepository : IGenericRepository<Review>
     /// an empty collection if the merchant has received no reviews.
     /// </returns>
     Task<IEnumerable<Review>> GetByMerchantIdAsync(int merchantId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Determines whether a review has already been submitted for the specified order.
+    /// Used to enforce the one-review-per-order business rule before inserting a new record.
+    /// </summary>
+    /// <param name="orderId">The identifier of the order to check.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// <c>true</c> if a review for the given order already exists; <c>false</c> otherwise.
+    /// </returns>
+    Task<bool> ExistsForOrderAsync(int orderId, CancellationToken ct = default);
 }
