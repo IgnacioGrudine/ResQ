@@ -24,6 +24,7 @@ using ResQ.API.Services.Merchants;
 using ResQ.API.Services.Orders;
 using ResQ.API.Services.Password;
 using ResQ.API.Services.Products;
+using ResQ.API.Services.Reviews;
 using ResQ.API.Services.Storage;
 using Minio;
 
@@ -153,6 +154,7 @@ builder.Services.AddScoped<ICatalogService, CatalogService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IConsumerService, ConsumerService>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IMercadoPagoOAuthService, MercadoPagoOAuthService>();
 builder.Services.AddScoped<IMpWebhookIngestionService, MpWebhookIngestionService>();
 builder.Services.AddScoped<IMpWebhookProcessorService, MpWebhookProcessorService>();

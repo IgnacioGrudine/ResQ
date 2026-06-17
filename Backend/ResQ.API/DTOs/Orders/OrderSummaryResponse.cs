@@ -48,4 +48,10 @@ public class OrderSummaryResponse
     /// List of individual line items included in this order.
     /// </summary>
     public List<OrderDetailItemResponse> Items { get; set; } = [];
+
+    /// <summary>
+    /// Indicates whether the consumer has already submitted a review for this order.
+    /// When <c>true</c>, the "Leave a review" action should be hidden in the UI.
+    /// </summary>
+    public bool HasReview { get; set; }
 }

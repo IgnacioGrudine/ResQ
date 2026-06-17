@@ -447,6 +447,7 @@ public class OrderService(
         OrderStatus       = o.OrderStatus.ToString(),
         PickupCode        = o.PickupCode,
         CreatedAt         = o.CreatedAt,
+        HasReview         = o.Review is not null,
         Items             = o.OrderDetails.Select(od => new OrderDetailItemResponse
         {
             ProductName = od.Product.Name,

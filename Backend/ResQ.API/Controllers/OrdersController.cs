@@ -1,20 +1,22 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.DTOs.Orders;
+using ResQ.API.DTOs.Reviews;
 using ResQ.API.Extensions;
 using ResQ.API.Services.Orders;
+using ResQ.API.Services.Reviews;
 
 namespace ResQ.API.Controllers;
 
 /// <summary>
-/// Manages the lifecycle of consumer orders from creation through payment confirmation.
+/// Manages the lifecycle of consumer orders from creation through payment confirmation and review submission.
 /// All endpoints require a valid JWT with role <c>Consumer</c>.
 /// The consumer's profile ID is extracted from the JWT claims via <c>User.GetProfileId()</c>.
 /// </summary>
 [ApiController]
 [Route("api/orders")]
 [Authorize(Roles = "Consumer")]
-public class OrdersController(IOrderService orderService) : ControllerBase
+public class OrdersController(IOrderService orderService, IReviewService reviewService) : ControllerBase
 {
     /// <summary>
     /// Creates a new order for the specified pack and generates a Mercado Pago checkout preference.
@@ -65,4 +67,25 @@ public class OrdersController(IOrderService orderService) : ControllerBase
     [HttpGet("{id:int}")]
     public async Task<ActionResult<OrderSummaryResponse>> GetOrderById(int id, CancellationToken ct)
         => (await orderService.GetOrderByIdAsync(id, User.GetProfileId(), ct)).ToActionResult();
+
+    /// <summary>
+    /// Submits a review for a completed order. The order must be in <c>PickedUp</c> status
+    /// and must not already have a review. Only the consumer who placed the order may review it.
+    /// Requires role: <c>Consumer</c>.
+    /// </summary>
+    /// <param name="id">The identifier of the order being reviewed.</param>
+    /// <param name="request">Contains the star rating (1–5) and an optional written comment.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// 201 Created with the new <see cref="ReviewResponse"/>;
+    /// 404 Not Found if the order does not exist;
+    /// 403 Forbidden if the order belongs to another consumer;
+    /// 400 Bad Request if the order has not been picked up yet;
+    /// 409 Conflict if the order already has a review.
+    /// </returns>
+    [HttpPost("{id:int}/review")]
+    public async Task<ActionResult<ReviewResponse>> SubmitReview(
+        int id, [FromBody] CreateReviewRequest request, CancellationToken ct)
+        => (await reviewService.CreateReviewAsync(User.GetProfileId(), id, request, ct))
+            .ToCreatedResult(r => r);
 }
