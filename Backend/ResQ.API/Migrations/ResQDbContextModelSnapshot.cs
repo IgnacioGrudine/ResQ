@@ -377,8 +377,7 @@ namespace ResQ.API.Migrations
                         .HasColumnType("character varying(600)");
 
                     b.Property<string>("Scope")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

@@ -21,7 +21,7 @@ public class MerchantMpCredentialConfiguration : IEntityTypeConfiguration<Mercha
             .HasMaxLength(600);
 
         builder.Property(c => c.Scope)
-            .HasMaxLength(200);
+            .HasColumnType("text");
 
         builder.Property(c => c.IsActive)
             .IsRequired()
