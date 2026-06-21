@@ -1,7 +1,9 @@
 using FluentResults;
+using ResQ.API.DTOs.Admin;
 using ResQ.API.DTOs.Merchants;
 using ResQ.API.DTOs.Orders;
 using ResQ.API.DTOs.Reviews;
+using ResQ.API.Services.Reporting;
 
 namespace ResQ.API.Services.Merchants;
 
@@ -116,4 +118,31 @@ public interface IMerchantService
     /// items; or a failed result if the profile does not exist.
     /// </returns>
     Task<Result<IEnumerable<ReviewResponse>>> GetMyReviewsAsync(int merchantProfileId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns filterable analytics for the authenticated merchant over a chosen date range:
+    /// period money/order KPIs, growth versus the previous equal-length period, top-selling
+    /// packs, the rating distribution, and an activity time series.
+    /// </summary>
+    /// <param name="merchantProfileId">The identifier of the merchant profile whose analytics are requested.</param>
+    /// <param name="query">Date range and time-series granularity (with sensible defaults).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> containing a <see cref="MerchantAnalyticsResponse"/>;
+    /// or a <c>NotFoundError</c> if the profile does not exist.
+    /// </returns>
+    Task<Result<MerchantAnalyticsResponse>> GetAnalyticsAsync(int merchantProfileId, DashboardQuery query, CancellationToken ct = default);
+
+    /// <summary>
+    /// Generates an exportable sales/earnings report (PDF or Excel) for the authenticated
+    /// merchant over a chosen date range.
+    /// </summary>
+    /// <param name="merchantProfileId">The identifier of the merchant profile whose report is generated.</param>
+    /// <param name="query">Date range and output format.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> containing the rendered <see cref="ReportFile"/>;
+    /// or a <c>NotFoundError</c> if the profile does not exist.
+    /// </returns>
+    Task<Result<ReportFile>> GenerateSalesReportAsync(int merchantProfileId, ReportQuery query, CancellationToken ct = default);
 }

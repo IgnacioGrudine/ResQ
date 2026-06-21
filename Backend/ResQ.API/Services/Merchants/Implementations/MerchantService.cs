@@ -1,5 +1,7 @@
+using System.Globalization;
 using FluentResults;
 using ResQ.API.Common.Errors;
+using ResQ.API.DTOs.Admin;
 using ResQ.API.DTOs.Merchants;
 using ResQ.API.DTOs.Orders;
 using ResQ.API.DTOs.Products;
@@ -7,18 +9,22 @@ using ResQ.API.DTOs.Reviews;
 using ResQ.API.DTOs.Shared;
 using ResQ.API.Models.Catalog;
 using ResQ.API.Models.Enums;
+using ResQ.API.Models.Orders;
+using ResQ.API.Models.Reporting;
 using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Repositories.Reviews;
 using ResQ.API.Services.Orders;
+using ResQ.API.Services.Reporting;
 using ResQ.API.Services.Storage;
 
 namespace ResQ.API.Services.Merchants;
 
 /// <summary>
 /// Manages merchant-facing operations: public catalog exposure, authenticated profile management,
-/// order confirmation, dashboard metrics, review retrieval, and profile photo upload.
+/// order confirmation, dashboard metrics, filterable analytics, exportable reports,
+/// review retrieval, and profile photo upload.
 /// </summary>
 public class MerchantService(
     IMerchantProfileRepository merchantProfiles,
@@ -27,8 +33,10 @@ public class MerchantService(
     IOrderRepository orderRepository,
     IProductRepository productRepository,
     IOrderService orderService,
-    IImageStorageService imageStorage) : IMerchantService
+    IImageStorageService imageStorage,
+    IReportFileFactory reportFactory) : IMerchantService
 {
+    private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-AR");
     // ─── Public catalog ───────────────────────────────────────────────────────
 
     /// <summary>
@@ -334,7 +342,204 @@ public class MerchantService(
         return Result.Ok(MapMerchantProfile(merchant));
     }
 
+    // ─── Authenticated merchant — analytics & reports ────────────────────────
+
+    /// <summary>
+    /// Computes filterable analytics for the merchant over the requested range, comparing
+    /// earnings against the immediately-preceding equal-length period for a growth figure.
+    /// All money metrics consider non-cancelled orders (Paid + PickedUp) as realised revenue.
+    /// </summary>
+    public async Task<Result<MerchantAnalyticsResponse>> GetAnalyticsAsync(
+        int merchantProfileId, DashboardQuery query, CancellationToken ct = default)
+    {
+        var merchant = await merchantProfiles.GetByIdAsync(merchantProfileId, ct);
+        if (merchant is null)
+            return Result.Fail(new NotFoundError("Perfil de comercio no encontrado."));
+
+        var allOrders  = (await orderRepository.GetByMerchantIdAsync(merchantProfileId, ct)).ToList();
+        var allReviews = (await reviews.GetByMerchantIdAsync(merchantProfileId, ct)).ToList();
+
+        var (fromUtc, toUtc) = ResolveRange(query.From, query.To);
+        var rangeLength      = toUtc - fromUtc;
+        var prevFrom         = fromUtc.Add(-rangeLength);
+
+        var inRange  = allOrders.Where(o => o.CreatedAt >= fromUtc && o.CreatedAt <= toUtc).ToList();
+        var revenue  = inRange.Where(o => o.OrderStatus != OrderStatus.Cancelled).ToList();
+        var prevRev  = allOrders
+            .Where(o => o.CreatedAt >= prevFrom && o.CreatedAt < fromUtc && o.OrderStatus != OrderStatus.Cancelled)
+            .ToList();
+
+        var earnings     = revenue.Sum(o => o.MerchantEarnings);
+        var prevEarnings = prevRev.Sum(o => o.MerchantEarnings);
+        var gmv          = revenue.Sum(o => o.TotalAmount);
+        var completed    = inRange.Count(o => o.OrderStatus == OrderStatus.PickedUp);
+        var cancelled    = inRange.Count(o => o.OrderStatus == OrderStatus.Cancelled);
+
+        var topProducts = revenue
+            .SelectMany(o => o.OrderDetails)
+            .GroupBy(od => new { od.ProductId, od.Product.Name })
+            .Select(g => new TopProductDto(
+                g.Key.ProductId, g.Key.Name, g.Sum(od => od.Quantity), g.Sum(od => od.UnitPrice * od.Quantity)))
+            .OrderByDescending(p => p.UnitsSold)
+            .Take(5)
+            .ToList();
+
+        var ratingDistribution = Enumerable.Range(1, 5)
+            .Select(stars => new RatingBucketDto(stars, allReviews.Count(r => r.Rating == stars)))
+            .ToList();
+
+        return Result.Ok(new MerchantAnalyticsResponse
+        {
+            RangeLabel        = $"{fromUtc:dd/MM/yyyy} — {toUtc:dd/MM/yyyy}",
+            Gmv               = gmv,
+            Earnings          = earnings,
+            AverageOrderValue = revenue.Count > 0 ? Math.Round(gmv / revenue.Count, 0) : 0,
+            PreviousEarnings  = prevEarnings,
+            EarningsGrowthPct = prevEarnings > 0
+                                    ? Math.Round((earnings - prevEarnings) / prevEarnings * 100, 1)
+                                    : (earnings > 0 ? 100 : 0),
+            CompletedOrders   = completed,
+            CancelledOrders   = cancelled,
+            CancellationRate  = inRange.Count > 0 ? Math.Round((decimal)cancelled / inRange.Count * 100, 1) : 0,
+            PacksSold         = revenue.SelectMany(o => o.OrderDetails).Sum(od => od.Quantity),
+            AverageRating     = allReviews.Count > 0 ? Math.Round((decimal)allReviews.Average(r => r.Rating), 1) : 0,
+            ReviewCount       = allReviews.Count,
+            RatingDistribution = ratingDistribution,
+            TopProducts       = topProducts,
+            ActivitySeries    = BuildMerchantSeries(revenue, fromUtc, toUtc, query.Granularity)
+        });
+    }
+
+    /// <summary>
+    /// Builds an exportable sales report for the merchant: KPI summary plus a per-order table
+    /// of the orders within the requested range, rendered to PDF or Excel.
+    /// </summary>
+    public async Task<Result<ReportFile>> GenerateSalesReportAsync(
+        int merchantProfileId, ReportQuery query, CancellationToken ct = default)
+    {
+        var merchant = await merchantProfiles.GetByIdAsync(merchantProfileId, ct);
+        if (merchant is null)
+            return Result.Fail(new NotFoundError("Perfil de comercio no encontrado."));
+
+        var (fromUtc, toUtc) = ResolveRange(query.From, query.To);
+
+        var inRange = (await orderRepository.GetByMerchantIdAsync(merchantProfileId, ct))
+            .Where(o => o.CreatedAt >= fromUtc && o.CreatedAt <= toUtc)
+            .ToList();
+        var revenue = inRange.Where(o => o.OrderStatus != OrderStatus.Cancelled).ToList();
+
+        var model = new ReportModel
+        {
+            Title    = $"Reporte de ventas — {merchant.BusinessName}",
+            Subtitle = $"Período: {fromUtc:dd/MM/yyyy} — {toUtc:dd/MM/yyyy}",
+            Kpis =
+            [
+                new ReportKpi("Órdenes completadas", inRange.Count(o => o.OrderStatus == OrderStatus.PickedUp).ToString("N0", Es)),
+                new ReportKpi("Ventas brutas (GMV)", "$" + revenue.Sum(o => o.TotalAmount).ToString("N0", Es)),
+                new ReportKpi("Ganancias netas",     "$" + revenue.Sum(o => o.MerchantEarnings).ToString("N0", Es))
+            ],
+            Columns =
+            [
+                new ReportColumn { Header = "Fecha",    Type = ReportColumnType.Date,     Width = 2 },
+                new ReportColumn { Header = "Cliente",  Type = ReportColumnType.Text,     Width = 3 },
+                new ReportColumn { Header = "Estado",   Type = ReportColumnType.Text,     Width = 2 },
+                new ReportColumn { Header = "Total",    Type = ReportColumnType.Currency, Width = 2 },
+                new ReportColumn { Header = "Ganancia", Type = ReportColumnType.Currency, Width = 2 }
+            ],
+            Rows = inRange
+                .OrderByDescending(o => o.CreatedAt)
+                .Select(o => new object?[]
+                {
+                    o.CreatedAt,
+                    o.Consumer is not null ? $"{o.Consumer.FirstName} {o.Consumer.LastName}".Trim() : "—",
+                    TranslateStatus(o.OrderStatus),
+                    o.TotalAmount,
+                    o.MerchantEarnings
+                })
+                .ToList(),
+            TotalsRow = ["Total", null, null, revenue.Sum(o => o.TotalAmount), revenue.Sum(o => o.MerchantEarnings)]
+        };
+
+        var file = reportFactory.Create(model, query.Format,
+            $"resq-ventas_{fromUtc:yyyyMMdd}-{toUtc:yyyyMMdd}");
+        return Result.Ok(file);
+    }
+
     // ─── Private helpers ──────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Resolves an optional date range into a concrete inclusive UTC window. Defaults to the
+    /// last 30 days; the end date is pushed to the end of its day so "today" is fully included.
+    /// </summary>
+    private static (DateTime From, DateTime To) ResolveRange(DateTime? from, DateTime? to)
+    {
+        var fromDate = (from ?? DateTime.UtcNow.AddDays(-30)).Date;
+        var toDate   = (to   ?? DateTime.UtcNow).Date;
+        if (fromDate > toDate) (fromDate, toDate) = (toDate, fromDate);
+
+        // Query params bind as Kind=Unspecified; Npgsql requires UTC for timestamptz columns.
+        var fromUtc = DateTime.SpecifyKind(fromDate, DateTimeKind.Utc);
+        var toUtc   = DateTime.SpecifyKind(toDate.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+        return (fromUtc, toUtc);
+    }
+
+    /// <summary>Buckets non-cancelled orders into an ordered earnings/orders series by granularity.</summary>
+    private static List<DailySalesDto> BuildMerchantSeries(
+        List<Order> revenue, DateTime fromUtc, DateTime toUtc, ReportGranularity granularity)
+    {
+        var bucketStarts = new List<DateTime>();
+
+        switch (granularity)
+        {
+            case ReportGranularity.Week:
+                for (var d = StartOfWeek(fromUtc.Date); d <= toUtc.Date; d = d.AddDays(7))
+                    bucketStarts.Add(d);
+                break;
+            case ReportGranularity.Month:
+                for (var d = new DateTime(fromUtc.Year, fromUtc.Month, 1); d <= toUtc.Date; d = d.AddMonths(1))
+                    bucketStarts.Add(d);
+                break;
+            default:
+                for (var d = fromUtc.Date; d <= toUtc.Date; d = d.AddDays(1))
+                    bucketStarts.Add(d);
+                break;
+        }
+
+        return bucketStarts.Select(start =>
+        {
+            var end = granularity switch
+            {
+                ReportGranularity.Week  => start.AddDays(7),
+                ReportGranularity.Month => start.AddMonths(1),
+                _                       => start.AddDays(1)
+            };
+
+            var inBucket = revenue.Where(o => o.CreatedAt >= start && o.CreatedAt < end).ToList();
+
+            var label = granularity == ReportGranularity.Month
+                ? Capitalize(start.ToString("MMM yy", Es))
+                : start.ToString("dd/MM", Es);
+
+            return new DailySalesDto(label, inBucket.Count, inBucket.Sum(o => o.MerchantEarnings));
+        }).ToList();
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return date.AddDays(-diff).Date;
+    }
+
+    private static string Capitalize(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpper(s[0]) + s[1..];
+
+    private static string TranslateStatus(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending   => "Pendiente",
+        OrderStatus.Paid      => "Pagado",
+        OrderStatus.PickedUp  => "Retirado",
+        OrderStatus.Cancelled => "Cancelado",
+        _                     => status.ToString()
+    };
 
     /// <summary>
     /// Maps a <see cref="Models.Catalog.Product"/> entity to a <see cref="ProductResponse"/> DTO.

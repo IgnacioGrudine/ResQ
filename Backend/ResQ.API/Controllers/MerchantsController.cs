@@ -1,10 +1,14 @@
+using FluentResults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ResQ.API.Common.Errors;
+using ResQ.API.DTOs.Admin;
 using ResQ.API.DTOs.Merchants;
 using ResQ.API.DTOs.Orders;
 using ResQ.API.DTOs.Reviews;
 using ResQ.API.Extensions;
 using ResQ.API.Services.Merchants;
+using ResQ.API.Services.Reporting;
 
 namespace ResQ.API.Controllers;
 
@@ -112,4 +116,36 @@ public class MerchantsController(IMerchantService merchantService) : ControllerB
     [HttpGet("me/reviews")]
     public async Task<ActionResult<IEnumerable<ReviewResponse>>> GetMyReviews(CancellationToken ct)
         => (await merchantService.GetMyReviewsAsync(User.GetProfileId(), ct)).ToActionResult();
+
+    /// <summary>
+    /// Returns filterable analytics for the authenticated merchant over a date range:
+    /// period KPIs, growth vs. the previous period, top packs, rating distribution, and
+    /// an activity series. Requires role: <c>Merchant</c>.
+    /// </summary>
+    /// <param name="query">Date range and time-series granularity.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>200 OK with a <see cref="MerchantAnalyticsResponse"/>; 404 if the profile does not exist.</returns>
+    [HttpGet("me/analytics")]
+    public async Task<ActionResult<MerchantAnalyticsResponse>> GetAnalytics([FromQuery] DashboardQuery query, CancellationToken ct)
+        => (await merchantService.GetAnalyticsAsync(User.GetProfileId(), query, ct)).ToActionResult();
+
+    /// <summary>
+    /// Downloads the authenticated merchant's sales/earnings report for a date range as PDF or Excel.
+    /// Requires role: <c>Merchant</c>.
+    /// </summary>
+    /// <param name="query">Date range and output format (pdf|excel).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A file download on success; 404 if the profile does not exist.</returns>
+    [HttpGet("me/reports/sales")]
+    public async Task<IActionResult> GetSalesReport([FromQuery] ReportQuery query, CancellationToken ct)
+    {
+        var result = await merchantService.GenerateSalesReportAsync(User.GetProfileId(), query, ct);
+        if (result.IsSuccess)
+            return File(result.Value.Content, result.Value.ContentType, result.Value.FileName);
+
+        var error = result.Errors.FirstOrDefault();
+        return error is NotFoundError
+            ? NotFound(new ProblemDetails { Status = 404, Title = "Not Found", Detail = error.Message })
+            : BadRequest(new ProblemDetails { Status = 400, Title = "Bad Request", Detail = error?.Message });
+    }
 }
