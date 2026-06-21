@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using ResQ.API.DTOs.MercadoPago;
 using ResQ.API.Extensions;
+using ResQ.API.Models.Settings;
 using ResQ.API.Services.MercadoPago;
 
 namespace ResQ.API.Controllers;
@@ -12,8 +14,12 @@ namespace ResQ.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api")]
-public class MercadoPagoOAuthController(IMercadoPagoOAuthService oauthService) : ControllerBase
+public class MercadoPagoOAuthController(
+    IMercadoPagoOAuthService oauthService,
+    IOptions<MpSettings> mpOptions) : ControllerBase
 {
+    private readonly MpSettings _mp = mpOptions.Value;
+
     /// <summary>
     /// Returns the Mercado Pago authorization URL for the authenticated merchant.
     /// The merchant must visit this URL in their browser to grant ResQ marketplace
@@ -28,11 +34,16 @@ public class MercadoPagoOAuthController(IMercadoPagoOAuthService oauthService) :
     /// <returns>
     /// 200 OK with a <see cref="MpAuthUrlResponse"/> containing the authorization URL.
     /// </returns>
+    /// <param name="returnOrigin">
+    /// The frontend origin the merchant is initiating the flow from (sent by the SPA as
+    /// <c>window.location.origin</c>). Encoded into the OAuth <c>state</c> so the callback can
+    /// redirect the merchant back to this exact origin, where their session cookie is valid.
+    /// </param>
     [HttpGet("merchants/mp/auth-url")]
     [Authorize(Roles = "Merchant")]
-    public IActionResult GetAuthUrl()
+    public IActionResult GetAuthUrl([FromQuery] string? returnOrigin)
     {
-        var url = oauthService.BuildAuthorizationUrl(User.GetProfileId());
+        var url = oauthService.BuildAuthorizationUrl(User.GetProfileId(), returnOrigin);
         return Ok(new MpAuthUrlResponse { AuthUrl = url });
     }
 
@@ -66,20 +77,25 @@ public class MercadoPagoOAuthController(IMercadoPagoOAuthService oauthService) :
         [FromQuery] string? error,
         CancellationToken ct)
     {
+        // Recover the merchant id and the origin the flow started from. The origin drives the
+        // redirect target so the merchant lands back where their session cookie is valid.
+        var parsed  = MpOAuthState.TryDecode(state, out var merchantProfileId, out var returnOrigin);
+        var baseUrl = ResolveFrontendBase(returnOrigin);
+
         if (error is not null)
-            return Redirect($"/mp/callback?status=error&message={Uri.EscapeDataString(error)}");
+            return Redirect($"{baseUrl}/mp/callback?status=error&message={Uri.EscapeDataString(error)}");
 
         if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(state))
-            return Redirect("/mp/callback?status=error&message=missing_params");
+            return Redirect($"{baseUrl}/mp/callback?status=error&message=missing_params");
 
-        if (!int.TryParse(state, out var merchantProfileId))
-            return Redirect("/mp/callback?status=error&message=invalid_state");
+        if (!parsed)
+            return Redirect($"{baseUrl}/mp/callback?status=error&message=invalid_state");
 
         var result = await oauthService.HandleCallbackAsync(code, merchantProfileId, ct);
 
         return result.IsSuccess
-            ? Redirect("/mp/callback?status=success")
-            : Redirect($"/mp/callback?status=error&message={Uri.EscapeDataString(result.Errors[0].Message)}");
+            ? Redirect($"{baseUrl}/mp/callback?status=success")
+            : Redirect($"{baseUrl}/mp/callback?status=error&message={Uri.EscapeDataString(result.Errors[0].Message)}");
     }
 
     /// <summary>
@@ -100,4 +116,35 @@ public class MercadoPagoOAuthController(IMercadoPagoOAuthService oauthService) :
     [Authorize(Roles = "Merchant")]
     public async Task<IActionResult> Disconnect(CancellationToken ct)
         => (await oauthService.DisconnectAsync(User.GetProfileId(), ct)).ToActionResult();
+
+    // ─── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Resolves the frontend base URL the callback should redirect to. Returns the merchant's
+    /// requested origin when it passes the <see cref="IsAllowedOrigin"/> allow-list check;
+    /// otherwise falls back to the configured <see cref="MpSettings.FrontendBaseUrl"/>.
+    /// </summary>
+    private string ResolveFrontendBase(string? returnOrigin)
+    {
+        if (!string.IsNullOrWhiteSpace(returnOrigin) && IsAllowedOrigin(returnOrigin))
+            return returnOrigin.TrimEnd('/');
+
+        return _mp.FrontendBaseUrl.TrimEnd('/');
+    }
+
+    /// <summary>
+    /// Guards against open-redirect attacks by only honouring a return origin that is either
+    /// localhost (any port, for local development) or the configured public frontend host.
+    /// </summary>
+    private bool IsAllowedOrigin(string returnOrigin)
+    {
+        if (!Uri.TryCreate(returnOrigin, UriKind.Absolute, out var origin))
+            return false;
+
+        if (origin.Host is "localhost" or "127.0.0.1")
+            return true;
+
+        return Uri.TryCreate(_mp.FrontendBaseUrl, UriKind.Absolute, out var configured)
+            && string.Equals(origin.Host, configured.Host, StringComparison.OrdinalIgnoreCase);
+    }
 }

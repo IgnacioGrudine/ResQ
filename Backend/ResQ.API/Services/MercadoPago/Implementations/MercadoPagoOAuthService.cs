@@ -43,7 +43,7 @@ public class MercadoPagoOAuthService(
     /// <returns>
     /// The fully constructed authorization URL pointing to <c>https://auth.mercadopago.com.ar/authorization</c>.
     /// </returns>
-    public string BuildAuthorizationUrl(int merchantProfileId)
+    public string BuildAuthorizationUrl(int merchantProfileId, string? returnOrigin = null)
     {
         var query = new Dictionary<string, string>
         {
@@ -51,7 +51,7 @@ public class MercadoPagoOAuthService(
             ["response_type"] = "code",
             ["platform_id"]   = "mp",
             ["redirect_uri"]  = _mp.RedirectUri,
-            ["state"]         = merchantProfileId.ToString()
+            ["state"]         = MpOAuthState.Encode(merchantProfileId, returnOrigin)
         };
 
         var qs = string.Join("&", query.Select(kv =>

@@ -10,12 +10,18 @@ public interface IMercadoPagoOAuthService
     /// </summary>
     /// <remarks>
     /// The URL includes the application's client ID, the required scopes, and a
-    /// <c>state</c> parameter that encodes <paramref name="merchantProfileId"/> to
-    /// correlate the callback with the correct merchant.
+    /// <c>state</c> parameter that encodes <paramref name="merchantProfileId"/> together
+    /// with <paramref name="returnOrigin"/> so the callback can both correlate the response
+    /// with the correct merchant and return them to the frontend origin they started from.
     /// </remarks>
     /// <param name="merchantProfileId">The identifier of the merchant profile initiating the OAuth flow.</param>
+    /// <param name="returnOrigin">
+    /// The frontend origin (scheme + host + port) the merchant initiated the flow from, used to
+    /// build the post-callback redirect so the merchant lands back where their session cookie lives.
+    /// Optional; when omitted the callback falls back to the configured frontend base URL.
+    /// </param>
     /// <returns>The fully-qualified Mercado Pago authorization URL as a string.</returns>
-    string BuildAuthorizationUrl(int merchantProfileId);
+    string BuildAuthorizationUrl(int merchantProfileId, string? returnOrigin = null);
 
     /// <summary>
     /// Handles the OAuth 2.0 authorization callback by exchanging the temporary
