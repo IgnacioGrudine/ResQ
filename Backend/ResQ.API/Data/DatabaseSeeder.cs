@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ResQ.API.Models.Auth;
 using ResQ.API.Models.Catalog;
 using ResQ.API.Models.Enums;
@@ -12,6 +13,40 @@ namespace ResQ.API.Data;
 /// </summary>
 public static class DatabaseSeeder
 {
+    /// <summary>
+    /// Idempotently ensures a platform administrator account exists. Unlike <see cref="Seed"/>
+    /// (which only runs on an empty database), this runs on every startup so the admin account
+    /// is provisioned even on databases that were seeded before the admin module existed.
+    /// </summary>
+    /// <param name="db">The database context.</param>
+    /// <param name="email">Admin login email (from configuration, with a dev default).</param>
+    /// <param name="password">Admin plain-text password to hash (from configuration, with a dev default).</param>
+    /// <remarks>
+    /// The admin has no consumer or merchant profile — only the <see cref="Role.Admin"/> role.
+    /// There is no public registration path that grants this role.
+    /// </remarks>
+    public static void EnsureAdmin(ResQDbContext db, string email, string password)
+    {
+        email = email.ToLower().Trim();
+
+        var adminExists = db.Users
+            .Include(u => u.UserRoles)
+            .Any(u => u.Email == email || u.UserRoles.Any(r => r.Role == Role.Admin));
+
+        if (adminExists) return;
+
+        var now = DateTime.UtcNow;
+        db.Users.Add(new User
+        {
+            Email        = email,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, 8),
+            IsActive     = true,
+            CreatedAt    = now,
+            UserRoles    = [new UserRole { Role = Role.Admin, CreatedAt = now }]
+        });
+        db.SaveChanges();
+    }
+
     public static void Seed(ResQDbContext db)
     {
         // Idempotent guard — skip if already seeded

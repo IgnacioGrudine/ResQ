@@ -7,12 +7,16 @@ using ResQ.API.Models.Settings;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using ResQ.API.Middleware;
+using ResQ.API.Repositories.Admin;
 using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Repositories.Reviews;
+using ResQ.API.Services.Admin;
 using ResQ.API.Services.Auth;
+using ResQ.API.Services.Reporting;
+using ResQ.API.Services.Reporting.Implementations;
 using ResQ.API.Services.Catalog;
 using ResQ.API.Services.Consumers;
 using ResQ.API.Services.Encryption;
@@ -29,6 +33,9 @@ using ResQ.API.Services.Storage;
 using Minio;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── QuestPDF licence (free Community tier — required before any PDF generation) ─
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 // ── Controllers + FluentValidation ───────────────────────────────────────────
 builder.Services.AddControllers();
@@ -143,6 +150,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IMerchantMpCredentialRepository, MerchantMpCredentialRepository>();
 builder.Services.AddScoped<IMpWebhookEventRepository, MpWebhookEventRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IPasswordService, PasswordService>();
@@ -159,6 +167,12 @@ builder.Services.AddScoped<IMercadoPagoOAuthService, MercadoPagoOAuthService>();
 builder.Services.AddScoped<IMpWebhookIngestionService, MpWebhookIngestionService>();
 builder.Services.AddScoped<IMpWebhookProcessorService, MpWebhookProcessorService>();
 builder.Services.AddScoped<IMpTokenRefreshJob, MpTokenRefreshJob>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+
+// ── Reporting (PDF via QuestPDF, Excel via ClosedXML) ──────────────────────────
+builder.Services.AddScoped<IReportExporter, PdfReportExporter>();
+builder.Services.AddScoped<IReportExporter, ExcelReportExporter>();
+builder.Services.AddScoped<IReportFileFactory, ReportFileFactory>();
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
@@ -169,6 +183,11 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ResQDbContext>();
     db.Database.Migrate();
     DatabaseSeeder.Seed(db);
+
+    // Idempotently provision the platform admin (runs even on already-seeded databases).
+    var adminEmail    = builder.Configuration["Admin:Email"]    ?? "admin@resq.com";
+    var adminPassword = builder.Configuration["Admin:Password"] ?? "ResQ1234!";
+    DatabaseSeeder.EnsureAdmin(db, adminEmail, adminPassword);
 }
 
 if (app.Environment.IsDevelopment())
