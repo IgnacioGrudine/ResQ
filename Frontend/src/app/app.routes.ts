@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { merchantGuard } from './core/guards/merchant.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -91,9 +92,45 @@ export const routes: Routes = [
           import('./features/merchant/reviews/reviews.component').then(m => m.ReviewsComponent)
       },
       {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/merchant/analytics/merchant-analytics.component').then(m => m.MerchantAnalyticsComponent)
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/merchant/profile/merchant-profile.component').then(m => m.MerchantProfileComponent)
+      }
+    ]
+  },
+
+  // ── Admin area ─────────────────────────────────────────────────
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./layouts/admin-layout/admin-layout.component')
+        .then(m => m.AdminLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/admin/dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+      },
+      {
+        path: 'merchants',
+        loadComponent: () =>
+          import('./features/admin/merchants/admin-merchants.component').then(m => m.AdminMerchantsComponent)
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/admin-users.component').then(m => m.AdminUsersComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/admin/reports/admin-reports.component').then(m => m.AdminReportsComponent)
       }
     ]
   },

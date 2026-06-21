@@ -1,0 +1,204 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 md:px-8 pt-7 pb-6">
+    <div class="max-w-6xl mx-auto">
+      <p class="text-white/60 text-sm font-medium">Panel de administración</p>
+      <h1 class="text-2xl font-bold text-white mt-0.5">Gestión de comercios</h1>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-4 md:px-8 py-6 flex flex-col gap-4">
+
+    <!-- ── Filters ── -->
+    <div class="flex flex-wrap gap-2">
+      <select [(ngModel)]="activeFilter" (ngModelChange)="applyFilters()"
+        class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+        <option value="">Estado: todos</option>
+        <option value="true">Activos</option>
+        <option value="false">Inactivos</option>
+      </select>
+      <select [(ngModel)]="mpFilter" (ngModelChange)="applyFilters()"
+        class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+        <option value="">Mercado Pago: todos</option>
+        <option value="Connected">Conectado</option>
+        <option value="Disconnected">Desconectado</option>
+        <option value="TokenExpired">Token vencido</option>
+      </select>
+    </div>
+
+    @if (loading()) {
+      <div class="flex justify-center pt-16">
+        <div class="w-8 h-8 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+      </div>
+    }
+
+    @else if (page(); as p) {
+      <!-- ── Table ── -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wide">
+              <tr>
+                <th class="text-left px-5 py-3 font-semibold">Comercio</th>
+                <th class="text-left px-3 font-semibold">Categorías</th>
+                <th class="text-center px-3 font-semibold">MP</th>
+                <th class="text-right px-3 font-semibold">Órdenes</th>
+                <th class="text-right px-3 font-semibold">Comisión</th>
+                <th class="text-right px-3 font-semibold">Rating</th>
+                <th class="text-center px-3 font-semibold">Estado</th>
+                <th class="px-5"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (m of p.items; track m.id) {
+                <tr class="hover:bg-gray-50/60" [class.opacity-50]="!m.isActive">
+                  <td class="px-5 py-3.5">
+                    <p class="font-semibold text-gray-800">{{ m.businessName }}</p>
+                    <p class="text-xs text-gray-400">{{ m.email }} · {{ m.cuit }}</p>
+                  </td>
+                  <td class="px-3">
+                    <div class="flex flex-wrap gap-1">
+                      @for (c of m.categories; track c) {
+                        <span class="text-[10px] bg-lime/50 text-hunter px-2 py-0.5 rounded-full">{{ c }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="text-center px-3 text-xs text-gray-500">{{ statusLabel(m.mpConnectionStatus) }}</td>
+                  <td class="text-right px-3 text-gray-600">{{ m.totalOrders }}</td>
+                  <td class="text-right px-3 font-semibold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</td>
+                  <td class="text-right px-3 text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</td>
+                  <td class="text-center px-3">
+                    @if (m.isActive) {
+                      <span class="text-[11px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">Activo</span>
+                    } @else {
+                      <span class="text-[11px] bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">Inactivo</span>
+                    }
+                  </td>
+                  <td class="px-5 text-right">
+                    <button (click)="openDetail(m.id)" class="text-xs text-fern font-medium hover:underline whitespace-nowrap">Ver detalle</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="8" class="text-center text-gray-400 py-10 text-sm">No hay comercios para los filtros aplicados.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Pagination ── -->
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-gray-400">{{ p.totalItems }} comercios · página {{ p.page }} de {{ p.totalPages || 1 }}</span>
+        @if (p.totalPages > 1) {
+          <div class="flex items-center gap-2">
+            <button (click)="setPage(p.page - 1)" [disabled]="p.page === 1"
+              class="flex items-center gap-1 text-gray-500 disabled:opacity-30 hover:text-evergreen disabled:cursor-not-allowed">
+              <svg lucideChevronLeft class="w-4 h-4"></svg> Anterior
+            </button>
+            <button (click)="setPage(p.page + 1)" [disabled]="p.page === p.totalPages"
+              class="flex items-center gap-1 text-gray-500 disabled:opacity-30 hover:text-evergreen disabled:cursor-not-allowed">
+              Siguiente <svg lucideChevronRight class="w-4 h-4"></svg>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ══════════ DETAIL MODAL ══════════ -->
+@if (detail() !== null || detailLoading()) {
+  <div class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-sm" (click)="closeDetail()">
+    <div class="bg-white w-full max-w-2xl rounded-t-3xl md:rounded-3xl shadow-xl max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+
+      @if (detailLoading()) {
+        <div class="flex justify-center py-20">
+          <div class="w-8 h-8 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+        </div>
+      }
+
+      @else if (detail(); as m) {
+        <!-- Header -->
+        <div class="bg-evergreen px-6 pt-6 pb-5 rounded-t-3xl md:rounded-t-3xl flex items-start justify-between sticky top-0">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-lime/20 grid place-items-center">
+              <svg lucideStore class="w-5 h-5 text-lime"></svg>
+            </div>
+            <div>
+              <h2 class="text-white font-bold text-lg leading-tight">{{ m.businessName }}</h2>
+              <p class="text-white/60 text-xs">{{ m.email }} · {{ m.cuit }}</p>
+            </div>
+          </div>
+          <button (click)="closeDetail()" class="p-1.5 rounded-full text-white/60 hover:bg-white/10">
+            <svg lucideX class="w-5 h-5"></svg>
+          </button>
+        </div>
+
+        <div class="p-6 flex flex-col gap-5">
+          <!-- KPIs -->
+          <div class="grid grid-cols-4 gap-3">
+            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalGmv | number:'1.0-0' }}</p><p class="text-[10px] text-gray-400 mt-0.5">GMV total</p></div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</p><p class="text-[10px] text-gray-400 mt-0.5">Comisión</p></div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</p><p class="text-[10px] text-gray-400 mt-0.5">{{ m.reviewCount }} reseñas</p></div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">{{ m.activePacks }}</p><p class="text-[10px] text-gray-400 mt-0.5">Packs activos</p></div>
+          </div>
+
+          <!-- Contact + status -->
+          <div class="flex items-center justify-between text-sm bg-gray-50 rounded-xl px-4 py-3">
+            <div>
+              <p class="text-gray-600">{{ m.address }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ m.contactPhone }} · MP: {{ statusLabel(m.mpConnectionStatus) }}</p>
+            </div>
+            <button (click)="toggleStatus(m)" [disabled]="busy()"
+              class="text-xs font-semibold px-3 py-2 rounded-lg border transition-colors disabled:opacity-50"
+              [class]="m.isActive
+                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'">
+              {{ m.isActive ? 'Desactivar comercio' : 'Activar comercio' }}
+            </button>
+          </div>
+
+          <!-- Recent orders -->
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Órdenes recientes</p>
+            @if (m.recentOrders.length) {
+              <div class="border border-gray-100 rounded-xl divide-y divide-gray-50 text-sm">
+                @for (o of m.recentOrders; track o.id) {
+                  <div class="flex items-center justify-between px-4 py-2.5">
+                    <div>
+                      <span class="text-gray-700">{{ o.consumerName }}</span>
+                      <span class="text-xs text-gray-400 ml-2">{{ formatDate(o.createdAt) }} · {{ o.orderStatus }}</span>
+                    </div>
+                    <span class="font-medium text-gray-700">${{ o.totalAmount | number:'1.0-0' }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-gray-400 text-sm italic">Sin órdenes registradas.</p>
+            }
+          </div>
+
+          <!-- MP logs -->
+          <div>
+            <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Logs renovación token MP</p>
+            @if (m.mpRefreshLogs.length) {
+              <div class="border border-gray-100 rounded-xl divide-y divide-gray-50 text-sm max-h-40 overflow-y-auto">
+                @for (log of m.mpRefreshLogs; track log.createdAt) {
+                  <div class="flex items-center justify-between px-4 py-2">
+                    <span [class]="log.success ? 'text-green-600' : 'text-red-500'">
+                      {{ log.success ? '✓ Renovado' : '✗ ' + (log.errorMessage ?? 'Error') }}
+                    </span>
+                    <span class="text-xs text-gray-400">{{ formatDate(log.createdAt) }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-gray-400 text-sm italic">Sin registros de renovación todavía.</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

@@ -1,0 +1,232 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 md:px-8 pt-7 pb-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <p class="text-white/60 text-sm font-medium">Panel de administración</p>
+        <h1 class="text-2xl font-bold text-white mt-0.5">Dashboard global</h1>
+        @if (data(); as d) {
+          <p class="text-white/50 text-xs mt-1">{{ d.rangeLabel }}</p>
+        }
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-2">
+        <input type="date" [(ngModel)]="from"
+          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
+        <span class="text-white/40">→</span>
+        <input type="date" [(ngModel)]="to"
+          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
+        <select [(ngModel)]="granularity"
+          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]">
+          <option class="text-gray-800" value="Day">Por día</option>
+          <option class="text-gray-800" value="Week">Por semana</option>
+          <option class="text-gray-800" value="Month">Por mes</option>
+        </select>
+        <button (click)="load()"
+          class="flex items-center gap-1.5 bg-lime text-evergreen text-sm font-semibold rounded-lg px-4 py-2 hover:bg-lime/90 transition-colors">
+          <svg lucideRefreshCw class="w-4 h-4"></svg>
+          Aplicar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center pt-24">
+      <div class="w-10 h-10 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+    </div>
+  }
+
+  @else if (error()) {
+    <div class="flex flex-col items-center gap-3 pt-24">
+      <p class="text-gray-400 text-sm">{{ error() }}</p>
+      <button (click)="load()" class="text-evergreen text-sm font-semibold underline">Reintentar</button>
+    </div>
+  }
+
+  @else if (data(); as d) {
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-6 flex flex-col gap-5">
+
+      <!-- ── Money KPIs ── -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-evergreen text-white rounded-2xl p-5">
+          <p class="text-[11px] text-lime/80 uppercase tracking-wide font-semibold">GMV · ventas brutas</p>
+          <p class="text-3xl font-bold mt-2 leading-none">${{ d.gmv | number:'1.0-0' }}</p>
+          <p class="text-xs text-white/50 mt-1.5">{{ d.totalOrders }} órdenes</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ingresos plataforma</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.platformRevenue | number:'1.0-0' }}</p>
+          <p class="text-xs text-fern mt-1.5">comisión marketplace</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ganancias comercios</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.merchantEarnings | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-1.5">neto a comercios</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ticket promedio</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.averageOrderValue | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-1.5">por orden</p>
+        </div>
+      </div>
+
+      <!-- ── Secondary KPIs ── -->
+      <div class="grid grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-evergreen">{{ d.completedOrders }}</p>
+          <p class="text-[11px] text-gray-400 mt-1">Completadas</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-red-500">{{ d.cancelledOrders }}</p>
+          <p class="text-[11px] text-gray-400 mt-1">Canceladas</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-evergreen">{{ d.pickupRate | number:'1.0-1' }}%</p>
+          <p class="text-[11px] text-gray-400 mt-1">Tasa retiro</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-evergreen">{{ d.activeMerchants }}/{{ d.totalMerchants }}</p>
+          <p class="text-[11px] text-gray-400 mt-1">Comercios</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-evergreen">{{ d.activeConsumers }}/{{ d.totalConsumers }}</p>
+          <p class="text-[11px] text-gray-400 mt-1">Consumidores</p>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 text-center">
+          <p class="text-2xl font-bold text-amber-500">{{ d.averageRating | number:'1.1-1' }}★</p>
+          <p class="text-[11px] text-gray-400 mt-1">{{ d.reviewCount }} reseñas</p>
+        </div>
+      </div>
+
+      <!-- ── Activity chart + category breakdown ── -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Activity bars -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-5">
+          <div class="flex items-start justify-between mb-5">
+            <div>
+              <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                <svg lucideTrendingUp class="w-4 h-4 text-fern"></svg> Actividad — GMV por período
+              </h3>
+              <p class="text-xs text-gray-400 mt-0.5">Ventas brutas y órdenes en el rango</p>
+            </div>
+          </div>
+
+          @if (chartBars().length) {
+            <div class="flex items-end gap-1 overflow-x-auto pb-1" style="height: 9rem">
+              @for (bar of chartBars(); track bar.label) {
+                <div class="flex-1 min-w-[14px] flex flex-col items-center justify-end h-full group relative">
+                  <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
+                    ${{ bar.value | number:'1.0-0' }} · {{ bar.orders }} ord.
+                  </div>
+                  <div class="w-full rounded-t-md transition-all duration-300"
+                    [style.height.%]="bar.heightPct"
+                    [class]="bar.value === 0 ? 'bg-gray-100' : 'bg-fern hover:bg-evergreen'"></div>
+                </div>
+              }
+            </div>
+            <div class="flex gap-1 mt-2">
+              @for (bar of chartBars(); track bar.label) {
+                <div class="flex-1 min-w-[14px] text-center">
+                  <span class="text-[9px] text-gray-400">{{ bar.label }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-gray-400 text-sm text-center py-10">Sin actividad en el período.</p>
+          }
+        </div>
+
+        <!-- Category distribution -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-bold text-gray-800 mb-4">Por categoría</h3>
+          @if (categoryBars().length) {
+            <div class="flex flex-col gap-3">
+              @for (cat of categoryBars(); track cat.category) {
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="font-medium text-gray-600">{{ cat.category }}</span>
+                    <span class="text-gray-400">${{ cat.gmv | number:'1.0-0' }} · {{ cat.orders }}</span>
+                  </div>
+                  <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-fern rounded-full" [style.width.%]="cat.widthPct"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-gray-400 text-sm py-6 text-center">Sin datos.</p>
+          }
+        </div>
+      </div>
+
+      <!-- ── Ranking + alerts ── -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Top merchants -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden">
+          <h3 class="font-bold text-gray-800 px-5 pt-5 pb-3 flex items-center gap-2">
+            <svg lucideStore class="w-4 h-4 text-fern"></svg> Top comercios por ingresos
+          </h3>
+          @if (d.topMerchantsByRevenue.length) {
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wide">
+                <tr>
+                  <th class="text-left px-5 py-2.5 font-semibold">Comercio</th>
+                  <th class="text-right px-3 font-semibold">Órdenes</th>
+                  <th class="text-right px-3 font-semibold">GMV</th>
+                  <th class="text-right px-3 font-semibold">Comisión</th>
+                  <th class="text-right px-5 font-semibold">Rating</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50">
+                @for (m of d.topMerchantsByRevenue; track m.merchantId; let i = $index) {
+                  <tr class="hover:bg-gray-50/60">
+                    <td class="px-5 py-3 font-medium text-gray-800">
+                      <span class="text-gray-300 mr-1.5">{{ i + 1 }}.</span>{{ m.businessName }}
+                    </td>
+                    <td class="text-right px-3 text-gray-600">{{ m.orders }}</td>
+                    <td class="text-right px-3 text-gray-600">${{ m.gmv | number:'1.0-0' }}</td>
+                    <td class="text-right px-3 font-semibold text-evergreen">${{ m.platformRevenue | number:'1.0-0' }}</td>
+                    <td class="text-right px-5 text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <p class="text-gray-400 text-sm px-5 py-8 text-center">Sin ventas en el período.</p>
+          }
+        </div>
+
+        <!-- Alerts -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg lucideTriangleAlert class="w-4 h-4 text-amber-500"></svg> Alertas
+          </h3>
+          @if (d.alerts.length) {
+            <div class="flex flex-col gap-3">
+              @for (alert of d.alerts; track alert.title + alert.detail) {
+                <div class="flex gap-2.5 p-3 rounded-xl border {{ alertClasses(alert.severity) }}">
+                  <svg lucideInfo class="w-4 h-4 shrink-0 mt-0.5 opacity-70"></svg>
+                  <div>
+                    <p class="text-sm font-semibold leading-tight">{{ alert.title }}</p>
+                    <p class="text-xs opacity-70 mt-0.5">{{ alert.detail }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="flex flex-col items-center justify-center py-8 text-center">
+              <svg lucidePackage class="w-8 h-8 text-gray-200 mb-2"></svg>
+              <p class="text-gray-400 text-sm">Todo en orden, sin alertas.</p>
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+</div>

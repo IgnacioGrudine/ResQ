@@ -49,7 +49,8 @@ export class LoginComponent {
     this.authService.login({ email: email!, password: password! }).subscribe({
       next: res => {
         this.loading.set(false);
-        this.router.navigate([res.role === 'Merchant' ? '/panel' : '/home']);
+        const target = res.role === 'Admin' ? '/admin' : res.role === 'Merchant' ? '/panel' : '/home';
+        this.router.navigate([target]);
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

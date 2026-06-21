@@ -1,0 +1,81 @@
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { AdminService } from '../../../core/services/admin.service';
+import { AdminDashboard, ReportGranularity } from '../../../core/models/admin.models';
+import {
+  LucideRefreshCw, LucideTrendingUp, LucideStore, LucideUsers,
+  LucideStar, LucidePackage, LucideTriangleAlert, LucideInfo
+} from '@lucide/angular';
+
+interface Bar { label: string; value: number; orders: number; heightPct: number; }
+
+@Component({
+  selector: 'app-admin-dashboard',
+  standalone: true,
+  imports: [
+    DecimalPipe, FormsModule,
+    LucideRefreshCw, LucideTrendingUp, LucideStore, LucideUsers,
+    LucideStar, LucidePackage, LucideTriangleAlert, LucideInfo
+  ],
+  templateUrl: './admin-dashboard.component.html'
+})
+export class AdminDashboardComponent implements OnInit {
+  private readonly admin = inject(AdminService);
+
+  readonly data    = signal<AdminDashboard | null>(null);
+  readonly loading = signal(true);
+  readonly error   = signal<string | null>(null);
+
+  from        = isoDaysAgo(30);
+  to          = isoToday();
+  granularity: ReportGranularity = 'Day';
+
+  /** GMV bars for the activity chart, height-normalized against the period peak. */
+  readonly chartBars = computed<Bar[]>(() => {
+    const series = this.data()?.activitySeries ?? [];
+    const max = Math.max(...series.map(s => s.gmv), 1);
+    return series.map(s => ({
+      label:     s.label,
+      value:     s.gmv,
+      orders:    s.orders,
+      heightPct: s.gmv === 0 ? 0 : Math.max(Math.round((s.gmv / max) * 100), 6)
+    }));
+  });
+
+  /** Category rows with width-normalized bars against the top category. */
+  readonly categoryBars = computed(() => {
+    const cats = this.data()?.categoryDistribution ?? [];
+    const max = Math.max(...cats.map(c => c.gmv), 1);
+    return cats.map(c => ({ ...c, widthPct: Math.max(Math.round((c.gmv / max) * 100), 4) }));
+  });
+
+  ngOnInit(): void { this.load(); }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.admin.getDashboard({ from: this.from, to: this.to, granularity: this.granularity }).subscribe({
+      next:  d  => { this.data.set(d); this.loading.set(false); },
+      error: () => { this.error.set('No se pudo cargar el dashboard.'); this.loading.set(false); }
+    });
+  }
+
+  alertClasses(severity: string): string {
+    switch (severity) {
+      case 'critical': return 'bg-red-50 border-red-100 text-red-900';
+      case 'warning':  return 'bg-amber-50 border-amber-100 text-amber-900';
+      default:         return 'bg-blue-50 border-blue-100 text-blue-900';
+    }
+  }
+}
+
+function isoToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
