@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ConsumerService } from '../../../core/services/consumer.service';
 import { Order, OrderStatus } from '../../../core/models/consumer.models';
-import { LucideShoppingBag, LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
+import { LucideShoppingBag, LucideChevronLeft, LucideChevronRight, LucideStar, LucideX } from '@lucide/angular';
 
 type FilterTab = 'active' | 'cancelled' | 'completed' | 'all';
 
@@ -11,7 +12,7 @@ const PAGE_SIZE = 5;
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, LucideShoppingBag, LucideChevronLeft, LucideChevronRight],
+  imports: [DecimalPipe, FormsModule, LucideShoppingBag, LucideChevronLeft, LucideChevronRight, LucideStar, LucideX],
   templateUrl: './orders.component.html'
 })
 export class OrdersComponent implements OnInit {
@@ -19,6 +20,13 @@ export class OrdersComponent implements OnInit {
 
   readonly orders  = signal<Order[]>([]);
   readonly loading = signal(true);
+
+  // Review modal state
+  reviewOrderId: number | null = null;
+  reviewRating   = 0;
+  hoverRating    = 0;
+  reviewComment  = '';
+  submitting     = false;
 
   private _activeTab: FilterTab = 'active';
   page = 1;
@@ -82,5 +90,41 @@ export class OrdersComponent implements OnInit {
 
   formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ── Review modal ─────────────────────────────────────────────────────────
+
+  openReviewModal(orderId: number): void {
+    this.reviewOrderId = orderId;
+    this.reviewRating  = 0;
+    this.hoverRating   = 0;
+    this.reviewComment = '';
+    this.submitting    = false;
+  }
+
+  closeReviewModal(): void {
+    this.reviewOrderId = null;
+  }
+
+  setRating(star: number): void {
+    this.reviewRating = star;
+  }
+
+  submitReview(): void {
+    if (!this.reviewOrderId || this.reviewRating === 0 || this.submitting) return;
+
+    this.submitting = true;
+    this.consumer.submitReview(this.reviewOrderId, {
+      rating:  this.reviewRating,
+      comment: this.reviewComment.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.orders.update(list =>
+          list.map(o => o.id === this.reviewOrderId ? { ...o, hasReview: true } : o)
+        );
+        this.closeReviewModal();
+      },
+      error: () => { this.submitting = false; }
+    });
   }
 }

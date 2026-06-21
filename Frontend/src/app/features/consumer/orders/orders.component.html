@@ -78,6 +78,24 @@
               <p class="text-xs text-gray-500 mt-1">Mostrá este código al retirar tu pedido</p>
             </div>
           }
+
+          <!-- Review CTA (only for PickedUp orders without a review yet) -->
+          @if (order.orderStatus === 'PickedUp' && !order.hasReview) {
+            <div class="mx-4 mb-4">
+              <button (click)="openReviewModal(order.id)"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-evergreen/5 border border-evergreen/20 text-evergreen text-sm font-semibold hover:bg-evergreen/10 transition-colors">
+                <svg lucideStar class="w-4 h-4"></svg>
+                Dejar reseña
+              </button>
+            </div>
+          }
+
+          @if (order.orderStatus === 'PickedUp' && order.hasReview) {
+            <div class="mx-4 mb-4 flex items-center gap-1.5 justify-center text-xs text-gray-400">
+              <svg lucideStar class="w-3.5 h-3.5 fill-amber-400 text-amber-400"></svg>
+              Reseña enviada
+            </div>
+          }
         </div>
       }
 
@@ -105,3 +123,63 @@
 
   </div>
 </div>
+
+<!-- ── Review Modal ── -->
+@if (reviewOrderId !== null) {
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+       (click)="closeReviewModal()">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-xl p-6"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-bold text-gray-800">Dejá tu reseña</h2>
+        <button (click)="closeReviewModal()"
+          class="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 transition-colors">
+          <svg lucideX class="w-5 h-5"></svg>
+        </button>
+      </div>
+
+      <!-- Stars -->
+      <div class="flex justify-center gap-2 mb-5">
+        @for (star of [1,2,3,4,5]; track star) {
+          <button (click)="setRating(star)"
+                  (mouseenter)="hoverRating = star"
+                  (mouseleave)="hoverRating = 0"
+                  class="transition-transform hover:scale-110">
+            <svg lucideStar class="w-9 h-9 transition-colors"
+              [class]="(hoverRating || reviewRating) >= star
+                ? 'fill-amber-400 text-amber-400'
+                : 'text-gray-200'">
+            </svg>
+          </button>
+        }
+      </div>
+
+      <!-- Comment -->
+      <textarea
+        [(ngModel)]="reviewComment"
+        placeholder="¿Qué te pareció el pack? (opcional)"
+        rows="3"
+        maxlength="500"
+        class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-evergreen/30 focus:border-evergreen/50 transition mb-4">
+      </textarea>
+
+      <!-- Submit -->
+      <button (click)="submitReview()"
+        [disabled]="reviewRating === 0 || submitting"
+        class="w-full py-3 rounded-xl font-semibold text-sm transition-all
+               bg-evergreen text-white hover:bg-evergreen/90
+               disabled:opacity-40 disabled:cursor-not-allowed">
+        @if (submitting) {
+          <span class="flex items-center justify-center gap-2">
+            <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            Enviando...
+          </span>
+        } @else {
+          Enviar reseña
+        }
+      </button>
+    </div>
+  </div>
+}

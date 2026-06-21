@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ResQ.API.DTOs.Consumers;
 using ResQ.API.DTOs.Orders;
+using ResQ.API.DTOs.Reviews;
 using ResQ.API.Extensions;
 using ResQ.API.Services.Consumers;
+using ResQ.API.Services.Reviews;
 
 namespace ResQ.API.Controllers;
 
@@ -15,7 +17,7 @@ namespace ResQ.API.Controllers;
 [ApiController]
 [Route("api/consumers")]
 [Authorize(Roles = "Consumer")]
-public class ConsumersController(IConsumerService consumerService) : ControllerBase
+public class ConsumersController(IConsumerService consumerService, IReviewService reviewService) : ControllerBase
 {
     /// <summary>
     /// Returns the authenticated consumer's profile, including name, phone, and account metadata.
@@ -52,4 +54,22 @@ public class ConsumersController(IConsumerService consumerService) : ControllerB
     [HttpGet("me/orders")]
     public async Task<ActionResult<IEnumerable<OrderSummaryResponse>>> GetMyOrders(CancellationToken ct)
         => (await consumerService.GetMyOrdersAsync(User.GetProfileId(), ct)).ToActionResult();
+
+    /// <summary>
+    /// Submits a review for a completed (PickedUp) order on behalf of the authenticated consumer.
+    /// One review per order is allowed. Requires role: <c>Consumer</c>.
+    /// </summary>
+    /// <param name="orderId">The ID of the order to review.</param>
+    /// <param name="request">Rating (1-5) and optional comment.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>201 Created with the new <see cref="ReviewResponse"/>; or 400/403/404/409 on failure.</returns>
+    [HttpPost("me/orders/{orderId:int}/review")]
+    public async Task<ActionResult<ReviewResponse>> CreateReview(
+        int orderId, [FromBody] CreateReviewRequest request, CancellationToken ct)
+    {
+        var result = await reviewService.CreateReviewAsync(User.GetProfileId(), orderId, request, ct);
+        return result.IsSuccess
+            ? CreatedAtAction(nameof(CreateReview), new { orderId }, result.Value)
+            : result.ToActionResult();
+    }
 }

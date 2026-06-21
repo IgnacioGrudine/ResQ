@@ -15,6 +15,7 @@ export interface Order {
   pickupCode?: string;
   createdAt: string;
   items: OrderItem[];
+  hasReview: boolean;
 }
 
 export interface ConsumerProfile {
