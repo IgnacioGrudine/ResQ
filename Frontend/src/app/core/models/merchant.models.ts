@@ -29,6 +29,31 @@ export interface MerchantDashboard {
   weeklySales: DailySales[];
 }
 
+// ── Analytics (filterable) ──
+export interface RatingBucket { stars: number; count: number; }
+export interface TopProduct   { productId: number; name: string; unitsSold: number; revenue: number; }
+
+export interface MerchantAnalytics {
+  rangeLabel: string;
+  gmv: number;
+  earnings: number;
+  averageOrderValue: number;
+  previousEarnings: number;
+  earningsGrowthPct: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  cancellationRate: number;
+  packsSold: number;
+  averageRating: number;
+  reviewCount: number;
+  ratingDistribution: RatingBucket[];
+  topProducts: TopProduct[];
+  activitySeries: DailySales[];
+}
+
+export type ReportFormat = 'Pdf' | 'Excel';
+export type AnalyticsGranularity = 'Day' | 'Week' | 'Month';
+
 // ── Packs (own products, include isActive) ──
 export interface MerchantProduct {
   id: number;

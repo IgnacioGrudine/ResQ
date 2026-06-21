@@ -7,6 +7,7 @@ import {
   LucideClipboardList,
   LucideStar,
   LucideStore,
+  LucideTrendingUp,
   LucideLogOut
 } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
@@ -16,7 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore, LucideLogOut
+    LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore, LucideTrendingUp, LucideLogOut
   ],
   templateUrl: './merchant-layout.component.html'
 })

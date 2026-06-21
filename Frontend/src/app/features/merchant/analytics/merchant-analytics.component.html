@@ -1,0 +1,156 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Header ── -->
+  <div class="bg-evergreen px-4 md:px-8 pt-7 pb-6">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+      <div>
+        <p class="text-white/60 text-sm font-medium">Mi comercio</p>
+        <h1 class="text-2xl font-bold text-white mt-0.5">Analytics</h1>
+        @if (data(); as d) { <p class="text-white/50 text-xs mt-1">{{ d.rangeLabel }}</p> }
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <input type="date" [(ngModel)]="from"
+          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
+        <span class="text-white/40">→</span>
+        <input type="date" [(ngModel)]="to"
+          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
+        <select [(ngModel)]="granularity"
+          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]">
+          <option class="text-gray-800" value="Day">Por día</option>
+          <option class="text-gray-800" value="Week">Por semana</option>
+          <option class="text-gray-800" value="Month">Por mes</option>
+        </select>
+        <button (click)="load()"
+          class="flex items-center gap-1.5 bg-lime text-evergreen text-sm font-semibold rounded-lg px-4 py-2 hover:bg-lime/90 transition-colors">
+          <svg lucideRefreshCw class="w-4 h-4"></svg> Aplicar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="flex justify-center pt-24">
+      <div class="w-10 h-10 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+    </div>
+  }
+
+  @else if (error()) {
+    <div class="flex flex-col items-center gap-3 pt-24">
+      <p class="text-gray-400 text-sm">{{ error() }}</p>
+      <button (click)="load()" class="text-evergreen text-sm font-semibold underline">Reintentar</button>
+    </div>
+  }
+
+  @else if (data(); as d) {
+    <div class="max-w-5xl mx-auto px-4 md:px-8 py-6 flex flex-col gap-5">
+
+      <!-- ── Export buttons ── -->
+      <div class="flex justify-end gap-2">
+        <button (click)="download('Pdf')" class="bg-red-50 text-red-600 border border-red-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-red-100 transition-colors">Exportar PDF</button>
+        <button (click)="download('Excel')" class="bg-green-50 text-green-700 border border-green-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-green-100 transition-colors">Exportar Excel</button>
+      </div>
+
+      <!-- ── KPIs ── -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="bg-evergreen text-white rounded-2xl p-5">
+          <p class="text-[11px] text-lime/80 uppercase tracking-wide font-semibold">Ganancias del período</p>
+          <p class="text-3xl font-bold mt-2 leading-none">${{ d.earnings | number:'1.0-0' }}</p>
+          <p class="text-xs mt-1.5 flex items-center gap-1"
+            [class]="d.earningsGrowthPct >= 0 ? 'text-lime' : 'text-red-300'">
+            @if (d.earningsGrowthPct >= 0) { <svg lucideTrendingUp class="w-3.5 h-3.5"></svg> }
+            @else { <svg lucideTrendingDown class="w-3.5 h-3.5"></svg> }
+            {{ d.earningsGrowthPct | number:'1.0-1' }}% vs. período anterior
+          </p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Órdenes completadas</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">{{ d.completedOrders }}</p>
+          <p class="text-xs text-gray-400 mt-1.5">{{ d.packsSold }} packs vendidos</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ticket promedio</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.averageOrderValue | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-1.5">GMV ${{ d.gmv | number:'1.0-0' }}</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border border-gray-100">
+          <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Rating</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-amber-500">{{ d.averageRating | number:'1.1-1' }}★</p>
+          <p class="text-xs text-gray-400 mt-1.5">{{ d.reviewCount }} reseñas</p>
+        </div>
+      </div>
+
+      <!-- ── Earnings chart + rating distribution ── -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-bold text-gray-800 flex items-center gap-2 mb-5">
+            <svg lucideTrendingUp class="w-4 h-4 text-fern"></svg> Ganancias por período
+          </h3>
+          @if (chartBars().length) {
+            <div class="flex items-end gap-1 overflow-x-auto pb-1" style="height: 9rem">
+              @for (bar of chartBars(); track bar.label) {
+                <div class="flex-1 min-w-[14px] flex flex-col items-center justify-end h-full group relative">
+                  <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
+                    ${{ bar.income | number:'1.0-0' }} · {{ bar.orders }} ord.
+                  </div>
+                  <div class="w-full rounded-t-md transition-all duration-300"
+                    [style.height.%]="bar.heightPct"
+                    [class]="bar.income === 0 ? 'bg-gray-100' : 'bg-fern hover:bg-evergreen'"></div>
+                </div>
+              }
+            </div>
+            <div class="flex gap-1 mt-2">
+              @for (bar of chartBars(); track bar.label) {
+                <div class="flex-1 min-w-[14px] text-center"><span class="text-[9px] text-gray-400">{{ bar.label }}</span></div>
+              }
+            </div>
+          } @else {
+            <p class="text-gray-400 text-sm text-center py-10">Sin ventas en el período.</p>
+          }
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <svg lucideStar class="w-4 h-4 text-amber-400 fill-amber-400"></svg> Distribución de ratings
+          </h3>
+          <div class="flex flex-col gap-2.5">
+            @for (row of ratingRows(); track row.stars) {
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500 w-6">{{ row.stars }}★</span>
+                <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-amber-400 rounded-full" [style.width.%]="row.widthPct"></div>
+                </div>
+                <span class="text-xs text-gray-400 w-5 text-right">{{ row.count }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Top products ── -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <h3 class="font-bold text-gray-800 px-5 pt-5 pb-3 flex items-center gap-2">
+          <svg lucidePackage class="w-4 h-4 text-fern"></svg> Packs más vendidos
+        </h3>
+        @if (d.topProducts.length) {
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wide">
+              <tr><th class="text-left px-5 py-2.5 font-semibold">Pack</th><th class="text-right px-3 font-semibold">Unidades</th><th class="text-right px-5 font-semibold">Ingresos</th></tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (p of d.topProducts; track p.productId) {
+                <tr class="hover:bg-gray-50/60">
+                  <td class="px-5 py-3 font-medium text-gray-800">{{ p.name }}</td>
+                  <td class="text-right px-3 text-gray-600">{{ p.unitsSold }}</td>
+                  <td class="text-right px-5 font-semibold text-evergreen">${{ p.revenue | number:'1.0-0' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="text-gray-400 text-sm px-5 py-8 text-center">Sin ventas en el período.</p>
+        }
+      </div>
+
+    </div>
+  }
+</div>

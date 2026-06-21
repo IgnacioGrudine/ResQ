@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   MerchantDashboard,
@@ -8,7 +8,10 @@ import {
   MerchantReview,
   MerchantProfile,
   ProductPayload,
-  UpdateMerchantProfilePayload
+  UpdateMerchantProfilePayload,
+  MerchantAnalytics,
+  AnalyticsGranularity,
+  ReportFormat
 } from '../models/merchant.models';
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +22,30 @@ export class MerchantService {
   // ── Dashboard ──
   getDashboard(): Observable<MerchantDashboard> {
     return this.http.get<MerchantDashboard>(`${this.base}/dashboard`);
+  }
+
+  // ── Analytics (filterable) ──
+  getAnalytics(from: string, to: string, granularity: AnalyticsGranularity): Observable<MerchantAnalytics> {
+    const params = new HttpParams().set('from', from).set('to', to).set('granularity', granularity);
+    return this.http.get<MerchantAnalytics>(`${this.base}/analytics`, { params });
+  }
+
+  downloadSalesReport(from: string, to: string, format: ReportFormat): void {
+    const params = new HttpParams().set('from', from).set('to', to).set('format', format);
+    this.http.get(`${this.base}/reports/sales`, { params, responseType: 'blob', observe: 'response' })
+      .subscribe(res => {
+        const disposition = res.headers.get('Content-Disposition') ?? '';
+        const match = /filename="?([^"]+)"?/.exec(disposition);
+        const fallback = `resq-ventas.${format === 'Excel' ? 'xlsx' : 'pdf'}`;
+        const objectUrl = URL.createObjectURL(res.body!);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = match?.[1] ?? fallback;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(objectUrl);
+      });
   }
 
   // ── Packs ──
