@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX } from '@lucide/angular';
+import { LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX, LucideMap } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsumerService } from '../../core/services/consumer.service';
 import { Order } from '../../core/models/consumer.models';
@@ -10,7 +10,7 @@ import { Order } from '../../core/models/consumer.models';
   selector: 'app-consumer-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule,
-            LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX],
+            LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX, LucideMap],
   templateUrl: './consumer-layout.component.html'
 })
 export class ConsumerLayoutComponent implements OnInit {

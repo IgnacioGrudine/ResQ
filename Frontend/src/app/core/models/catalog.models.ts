@@ -16,6 +16,21 @@ export interface PackListItem {
   distanceKm?: number;
 }
 
+export interface MerchantListItem {
+  id: number;
+  businessName: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  contactPhone: string;
+  photoUrl?: string;
+  categories: string[];
+  averageRating: number;
+  reviewCount: number;
+  minSalePrice: number;
+  activeProductCount: number;
+}
+
 export interface Review {
   id: number;
   rating: number;

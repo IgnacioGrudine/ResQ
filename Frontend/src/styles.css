@@ -15,9 +15,16 @@
   box-sizing: border-box;
 }
 
+/* Used by the consumer map merchant card (animate-[slideUp_...]) */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
 html, body {
   height: 100%;
   margin: 0;
+  font-size: 14px;
   font-family: var(--font-sans);
   background-color: #ffffff;
   color: #132A13;

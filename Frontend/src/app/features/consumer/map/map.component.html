@@ -1,0 +1,94 @@
+<div class="relative h-[calc(100vh-4rem)] md:h-screen w-full bg-gray-100">
+
+  <!-- ── Header overlay ── -->
+  <div class="absolute top-0 inset-x-0 z-10 pointer-events-none">
+    <div class="m-4 bg-white/95 backdrop-blur rounded-2xl shadow-sm px-4 py-3 flex items-center gap-2 pointer-events-auto">
+      <svg lucideMapPin class="w-5 h-5 text-evergreen shrink-0"></svg>
+      <div class="min-w-0">
+        <h1 class="font-bold text-gray-800 text-sm leading-tight">Comercios cerca tuyo</h1>
+        <p class="text-gray-400 text-xs">Tocá un pin para ver los packs disponibles</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Map container ── -->
+  <div #mapEl class="absolute inset-0 w-full h-full"></div>
+
+  <!-- ── Loading ── -->
+  @if (loading()) {
+    <div class="absolute inset-0 z-20 flex justify-center items-center bg-gray-50">
+      <div class="w-10 h-10 border-4 border-evergreen/20 border-t-evergreen rounded-full animate-spin"></div>
+    </div>
+  }
+
+  <!-- ── Error ── -->
+  @if (error()) {
+    <div class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 px-6 text-center bg-gray-50">
+      <svg lucideMapPin class="w-12 h-12 text-gray-200"></svg>
+      <p class="text-gray-500 text-sm">{{ error() }}</p>
+    </div>
+  }
+
+  <!-- ── Merchant card (selected pin) ── -->
+  @if (selected(); as m) {
+    <div class="absolute inset-x-0 bottom-0 z-30 p-4 flex justify-center">
+      <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-[slideUp_0.2s_ease-out]">
+
+        <div class="flex gap-4 p-4">
+          <!-- Photo -->
+          <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-evergreen to-hunter flex items-center justify-center">
+            @if (m.photoUrl) {
+              <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+            } @else {
+              <span class="text-white font-bold text-lg">{{ initials(m.businessName) }}</span>
+            }
+          </div>
+
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start gap-2">
+              <h2 class="font-bold text-gray-800 leading-tight flex-1 min-w-0 truncate">{{ m.businessName }}</h2>
+              <button (click)="closeCard()"
+                class="shrink-0 -mr-1 -mt-1 w-7 h-7 rounded-full flex items-center justify-center text-gray-300 hover:text-gray-500 hover:bg-gray-50 transition-colors">
+                <svg lucideX class="w-4 h-4"></svg>
+              </button>
+            </div>
+
+            <!-- Rating -->
+            <div class="flex items-center gap-1 mt-1">
+              @for (s of stars(m.averageRating); track s) {
+                <svg lucideStar class="w-3.5 h-3.5"
+                  [class]="s <= m.averageRating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
+                </svg>
+              }
+              <span class="text-xs text-gray-400 ml-1">{{ m.averageRating }} ({{ m.reviewCount }})</span>
+            </div>
+
+            <!-- Categories -->
+            @if (m.categories.length) {
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                @for (cat of m.categories; track cat) {
+                  <span class="text-[10px] text-fern bg-lime/40 px-2 py-0.5 rounded-full">{{ cat }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer: price + packs + CTA -->
+        <div class="flex items-center justify-between gap-3 px-4 pb-4">
+          <div>
+            <p class="text-evergreen font-bold">desde ${{ m.minSalePrice | number:'1.0-0' }}</p>
+            <p class="text-gray-400 text-xs">{{ m.activeProductCount }} {{ m.activeProductCount === 1 ? 'pack disponible' : 'packs disponibles' }}</p>
+          </div>
+          <button (click)="openMerchant(m.id)"
+            class="flex items-center gap-1.5 bg-evergreen text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-evergreen/90 transition-colors">
+            Ver comercio
+            <svg lucideChevronRight class="w-4 h-4"></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

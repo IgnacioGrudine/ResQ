@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Category, PackListItem, MerchantDetail } from '../models/catalog.models';
+import { Category, PackListItem, MerchantDetail, MerchantListItem } from '../models/catalog.models';
 
 export interface PackFilters {
   lat?: number;
@@ -37,5 +37,9 @@ export class CatalogService {
 
   getMerchantDetail(id: number): Observable<MerchantDetail> {
     return this.http.get<MerchantDetail>(`/api/catalog/${id}`);
+  }
+
+  getCatalog(): Observable<MerchantListItem[]> {
+    return this.http.get<MerchantListItem[]>('/api/catalog');
   }
 }
