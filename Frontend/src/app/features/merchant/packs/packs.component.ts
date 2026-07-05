@@ -1,8 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { MerchantService } from '../../../core/services/merchant.service';
+import { MercadoPagoService } from '../../../core/services/mercadopago.service';
 import { MerchantProduct, ProductPayload } from '../../../core/models/merchant.models';
 import {
   LucidePackage,
@@ -31,11 +31,12 @@ interface PackForm {
 @Component({
   selector: 'app-merchant-packs',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink],
+  imports: [DecimalPipe, FormsModule, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink],
   templateUrl: './packs.component.html'
 })
 export class PacksComponent implements OnInit {
-  private readonly merchant = inject(MerchantService);
+  private readonly merchant  = inject(MerchantService);
+  private readonly mpService = inject(MercadoPagoService);
 
   @ViewChild('packImageInput') packImageInput!: ElementRef<HTMLInputElement>;
 
@@ -43,7 +44,8 @@ export class PacksComponent implements OnInit {
   readonly loading = signal(true);
 
   /** Whether the merchant has a live Mercado Pago connection. Packs cannot be published without it. */
-  readonly mpConnected = signal(false);
+  readonly mpConnected    = signal(false);
+  readonly mpConnecting   = signal(false);
 
   // Form modal state
   readonly formOpen    = signal(false);
@@ -62,6 +64,14 @@ export class PacksComponent implements OnInit {
     this.load();
     this.merchant.getProfile().subscribe({
       next: p => this.mpConnected.set(p.mpConnectionStatus === 'Connected')
+    });
+  }
+
+  connectMp(): void {
+    this.mpConnecting.set(true);
+    this.mpService.getAuthUrl().subscribe({
+      next:  ({ authUrl }) => { window.location.href = authUrl; },
+      error: () => this.mpConnecting.set(false)
     });
   }
 
