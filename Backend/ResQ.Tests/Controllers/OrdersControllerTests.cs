@@ -8,6 +8,7 @@ using ResQ.API.Common.Errors;
 using ResQ.API.Controllers;
 using ResQ.API.DTOs.Orders;
 using ResQ.API.Services.Orders;
+using ResQ.API.Services.Reviews;
 
 namespace ResQ.Tests.Controllers;
 
@@ -16,6 +17,7 @@ public class OrdersControllerTests
     private const int ConsumerProfileId = 7;
 
     private readonly Mock<IOrderService> _orderService = new();
+    private readonly Mock<IReviewService> _reviewService = new();
 
     private OrdersController CreateSut()
     {
@@ -26,7 +28,7 @@ public class OrdersControllerTests
         };
         var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
 
-        return new OrdersController(_orderService.Object)
+        return new OrdersController(_orderService.Object, _reviewService.Object)
         {
             ControllerContext = new ControllerContext
             {
