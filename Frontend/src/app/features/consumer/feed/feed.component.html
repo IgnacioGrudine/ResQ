@@ -2,7 +2,7 @@
 
   <!-- ── Top bar ── -->
   <div class="sticky top-0 z-10 bg-evergreen shadow-md">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
       <!-- Logo visible only on mobile (sidebar hides it on desktop) -->
       <div class="md:hidden flex items-center gap-1.5 shrink-0">
         <svg lucideLeaf class="w-6 h-6 text-lime"></svg>
@@ -28,7 +28,7 @@
     </div>
   </div>
 
-  <div class="max-w-6xl mx-auto px-4">
+  <div class="max-w-6xl mx-auto px-4 md:px-8">
 
     <!-- ── Category chips ── -->
     <div class="flex gap-2 py-4 overflow-x-auto scrollbar-hide">
@@ -105,7 +105,7 @@
 
     <!-- ── Pack grid ── -->
     @else {
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-8">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 pb-8">
         @for (pack of packs(); track pack.id) {
           <div
             (click)="openPack(pack.id)"

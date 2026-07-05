@@ -22,7 +22,7 @@
   <div class="min-h-screen bg-gray-50">
 
     <!-- ── Header ── -->
-    <div class="bg-evergreen px-4 pt-4 pb-8">
+    <div class="bg-evergreen px-4 md:px-8 pt-4 pb-8">
       <button (click)="goBack()"
         class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white mb-5 hover:bg-white/25 transition-colors">
         <svg lucideArrowLeft class="w-5 h-5"></svg>
@@ -71,7 +71,7 @@
       }
     </div>
 
-    <div class="max-w-2xl mx-auto px-4 -mt-4 flex flex-col gap-5 pb-10">
+    <div class="max-w-2xl mx-auto px-4 md:px-8 -mt-4 flex flex-col gap-5 pb-10">
 
       <!-- ── Mini-mapa ── -->
       <a [href]="'https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude"

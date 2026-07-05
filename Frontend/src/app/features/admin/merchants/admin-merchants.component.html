@@ -34,8 +34,58 @@
     }
 
     @else if (page(); as p) {
-      <!-- ── Table ── -->
-      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+
+      <!-- ── Mobile: stacked cards ── -->
+      <div class="flex flex-col gap-3 lg:hidden">
+        @for (m of p.items; track m.id) {
+          <div class="bg-white rounded-2xl shadow-sm p-4 flex flex-col gap-3" [class.opacity-50]="!m.isActive">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="font-semibold text-gray-800 truncate">{{ m.businessName }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ m.email }} · {{ m.cuit }}</p>
+              </div>
+              @if (m.isActive) {
+                <span class="shrink-0 text-[11px] bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">Activo</span>
+              } @else {
+                <span class="shrink-0 text-[11px] bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">Inactivo</span>
+              }
+            </div>
+
+            @if (m.categories.length) {
+              <div class="flex flex-wrap gap-1">
+                @for (c of m.categories; track c) {
+                  <span class="text-[10px] bg-lime/50 text-hunter px-2 py-0.5 rounded-full">{{ c }}</span>
+                }
+              </div>
+            }
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+              <div class="bg-gray-50 rounded-lg py-2">
+                <p class="text-sm font-semibold text-gray-700">{{ m.totalOrders }}</p>
+                <p class="text-[10px] text-gray-400">Órdenes</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg py-2">
+                <p class="text-sm font-semibold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</p>
+                <p class="text-[10px] text-gray-400">Comisión</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg py-2">
+                <p class="text-sm font-semibold text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</p>
+                <p class="text-[10px] text-gray-400">Rating</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-gray-500">MP: {{ statusLabel(m.mpConnectionStatus) }}</span>
+              <button (click)="openDetail(m.id)" class="text-sm text-fern font-medium hover:underline whitespace-nowrap py-1">Ver detalle</button>
+            </div>
+          </div>
+        } @empty {
+          <div class="bg-white rounded-2xl shadow-sm text-center text-gray-400 py-10 text-sm">No hay comercios para los filtros aplicados.</div>
+        }
+      </div>
+
+      <!-- ── Desktop: table ── -->
+      <div class="hidden lg:block bg-white rounded-2xl shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wide">
@@ -137,7 +187,7 @@
 
         <div class="p-6 flex flex-col gap-5">
           <!-- KPIs -->
-          <div class="grid grid-cols-4 gap-3">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalGmv | number:'1.0-0' }}</p><p class="text-[10px] text-gray-400 mt-0.5">GMV total</p></div>
             <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</p><p class="text-[10px] text-gray-400 mt-0.5">Comisión</p></div>
             <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</p><p class="text-[10px] text-gray-400 mt-0.5">{{ m.reviewCount }} reseñas</p></div>
@@ -145,13 +195,13 @@
           </div>
 
           <!-- Contact + status -->
-          <div class="flex items-center justify-between text-sm bg-gray-50 rounded-xl px-4 py-3">
-            <div>
-              <p class="text-gray-600">{{ m.address }}</p>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm bg-gray-50 rounded-xl px-4 py-3">
+            <div class="min-w-0">
+              <p class="text-gray-600 break-words">{{ m.address }}</p>
               <p class="text-xs text-gray-400 mt-0.5">{{ m.contactPhone }} · MP: {{ statusLabel(m.mpConnectionStatus) }}</p>
             </div>
             <button (click)="toggleStatus(m)" [disabled]="busy()"
-              class="text-xs font-semibold px-3 py-2 rounded-lg border transition-colors disabled:opacity-50"
+              class="shrink-0 text-xs font-semibold px-3 py-2 rounded-lg border transition-colors disabled:opacity-50"
               [class]="m.isActive
                 ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
                 : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'">

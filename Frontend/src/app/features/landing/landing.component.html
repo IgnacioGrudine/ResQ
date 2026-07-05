@@ -2,7 +2,7 @@
 
   <!-- ═══════════════════════════════════════ NAVBAR ═══════════════════════════════════════ -->
   <nav class="sticky top-0 z-50 bg-evergreen shadow-md">
-    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
       <!-- Logo -->
       <a routerLink="/" class="flex items-center gap-2 group">
         <svg lucideLeaf class="w-6 h-6 text-lime"></svg>
@@ -28,8 +28,8 @@
   </nav>
 
   <!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
-  <section class="bg-evergreen text-white py-20 md:py-28">
-    <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+  <section class="bg-evergreen text-white py-14 md:py-28">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 grid md:grid-cols-2 gap-12 items-center">
       <!-- Copy -->
       <div class="flex flex-col gap-6">
         <div class="inline-flex items-center gap-2 bg-hunter px-4 py-2 rounded-full w-fit">
@@ -37,7 +37,7 @@
           <span class="text-lime text-sm font-medium">Plataforma de rescate de alimentos</span>
         </div>
 
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
           Rescatá comida.<br />
           <span class="text-lime">Ahorrá dinero.</span><br />
           Cuidá el planeta.
@@ -49,21 +49,21 @@
         </p>
 
         <div class="flex flex-col sm:flex-row gap-3 pt-2">
-          <a routerLink="/register">
-            <resq-button size="lg" [fullWidth]="false">
+          <a routerLink="/register" class="w-full sm:w-auto">
+            <resq-button size="lg" [fullWidth]="false" class="block w-full sm:w-auto">
               <span class="text-white">Registrarme gratis</span>
             </resq-button>
           </a>
-          <a routerLink="/login">
+          <a routerLink="/login" class="w-full sm:w-auto">
             <button
-              class="px-7 py-3.5 rounded-lg border border-white/40 text-white font-semibold text-lg hover:bg-white/10 transition-all duration-200"
+              class="w-full sm:w-auto px-7 py-3.5 rounded-lg border border-white/40 text-white font-semibold text-lg hover:bg-white/10 transition-all duration-200"
             >
               Ya tengo cuenta
             </button>
           </a>
         </div>
 
-        <div class="flex items-center gap-6 pt-2 text-sm text-gray-400">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-sm text-gray-400">
           <span class="flex items-center gap-1.5">
             <svg lucideCheck class="w-4 h-4 text-lime"></svg> Sin costo de registro
           </span>
@@ -155,9 +155,9 @@
           Sumá ResQ y convertí los excedentes del día en ingresos reales,
           mientras contribuís a reducir el desperdicio en tu comunidad.
         </p>
-        <a routerLink="/register" class="w-fit">
+        <a routerLink="/register" class="w-full sm:w-fit">
           <button
-            class="px-7 py-3.5 rounded-lg bg-lime text-evergreen font-bold text-lg hover:bg-palm hover:text-white transition-all duration-200"
+            class="w-full sm:w-auto px-7 py-3.5 rounded-lg bg-lime text-evergreen font-bold text-lg hover:bg-palm hover:text-white transition-all duration-200"
           >
             Registrar mi comercio
           </button>
@@ -203,9 +203,9 @@
       <p class="text-white/80 text-lg">
         Creá tu cuenta gratis y empezá hoy mismo a marcar la diferencia.
       </p>
-      <a routerLink="/register">
+      <a routerLink="/register" class="w-full sm:w-auto">
         <button
-          class="px-8 py-4 rounded-xl bg-evergreen text-white font-bold text-lg hover:bg-hunter transition-all duration-200 shadow-lg"
+          class="w-full sm:w-auto px-8 py-4 rounded-xl bg-evergreen text-white font-bold text-lg hover:bg-hunter transition-all duration-200 shadow-lg"
         >
           Registrarme ahora
         </button>
