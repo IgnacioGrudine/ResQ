@@ -148,6 +148,9 @@ public class AuthService(
         if (user is null)
             return Result.Fail(new UnauthorizedError("Credenciales inválidas."));
 
+        if (user.PasswordHash is null)
+            return Result.Fail(new UnauthorizedError("Esta cuenta usa Google para iniciar sesión."));
+
         if (!passwordService.Verify(request.Password, user.PasswordHash))
             return Result.Fail(new UnauthorizedError("Credenciales inválidas."));
 

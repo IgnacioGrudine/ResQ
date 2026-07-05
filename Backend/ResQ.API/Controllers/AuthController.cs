@@ -17,6 +17,7 @@ namespace ResQ.API.Controllers;
 [Route("api/auth")]
 public class AuthController(
     IAuthService authService,
+    IGoogleAuthService googleAuthService,
     IOptions<JwtSettings> jwtOptions,
     IWebHostEnvironment env) : ControllerBase
 {
@@ -79,6 +80,18 @@ public class AuthController(
         => (await authService.LogoutAsync(
                 Request.Cookies[RefreshCookieName] ?? string.Empty, ct))
             .ToActionResult(ClearRefreshCookie);
+
+    /// <summary>
+    /// Authenticates (or registers) a user via Google Sign-In.
+    /// Verifies the Google id_token server-side, then finds or creates a consumer account.
+    /// </summary>
+    /// <remarks>Returns 401 if the token is invalid or expired.</remarks>
+    [HttpPost("google")]
+    public async Task<ActionResult<ClientAuthResponse>> LoginWithGoogle(
+        [FromBody] GoogleLoginRequest request,
+        CancellationToken ct)
+        => (await googleAuthService.LoginWithGoogleAsync(request.IdToken, ct))
+            .ToActionResult(ToClientResponse, r => SetRefreshCookie(r.RefreshToken));
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
 

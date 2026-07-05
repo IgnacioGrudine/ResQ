@@ -99,6 +99,10 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 // ── Mercado Pago Settings ─────────────────────────────────────────────────────
 builder.Services.Configure<MpSettings>(builder.Configuration.GetSection("MercadoPago"));
 
+// ── Google Settings ───────────────────────────────────────────────────────────
+builder.Services.Configure<ResQ.API.Models.Settings.GoogleSettings>(
+    builder.Configuration.GetSection("Google"));
+
 // ── Hangfire ──────────────────────────────────────────────────────────────────
 var hangfireConn = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddHangfire(cfg => cfg
@@ -156,6 +160,7 @@ builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMerchantService, MerchantService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();

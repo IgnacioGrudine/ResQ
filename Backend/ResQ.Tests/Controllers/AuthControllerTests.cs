@@ -15,6 +15,7 @@ namespace ResQ.Tests.Controllers;
 public class AuthControllerTests
 {
     private readonly Mock<IAuthService> _authService = new();
+    private readonly Mock<IGoogleAuthService> _googleAuthService = new();
     private readonly Mock<IWebHostEnvironment> _env = new();
     private readonly IOptions<JwtSettings> _jwtOptions = Options.Create(new JwtSettings
     {
@@ -25,7 +26,7 @@ public class AuthControllerTests
     private AuthController CreateSut()
     {
         _env.Setup(e => e.EnvironmentName).Returns("Development");
-        var controller = new AuthController(_authService.Object, _jwtOptions, _env.Object)
+        var controller = new AuthController(_authService.Object, _googleAuthService.Object, _jwtOptions, _env.Object)
         {
             ControllerContext = new ControllerContext
             {

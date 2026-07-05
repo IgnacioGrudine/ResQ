@@ -50,6 +50,7 @@ services:
       MercadoPago__FrontendBaseUrl: ${MP_FRONTEND_BASE_URL}
       MercadoPago__UseTestMode: ${MP_USE_TEST_MODE:-false}
       Encryption__Key: ${ENCRYPTION_KEY}
+      Google__ClientId: ${GOOGLE_CLIENT_ID}
     depends_on:
       postgres:
         condition: service_healthy

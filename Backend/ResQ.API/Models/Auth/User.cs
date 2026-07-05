@@ -16,9 +16,14 @@ public class User : BaseEntity
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Bcrypt hash of the user's password. The plain-text password is never stored.
+    /// Bcrypt hash of the user's password. Null for accounts created via Google OAuth.
     /// </summary>
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; }
+
+    /// <summary>
+    /// Google account subject identifier. Null for email/password accounts.
+    /// </summary>
+    public string? GoogleId { get; set; }
 
     /// <summary>
     /// Indicates whether the account is active and permitted to authenticate.

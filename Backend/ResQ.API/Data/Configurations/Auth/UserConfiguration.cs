@@ -17,8 +17,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(255);
 
         builder.Property(u => u.PasswordHash)
-            .IsRequired()
             .HasMaxLength(255);
+
+        builder.Property(u => u.GoogleId)
+            .HasMaxLength(128);
+
+        builder.HasIndex(u => u.GoogleId)
+            .IsUnique()
+            .HasFilter("\"GoogleId\" IS NOT NULL");
 
         builder.Property(u => u.IsActive)
             .IsRequired()
