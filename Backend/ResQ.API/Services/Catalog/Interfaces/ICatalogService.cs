@@ -78,4 +78,17 @@ public interface ICatalogService
     /// or a failed result if no pack with the given identifier exists or the pack is inactive.
     /// </returns>
     Task<Result<PackListItemResponse>> GetPackByIdAsync(int packId, CancellationToken ct = default);
+
+    // ── Admin category management ──────────────────────────────────────────────
+
+    /// <summary>Creates a new food category and returns the persisted record.</summary>
+    Task<Result<CategoryResponse>> CreateCategoryAsync(string name, CancellationToken ct = default);
+
+    /// <summary>Renames an existing category. Returns 404 if the category does not exist.</summary>
+    Task<Result<CategoryResponse>> UpdateCategoryAsync(int id, string name, CancellationToken ct = default);
+
+    /// <summary>
+    /// Deletes a category. Returns 409 Conflict if one or more merchants are still assigned to it.
+    /// </summary>
+    Task<Result> DeleteCategoryAsync(int id, CancellationToken ct = default);
 }

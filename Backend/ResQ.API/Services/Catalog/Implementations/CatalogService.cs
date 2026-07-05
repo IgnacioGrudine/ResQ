@@ -180,6 +180,43 @@ public class CatalogService(
     /// account for Earth's ellipsoidal shape, which is acceptable for the short urban
     /// distances typical in the ResQ platform.
     /// </remarks>
+    // ── Admin category management ─────────────────────────────────────────────
+
+    public async Task<Result<CategoryResponse>> CreateCategoryAsync(string name, CancellationToken ct = default)
+    {
+        var category = new Models.Catalog.Category { Name = name.Trim() };
+        await categoryRepository.AddAsync(category, ct);
+        await categoryRepository.SaveChangesAsync(ct);
+        return Result.Ok(new CategoryResponse { Id = category.Id, Name = category.Name });
+    }
+
+    public async Task<Result<CategoryResponse>> UpdateCategoryAsync(int id, string name, CancellationToken ct = default)
+    {
+        var category = await categoryRepository.GetByIdAsync(id, ct);
+        if (category is null)
+            return Result.Fail(new NotFoundError($"Category {id} not found."));
+
+        category.Name = name.Trim();
+        categoryRepository.Update(category);
+        await categoryRepository.SaveChangesAsync(ct);
+        return Result.Ok(new CategoryResponse { Id = category.Id, Name = category.Name });
+    }
+
+    public async Task<Result> DeleteCategoryAsync(int id, CancellationToken ct = default)
+    {
+        var category = await categoryRepository.GetByIdAsync(id, ct);
+        if (category is null)
+            return Result.Fail(new NotFoundError($"Category {id} not found."));
+
+        if (await categoryRepository.IsInUseAsync(id, ct))
+            return Result.Fail(new ConflictError(
+                "La categoría está asignada a uno o más comercios. Reasignalos antes de eliminarla."));
+
+        categoryRepository.Delete(category);
+        await categoryRepository.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
     private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
     {
         const double R = 6371;

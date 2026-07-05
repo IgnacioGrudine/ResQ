@@ -7,6 +7,7 @@ using ResQ.API.DTOs.Orders;
 using ResQ.API.DTOs.Shared;
 using ResQ.API.Extensions;
 using ResQ.API.Services.Admin;
+using ResQ.API.Services.Catalog;
 using ResQ.API.Services.Reporting;
 
 namespace ResQ.API.Controllers;
@@ -19,7 +20,7 @@ namespace ResQ.API.Controllers;
 [ApiController]
 [Route("api/admin")]
 [Authorize(Roles = "Admin")]
-public class AdminController(IAdminService adminService) : ControllerBase
+public class AdminController(IAdminService adminService, ICatalogService catalogService) : ControllerBase
 {
     // ── Dashboard ─────────────────────────────────────────────────────────────
 
@@ -84,6 +85,26 @@ public class AdminController(IAdminService adminService) : ControllerBase
     [HttpGet("reports/merchants/{id:int}")]
     public async Task<IActionResult> GetMerchantReport(int id, [FromQuery] ReportQuery query, CancellationToken ct)
         => ToFileResult(await adminService.GenerateMerchantReportAsync(id, query, ct));
+
+    // ── Category management ───────────────────────────────────────────────────
+
+    /// <summary>Creates a new food category. Requires role: <c>Admin</c>.</summary>
+    [HttpPost("categories")]
+    public async Task<ActionResult<CategoryResponse>> CreateCategory([FromBody] CategoryRequest request, CancellationToken ct)
+        => (await catalogService.CreateCategoryAsync(request.Name, ct)).ToActionResult();
+
+    /// <summary>Renames an existing category. Requires role: <c>Admin</c>.</summary>
+    [HttpPut("categories/{id:int}")]
+    public async Task<ActionResult<CategoryResponse>> UpdateCategory(int id, [FromBody] CategoryRequest request, CancellationToken ct)
+        => (await catalogService.UpdateCategoryAsync(id, request.Name, ct)).ToActionResult();
+
+    /// <summary>
+    /// Deletes a category. Returns 409 Conflict if merchants are still assigned to it.
+    /// Requires role: <c>Admin</c>.
+    /// </summary>
+    [HttpDelete("categories/{id:int}")]
+    public async Task<IActionResult> DeleteCategory(int id, CancellationToken ct)
+        => (await catalogService.DeleteCategoryAsync(id, ct)).ToActionResult();
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 

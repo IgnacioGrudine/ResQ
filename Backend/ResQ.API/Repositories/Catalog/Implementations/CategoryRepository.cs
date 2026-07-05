@@ -18,12 +18,13 @@ public class CategoryRepository(ResQDbContext db) : GenericRepository<Category>(
     /// Used to validate that a list of category IDs submitted by a merchant all correspond
     /// to existing records before persisting the assignment.
     /// </summary>
-    /// <param name="ids">The collection of category identifiers to fetch.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>
-    /// A collection of <see cref="Category"/> objects matching the supplied identifiers.
-    /// Identifiers that do not exist in the database are silently omitted from the result.
-    /// </returns>
     public async Task<IEnumerable<Category>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken ct = default)
         => await _set.Where(c => ids.Contains(c.Id)).ToListAsync(ct);
+
+    /// <summary>
+    /// Returns <c>true</c> if at least one <see cref="MerchantCategory"/> record references this category.
+    /// Used as a pre-delete guard to prevent removing categories that still have active merchant assignments.
+    /// </summary>
+    public async Task<bool> IsInUseAsync(int id, CancellationToken ct = default)
+        => await _db.Set<MerchantCategory>().AnyAsync(mc => mc.CategoryId == id, ct);
 }

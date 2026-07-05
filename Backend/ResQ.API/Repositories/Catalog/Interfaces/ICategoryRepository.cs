@@ -20,4 +20,10 @@ public interface ICategoryRepository : IGenericRepository<Category>
     /// Identifiers that do not correspond to any category are silently omitted from the result.
     /// </returns>
     Task<IEnumerable<Category>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken ct = default);
+
+    /// <summary>
+    /// Returns <c>true</c> if any merchant is currently assigned to the specified category.
+    /// Used as a guard before deletion to prevent orphaning merchant profiles.
+    /// </summary>
+    Task<bool> IsInUseAsync(int id, CancellationToken ct = default);
 }
