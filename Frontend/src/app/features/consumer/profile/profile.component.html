@@ -8,29 +8,31 @@
 
   @else if (profile(); as p) {
     <!-- ── Header ── -->
-    <div class="bg-evergreen px-4 md:px-8 pt-6 pb-16 text-center">
-      <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold mx-auto">
+    <div class="bg-evergreen px-4 md:px-8 pt-6 pb-20 text-center">
+      <div class="w-20 h-20 rounded-full bg-white/10 ring-2 ring-white/20 flex items-center justify-center text-white text-2xl font-bold mx-auto">
         {{ initials(p) }}
       </div>
       <h1 class="text-xl md:text-2xl font-bold text-white mt-3">{{ p.firstName }} {{ p.lastName }}</h1>
-      <p class="text-white/60 text-sm mt-0.5 break-words">{{ p.email }}</p>
+      <p class="text-white/50 text-sm mt-0.5 break-words">{{ p.email }}</p>
     </div>
 
-    <div class="max-w-2xl mx-auto px-4 md:px-8 -mt-10 pb-10 flex flex-col gap-4">
+    <div class="max-w-2xl mx-auto px-4 md:px-8 -mt-12 pb-10 flex flex-col gap-4">
 
       <!-- ── Stats ── -->
-      <div class="bg-white rounded-2xl shadow-sm grid grid-cols-3 divide-x divide-gray-100">
-        <div class="flex flex-col items-center py-5 px-2 sm:px-3 text-center">
-          <span class="text-xl sm:text-2xl font-bold text-evergreen break-words">{{ p.totalOrders }}</span>
-          <span class="text-xs text-gray-400 mt-0.5">Órdenes</span>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+          <div class="w-8 h-8 rounded-full bg-lime/40 flex items-center justify-center mx-auto mb-2">
+            <svg lucideShoppingBag class="w-4 h-4 text-hunter"></svg>
+          </div>
+          <p class="text-xl font-bold text-evergreen break-words">{{ p.totalOrders }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Órdenes</p>
         </div>
-        <div class="flex flex-col items-center py-5 px-2 sm:px-3 text-center">
-          <span class="text-xl sm:text-2xl font-bold text-evergreen break-words">${{ p.totalSaved | number:'1.0-0' }}</span>
-          <span class="text-xs text-gray-400 mt-0.5">Ahorrado</span>
-        </div>
-        <div class="flex flex-col items-center py-5 px-2 sm:px-3 text-center">
-          <span class="text-xl sm:text-2xl font-bold text-evergreen break-words">{{ p.co2SavedKg }}</span>
-          <span class="text-xs text-gray-400 mt-0.5">kg CO₂ evitado</span>
+        <div class="bg-white rounded-2xl shadow-sm p-4 text-center">
+          <div class="w-8 h-8 rounded-full bg-lime/40 flex items-center justify-center mx-auto mb-2">
+            <svg lucideWallet class="w-4 h-4 text-hunter"></svg>
+          </div>
+          <p class="text-xl font-bold text-evergreen break-words">${{ p.totalSaved | number:'1.0-0' }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">Ahorrado</p>
         </div>
       </div>
 
@@ -69,6 +71,7 @@
             <div class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"></div>
             Guardando...
           } @else if (saved()) {
+            <svg lucideCheck class="w-4 h-4"></svg>
             Guardado
           } @else {
             <svg lucideSave class="w-4 h-4"></svg>
