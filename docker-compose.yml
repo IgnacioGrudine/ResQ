@@ -96,13 +96,12 @@ services:
       - "9000:9000"   # S3 API
       - "9001:9001"   # MinIO Console UI (http://localhost:9001)
     volumes:
-      - minio_data:/data
+      - ./.minio-data:/data
     networks:
       - resq-net
 
 volumes:
   pg_data:
-  minio_data:
 
 networks:
   resq-net:

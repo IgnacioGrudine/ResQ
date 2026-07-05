@@ -3,6 +3,10 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Bind-mount data (persiste en disco pero no se commitea)
+.minio-data/
+.pg-data/
+
 # dotenv files
 .env
 
