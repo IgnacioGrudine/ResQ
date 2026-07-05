@@ -42,4 +42,17 @@ export class CatalogService {
   getCatalog(): Observable<MerchantListItem[]> {
     return this.http.get<MerchantListItem[]>('/api/catalog');
   }
+
+  // ── Admin category CRUD (require Admin role) ──
+  createCategory(name: string): Observable<Category> {
+    return this.http.post<Category>('/api/admin/categories', { name });
+  }
+
+  updateCategory(id: number, name: string): Observable<Category> {
+    return this.http.put<Category>(`/api/admin/categories/${id}`, { name });
+  }
+
+  deleteCategory(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/admin/categories/${id}`);
+  }
 }

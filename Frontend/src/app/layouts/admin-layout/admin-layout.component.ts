@@ -6,6 +6,7 @@ import {
   LucideStore,
   LucideUsers,
   LucideFileText,
+  LucideTags,
   LucideLogOut
 } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
@@ -15,7 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    LucideLeaf, LucideLayoutDashboard, LucideStore, LucideUsers, LucideFileText, LucideLogOut
+    LucideLeaf, LucideLayoutDashboard, LucideStore, LucideUsers, LucideFileText, LucideTags, LucideLogOut
   ],
   templateUrl: './admin-layout.component.html'
 })

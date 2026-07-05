@@ -33,6 +33,12 @@
         <svg lucideFileText class="w-5 h-5 shrink-0"></svg>
         Reportes
       </a>
+      <a routerLink="/admin/categories"
+         routerLinkActive="bg-white/15 !text-white"
+         class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/65 hover:bg-white/10 hover:text-white transition-colors font-medium">
+        <svg lucideTags class="w-5 h-5 shrink-0"></svg>
+        Categorías
+      </a>
     </nav>
 
     <button (click)="logout()"
@@ -83,11 +89,20 @@
 
       <a routerLink="/admin/reports"
          routerLinkActive #rla4="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-4 pt-2 pb-1 transition-colors"
+         class="flex flex-col items-center gap-0.5 px-3 pt-2 pb-1 transition-colors"
          [class.text-evergreen]="rla4.isActive"
          [class.text-gray-400]="!rla4.isActive">
         <svg lucideFileText class="w-5 h-5"></svg>
         <span class="text-[10px] font-medium">Reportes</span>
+      </a>
+
+      <a routerLink="/admin/categories"
+         routerLinkActive #rla5="routerLinkActive"
+         class="flex flex-col items-center gap-0.5 px-3 pt-2 pb-1 transition-colors"
+         [class.text-evergreen]="rla5.isActive"
+         [class.text-gray-400]="!rla5.isActive">
+        <svg lucideTags class="w-5 h-5"></svg>
+        <span class="text-[10px] font-medium">Categorías</span>
       </a>
 
       <button (click)="logout()"
