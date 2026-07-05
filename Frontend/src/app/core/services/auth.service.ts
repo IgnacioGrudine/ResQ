@@ -51,6 +51,12 @@ export class AuthService {
       .pipe(tap(res => this.setSession(res)));
   }
 
+  loginWithGoogle(idToken: string): Observable<ClientAuthResponse> {
+    return this.http
+      .post<ClientAuthResponse>('/api/auth/google', { idToken }, { withCredentials: true })
+      .pipe(tap(res => this.setSession(res)));
+  }
+
   refresh(): Observable<ClientAuthResponse> {
     return this.http
       .post<ClientAuthResponse>('/api/auth/refresh', {}, { withCredentials: true })

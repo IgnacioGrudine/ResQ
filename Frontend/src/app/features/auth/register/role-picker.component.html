@@ -56,6 +56,29 @@
 
       </div>
 
+      <!-- Separator -->
+      <div class="relative my-7">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-200"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="bg-white px-3 text-gray-400">o registrate rápido como consumidor</span>
+        </div>
+      </div>
+
+      <!-- Google Error -->
+      @if (googleError()) {
+        <div class="mb-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <svg lucideTriangleAlert class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></svg>
+          <p class="text-red-700 text-sm">{{ googleError() }}</p>
+        </div>
+      }
+
+      <!-- Google Sign-In button -->
+      <div class="flex justify-center">
+        <div #googleBtn></div>
+      </div>
+
       <p class="text-center text-sm text-gray-400 mt-8">
         ¿Ya tenés cuenta?
         <a routerLink="/login" class="text-fern font-semibold hover:text-hunter transition-colors">Iniciá sesión</a>
