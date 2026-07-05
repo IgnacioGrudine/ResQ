@@ -107,6 +107,13 @@ export class PackDetailComponent implements OnInit {
     return Math.round((1 - sale / original) * 100);
   }
 
+  productTypeLabel(type: string): string {
+    const t = type?.toLowerCase();
+    if (t === 'surprisepack')  return 'Pack Sorpresa';
+    if (t === 'explicititem')  return 'Producto exacto';
+    return type;
+  }
+
   formatTime(t: string): string { return t.substring(0, 5); }
 
   formatDate(iso: string): string {

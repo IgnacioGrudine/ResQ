@@ -19,60 +19,76 @@
 
 <!-- ── Content ── -->
 @else if (pack(); as p) {
-  <div class="min-h-screen bg-gray-50 pb-32">
+  <div class="min-h-screen bg-gray-50 pb-32 md:pb-28">
 
-    <!-- ── Hero image ── -->
-    <div class="relative w-full aspect-[4/3] md:aspect-[16/7] max-h-96 bg-gradient-to-br from-evergreen to-hunter overflow-hidden">
-      @if (p.imageUrl) {
-        <img [src]="p.imageUrl" [alt]="p.name" class="w-full h-full object-cover">
-      } @else {
-        <div class="absolute inset-0 flex items-center justify-center">
-          <svg lucideLeaf class="w-20 h-20 text-white/20"></svg>
-        </div>
-      }
+    <!-- ── Header bar ── -->
+    <div class="bg-evergreen px-4 md:px-8 py-3 flex items-center gap-3 sticky top-0 z-10">
       <button (click)="goBack()"
-        class="absolute top-4 left-4 w-10 h-10 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors">
-        <svg lucideArrowLeft class="w-5 h-5"></svg>
+        class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors shrink-0">
+        <svg lucideArrowLeft class="w-4 h-4"></svg>
       </button>
-      <div class="absolute top-4 right-4 bg-lime text-hunter font-bold text-sm px-3 py-1 rounded-full shadow">
-        -{{ discountPercent(p.originalPrice, p.salePrice) }}%
-      </div>
+      <h1 class="text-white font-semibold text-base truncate">{{ p.name }}</h1>
     </div>
 
-    <div class="max-w-2xl mx-auto px-4 py-5 flex flex-col gap-5">
+    <div class="max-w-2xl mx-auto px-4 md:px-8 py-5 flex flex-col gap-4">
 
-      <!-- ── Pack info ── -->
-      <div class="bg-white rounded-2xl p-5 shadow-sm">
-        <span class="inline-block text-[11px] font-bold text-fern bg-lime/50 px-3 py-0.5 rounded-full mb-3 uppercase tracking-wide">
-          {{ p.productType }}
-        </span>
-        <h1 class="text-2xl font-bold text-gray-800 leading-tight">{{ p.name }}</h1>
-        <p class="text-sm text-gray-400 mt-1">{{ p.stockQuantity }} unidades disponibles</p>
+      <!-- ── Product card: stack en mobile, split en desktop ── -->
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex flex-col md:flex-row md:h-64">
 
-        <div class="flex items-baseline gap-3 mt-4">
-          <span class="text-3xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-0' }}</span>
-          <span class="text-lg text-gray-300 line-through">${{ p.originalPrice | number:'1.0-0' }}</span>
-          <span class="text-sm font-semibold text-hunter bg-lime/60 px-2 py-0.5 rounded-full">
-            Ahorrás ${{ (p.originalPrice - p.salePrice) | number:'1.0-0' }}
-          </span>
+          <!-- Imagen -->
+          <div class="relative w-full h-48 md:w-56 md:h-full md:shrink-0">
+            <div class="w-full h-full bg-gradient-to-br from-evergreen to-hunter">
+              @if (p.imageUrl) {
+                <img [src]="p.imageUrl" [alt]="p.name" class="w-full h-full object-cover">
+              } @else {
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <svg lucideLeaf class="w-16 h-16 text-white/20"></svg>
+                </div>
+              }
+            </div>
+            <div class="absolute top-3 right-3 bg-lime text-hunter font-bold text-xs px-2.5 py-1 rounded-full shadow">
+              -{{ discountPercent(p.originalPrice, p.salePrice) }}%
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="p-5 flex flex-col gap-3 flex-1">
+            <div>
+              <span class="inline-block text-[11px] font-bold text-fern bg-lime/50 px-3 py-0.5 rounded-full mb-2 uppercase tracking-wide">
+                {{ productTypeLabel(p.productType) }}
+              </span>
+              <h2 class="text-xl font-bold text-gray-800 leading-tight">{{ p.name }}</h2>
+              <p class="text-sm text-gray-400 mt-0.5">{{ p.stockQuantity }} unidades disponibles</p>
+            </div>
+
+            <div class="flex items-baseline gap-2 flex-wrap">
+              <span class="text-3xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-0' }}</span>
+              <span class="text-base text-gray-300 line-through">${{ p.originalPrice | number:'1.0-0' }}</span>
+              <span class="text-xs font-semibold text-hunter bg-lime/60 px-2 py-0.5 rounded-full">
+                Ahorrás ${{ (p.originalPrice - p.salePrice) | number:'1.0-0' }}
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <svg lucideClock class="w-4 h-4 text-evergreen shrink-0"></svg>
+              <span>Retiro entre <strong class="text-gray-700">{{ formatTime(p.pickupTimeStart) }}</strong> y <strong class="text-gray-700">{{ formatTime(p.pickupTimeEnd) }}</strong></span>
+            </div>
+
+            @if (p.description) {
+              <p class="text-sm text-gray-500 leading-relaxed">{{ p.description }}</p>
+            }
+          </div>
         </div>
-
-        <div class="flex items-center gap-2 mt-4 text-sm text-gray-500">
-          <svg lucideClock class="w-4 h-4 text-evergreen shrink-0"></svg>
-          <span>Retiro entre <strong class="text-gray-700">{{ formatTime(p.pickupTimeStart) }}</strong> y <strong class="text-gray-700">{{ formatTime(p.pickupTimeEnd) }}</strong></span>
-        </div>
-
-        @if (p.description) {
-          <p class="text-sm text-gray-500 mt-4 leading-relaxed">{{ p.description }}</p>
-        }
       </div>
 
-      <!-- ── Merchant card (shown once merchant loads) ── -->
+      <!-- ── Merchant card ── -->
       @if (merchant(); as m) {
 
-        <div class="bg-white rounded-2xl p-5 shadow-sm">
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-evergreen flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-sm p-4">
+          <!-- Header clickeable que va al perfil del comercio -->
+          <button (click)="openMerchant(m.id)" class="w-full flex items-center gap-3 text-left">
+            <div class="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-evergreen flex items-center justify-center">
               @if (m.photoUrl) {
                 <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
               } @else {
@@ -80,57 +96,48 @@
               }
             </div>
             <div class="flex-1 min-w-0">
-              <h2 class="font-bold text-gray-800 truncate">{{ m.businessName }}</h2>
+              <p class="font-semibold text-gray-800 truncate">{{ m.businessName }}</p>
               <div class="flex items-center gap-1 mt-0.5">
                 <svg lucideStar class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></svg>
                 <span class="text-sm font-semibold text-gray-700">{{ m.averageRating }}</span>
                 <span class="text-xs text-gray-400">({{ m.reviewCount }} reseñas)</span>
               </div>
             </div>
-          </div>
+            <svg lucideChevronRight class="w-5 h-5 text-gray-300 shrink-0"></svg>
+          </button>
 
-          <div class="flex items-start gap-2 mt-4 text-sm text-gray-500">
-            <svg lucideMapPin class="w-4 h-4 text-evergreen shrink-0 mt-0.5"></svg>
-            <span>{{ m.address }}</span>
-          </div>
-
-          @if (m.contactPhone) {
-            <div class="flex items-center gap-2 mt-2 text-sm text-gray-500">
-              <svg lucidePhone class="w-4 h-4 text-evergreen shrink-0"></svg>
-              <a [href]="'tel:' + m.contactPhone" class="hover:text-evergreen transition-colors">{{ m.contactPhone }}</a>
+          <div class="mt-3 pt-3 border-t border-gray-50 flex flex-col gap-2">
+            <div class="flex items-start gap-2 text-sm text-gray-500">
+              <svg lucideMapPin class="w-4 h-4 text-evergreen shrink-0 mt-0.5"></svg>
+              <span>{{ m.address }}</span>
             </div>
-          }
+            @if (m.contactPhone) {
+              <div class="flex items-center gap-2 text-sm text-gray-500">
+                <svg lucidePhone class="w-4 h-4 text-evergreen shrink-0"></svg>
+                <a [href]="'tel:' + m.contactPhone" class="hover:text-evergreen transition-colors">{{ m.contactPhone }}</a>
+              </div>
+            }
+          </div>
 
           @if (m.categories.length) {
-            <div class="flex flex-wrap gap-2 mt-4">
+            <div class="flex flex-wrap gap-2 mt-3">
               @for (cat of m.categories; track cat.id) {
                 <span class="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full">{{ cat.name }}</span>
               }
             </div>
           }
 
-          <!-- ── Mini-mapa ── -->
           <a [href]="'https://www.google.com/maps?q=' + m.latitude + ',' + m.longitude"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="block mt-4 rounded-xl overflow-hidden">
-            <img [src]="staticMapUrl()"
-                 alt="Ver ubicación en Google Maps"
-                 class="w-full h-32 object-cover" />
+            target="_blank" rel="noopener noreferrer"
+            class="block mt-3 rounded-xl overflow-hidden">
+            <img [src]="staticMapUrl()" alt="Ver ubicación en Google Maps" class="w-full h-28 object-cover" />
           </a>
-
-          <button (click)="openMerchant(m.id)"
-            class="mt-4 w-full flex items-center justify-center gap-2 py-2.5 border border-evergreen text-evergreen rounded-xl text-sm font-semibold hover:bg-evergreen hover:text-white transition-colors">
-            <svg lucideStore class="w-4 h-4"></svg>
-            Ver comercio completo
-            <svg lucideChevronRight class="w-4 h-4"></svg>
-          </button>
         </div>
 
         <!-- ── Otros packs del comercio ── -->
-        @if (m.activeProducts.length) {
+        @if (m.activeProducts.length > 1) {
           <div>
-            <h3 class="font-bold text-gray-700 mb-3">Otros packs de {{ m.businessName }}</h3>
+            <h3 class="font-bold text-gray-700 mb-3 px-1">Otros packs de {{ m.businessName }}</h3>
             <div class="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
               @for (prod of m.activeProducts; track prod.id) {
                 @if (prod.id !== p.id) {
@@ -162,7 +169,7 @@
         <!-- ── Reseñas recientes ── -->
         @if (m.recentReviews.length) {
           <div>
-            <h3 class="font-bold text-gray-700 mb-3">Reseñas del comercio</h3>
+            <h3 class="font-bold text-gray-700 mb-3 px-1">Reseñas del comercio</h3>
             <div class="flex flex-col gap-3">
               @for (rev of m.recentReviews; track rev.id) {
                 <div class="bg-white rounded-xl p-4 shadow-sm">
@@ -184,21 +191,16 @@
         }
 
       }
-      <!-- /merchant loaded -->
 
     </div>
 
     <!-- ── Sticky buy bar ── -->
-    <div class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-3 z-20">
+    <div class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 md:px-8 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-20">
       <div class="max-w-2xl mx-auto flex flex-col gap-2">
-
-        <!-- Error message -->
         @if (buyError()) {
           <p class="text-xs text-red-500 text-center font-medium px-2">{{ buyError() }}</p>
         }
-
         <div class="flex items-center gap-3">
-          <!-- Quantity selector -->
           <div class="flex items-center gap-1 border border-gray-200 rounded-xl overflow-hidden shrink-0">
             <button (click)="decrementQty()" [disabled]="quantity() <= 1 || buying()"
               class="w-9 h-10 flex items-center justify-center text-gray-400 hover:text-evergreen hover:bg-gray-50 disabled:opacity-40 transition-colors">
@@ -210,8 +212,6 @@
               <svg lucidePlus class="w-4 h-4"></svg>
             </button>
           </div>
-
-          <!-- Buy button -->
           <button (click)="buy()" [disabled]="buying() || (pack()?.stockQuantity ?? 0) === 0"
             class="flex-1 py-3 bg-evergreen text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-hunter disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
             @if (buying()) {
@@ -225,7 +225,6 @@
             }
           </button>
         </div>
-
       </div>
     </div>
 
