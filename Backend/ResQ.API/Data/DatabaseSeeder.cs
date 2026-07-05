@@ -153,6 +153,10 @@ public static class DatabaseSeeder
         var sushi     = sushiUser.MerchantProfile!;
         var cafe      = cafeUser.MerchantProfile!;
 
+        panaderia.PhotoUrl = $"http://localhost/storage/resq-images/merchants/{panaderia.Id}/photo.jpg";
+        sushi.PhotoUrl     = $"http://localhost/storage/resq-images/merchants/{sushi.Id}/photo.jpg";
+        cafe.PhotoUrl      = $"http://localhost/storage/resq-images/merchants/{cafe.Id}/photo.jpg";
+
         // ─── 3. Merchant ↔ Category links ────────────────────────────────────────
         db.MerchantCategories.AddRange(
             new MerchantCategory { MerchantId = panaderia.Id, CategoryId = catPanaderia.Id },
@@ -254,6 +258,13 @@ public static class DatabaseSeeder
 
         db.Products.AddRange(packSorpresaDulce, packMedialunas, packMixtoSushi, packRolls, packCafe, packMerienda);
         db.SaveChanges();
+
+        packSorpresaDulce.ImageUrl = $"http://localhost/storage/resq-images/products/{packSorpresaDulce.Id}/image.jpg";
+        packMedialunas.ImageUrl    = $"http://localhost/storage/resq-images/products/{packMedialunas.Id}/image.jpg";
+        packMixtoSushi.ImageUrl    = $"http://localhost/storage/resq-images/products/{packMixtoSushi.Id}/image.jpg";
+        packRolls.ImageUrl         = $"http://localhost/storage/resq-images/products/{packRolls.Id}/image.jpg";
+        packCafe.ImageUrl          = $"http://localhost/storage/resq-images/products/{packCafe.Id}/image.jpg";
+        packMerienda.ImageUrl      = $"http://localhost/storage/resq-images/products/{packMerienda.Id}/image.jpg";
 
         // ─── 5. Orders ───────────────────────────────────────────────────────────
         // Current orders (shown in Mis Órdenes)
