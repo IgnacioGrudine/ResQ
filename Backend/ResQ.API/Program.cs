@@ -11,6 +11,7 @@ using ResQ.API.Repositories.Admin;
 using ResQ.API.Repositories.Auth;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.MercadoPago;
+using ResQ.API.Repositories.Notifications;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Repositories.Reviews;
 using ResQ.API.Services.Admin;
@@ -25,6 +26,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using ResQ.API.Services.MercadoPago;
 using ResQ.API.Services.Merchants;
+using ResQ.API.Services.Notifications;
 using ResQ.API.Services.Orders;
 using ResQ.API.Services.Password;
 using ResQ.API.Services.Products;
@@ -159,6 +161,7 @@ builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IMerchantMpCredentialRepository, MerchantMpCredentialRepository>();
 builder.Services.AddScoped<IMpWebhookEventRepository, MpWebhookEventRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+builder.Services.AddScoped<IMerchantNotificationRepository, MerchantNotificationRepository>();
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IPasswordService, PasswordService>();
@@ -178,6 +181,7 @@ builder.Services.AddScoped<IMpWebhookIngestionService, MpWebhookIngestionService
 builder.Services.AddScoped<IMpWebhookProcessorService, MpWebhookProcessorService>();
 builder.Services.AddScoped<IMpTokenRefreshJob, MpTokenRefreshJob>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // ── Reporting (PDF via QuestPDF, Excel via ClosedXML) ──────────────────────────
 builder.Services.AddScoped<IReportExporter, PdfReportExporter>();

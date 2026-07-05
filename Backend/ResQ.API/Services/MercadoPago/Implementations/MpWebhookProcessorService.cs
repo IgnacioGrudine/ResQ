@@ -1,9 +1,13 @@
+using System.Globalization;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ResQ.API.Models.Enums;
+using ResQ.API.Models.Orders;
 using ResQ.API.Models.Settings;
 using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
+using ResQ.API.Services.Notifications;
 
 namespace ResQ.API.Services.MercadoPago;
 
@@ -23,9 +27,14 @@ public class MpWebhookProcessorService(
     IMercadoPagoHttpClient mpClient,
     IOptions<MpSettings> mpOptions,
     IOrderRepository orderRepo,
-    IMpWebhookEventRepository webhookEventRepo) : IMpWebhookProcessorService
+    IMpWebhookEventRepository webhookEventRepo,
+    INotificationService notificationService,
+    ILogger<MpWebhookProcessorService> logger) : IMpWebhookProcessorService
 {
     private readonly MpSettings _mp = mpOptions.Value;
+
+    /// <summary>ARS currency formatter for notification messages (Argentine culture).</summary>
+    private static readonly CultureInfo Es = CultureInfo.GetCultureInfo("es-AR");
 
     /// <summary>
     /// Fetches the payment details from Mercado Pago, validates that it is approved,
@@ -69,8 +78,9 @@ public class MpWebhookProcessorService(
                 return;
             }
 
-            // Only process approved payments
-            if (payment.Status != "approved")
+            // Statuses other than approved / rejected / cancelled (e.g. "in_process", "pending")
+            // are intermediate and require no order transition — acknowledge and exit.
+            if (payment.Status is not ("approved" or "rejected" or "cancelled"))
             {
                 await MarkEventAsync(notificationId, WebhookProcessingStatus.Processed);
                 return;
@@ -84,14 +94,33 @@ public class MpWebhookProcessorService(
                 return;
             }
 
-            // Idempotent: only transition from Pending to Paid
-            if (order.OrderStatus == OrderStatus.Pending)
+            if (payment.Status == "approved")
             {
-                order.OrderStatus = OrderStatus.Paid;
-                order.MpPaymentId = payment.Id;
-                order.UpdatedAt   = DateTime.UtcNow;
-                orderRepo.Update(order);
-                await orderRepo.SaveChangesAsync();
+                // Idempotent: only transition from Pending to Paid
+                if (order.OrderStatus == OrderStatus.Pending)
+                {
+                    order.OrderStatus = OrderStatus.Paid;
+                    order.MpPaymentId = payment.Id;
+                    order.UpdatedAt   = DateTime.UtcNow;
+                    orderRepo.Update(order);
+                    await orderRepo.SaveChangesAsync();
+
+                    await NotifyOrderPaidAsync(order);
+                }
+            }
+            else
+            {
+                // rejected / cancelled: idempotently transition a still-pending order to Cancelled
+                if (order.OrderStatus == OrderStatus.Pending)
+                {
+                    order.OrderStatus = OrderStatus.Cancelled;
+                    order.MpPaymentId = payment.Id;
+                    order.UpdatedAt   = DateTime.UtcNow;
+                    orderRepo.Update(order);
+                    await orderRepo.SaveChangesAsync();
+
+                    await NotifyOrderCancelledAsync(order);
+                }
             }
 
             await MarkEventAsync(notificationId, WebhookProcessingStatus.Processed);
@@ -101,6 +130,65 @@ public class MpWebhookProcessorService(
             await MarkEventAsync(notificationId, WebhookProcessingStatus.Error, ex.Message);
         }
     }
+
+    /// <summary>
+    /// Creates an in-app "order paid" notification for the merchant who owns the order.
+    /// Wrapped defensively so a notification failure never blocks webhook processing.
+    /// </summary>
+    /// <param name="order">The order that was just marked as paid, with its line items loaded.</param>
+    private async Task NotifyOrderPaidAsync(Order order)
+    {
+        try
+        {
+            var packName = ResolvePackName(order);
+            var message  = $"{packName} · {order.TotalAmount.ToString("C0", Es)}";
+
+            await notificationService.CreateAsync(
+                order.MerchantId,
+                NotificationType.OrderPaid,
+                "Nueva orden pagada",
+                message,
+                order.Id);
+        }
+        catch (Exception ex)
+        {
+            // Never block webhook processing — log and continue
+            logger.LogError(ex, "[Notification] Failed to create OrderPaid notification for order #{OrderId}", order.Id);
+        }
+    }
+
+    /// <summary>
+    /// Creates an in-app "order cancelled" notification for the merchant who owns the order.
+    /// Wrapped defensively so a notification failure never blocks webhook processing.
+    /// </summary>
+    /// <param name="order">The order that was just cancelled, with its line items loaded.</param>
+    private async Task NotifyOrderCancelledAsync(Order order)
+    {
+        try
+        {
+            var packName = ResolvePackName(order);
+
+            await notificationService.CreateAsync(
+                order.MerchantId,
+                NotificationType.OrderCancelled,
+                "Orden cancelada",
+                packName,
+                order.Id);
+        }
+        catch (Exception ex)
+        {
+            // Never block webhook processing — log and continue
+            logger.LogError(ex, "[Notification] Failed to create OrderCancelled notification for order #{OrderId}", order.Id);
+        }
+    }
+
+    /// <summary>
+    /// Returns a human-readable pack name for the order's first line item,
+    /// falling back to the order number if line items are not available.
+    /// </summary>
+    /// <param name="order">The order whose pack name is needed.</param>
+    private static string ResolvePackName(Order order)
+        => order.OrderDetails.FirstOrDefault()?.Product?.Name ?? $"Orden #{order.Id}";
 
     /// <summary>
     /// Looks up the <c>MpWebhookEvents</c> row by <paramref name="notificationId"/> and updates

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ResQ.API.Models.Auth;
 using ResQ.API.Models.Catalog;
 using ResQ.API.Models.MercadoPago;
+using ResQ.API.Models.Notifications;
 using ResQ.API.Models.Orders;
 using ResQ.API.Models.Reviews;
 
@@ -30,6 +31,9 @@ public class ResQDbContext : DbContext
 
     // Reviews
     public DbSet<Review> Reviews => Set<Review>();
+
+    // Notifications
+    public DbSet<MerchantNotification> MerchantNotifications => Set<MerchantNotification>();
 
     // Mercado Pago OAuth
     public DbSet<MerchantMpCredential> MerchantMpCredentials => Set<MerchantMpCredential>();
