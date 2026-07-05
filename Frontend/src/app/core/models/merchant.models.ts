@@ -52,7 +52,6 @@ export interface MerchantAnalytics {
 }
 
 export type ReportFormat = 'Pdf' | 'Excel';
-export type AnalyticsGranularity = 'Day' | 'Week' | 'Month';
 
 // ── Packs (own products, include isActive) ──
 export interface MerchantProduct {

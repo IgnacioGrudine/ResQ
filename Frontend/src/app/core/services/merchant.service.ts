@@ -10,7 +10,6 @@ import {
   ProductPayload,
   UpdateMerchantProfilePayload,
   MerchantAnalytics,
-  AnalyticsGranularity,
   ReportFormat
 } from '../models/merchant.models';
 
@@ -25,8 +24,8 @@ export class MerchantService {
   }
 
   // ── Analytics (filterable) ──
-  getAnalytics(from: string, to: string, granularity: AnalyticsGranularity): Observable<MerchantAnalytics> {
-    const params = new HttpParams().set('from', from).set('to', to).set('granularity', granularity);
+  getAnalytics(from: string, to: string): Observable<MerchantAnalytics> {
+    const params = new HttpParams().set('from', from).set('to', to);
     return this.http.get<MerchantAnalytics>(`${this.base}/analytics`, { params });
   }
 

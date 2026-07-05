@@ -2,12 +2,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
-import { MerchantAnalytics, AnalyticsGranularity, ReportFormat } from '../../../core/models/merchant.models';
+import { MerchantAnalytics, ReportFormat } from '../../../core/models/merchant.models';
 import {
   LucideRefreshCw, LucideTrendingUp, LucideTrendingDown, LucideStar, LucidePackage
 } from '@lucide/angular';
 
-interface Bar { label: string; income: number; orders: number; heightPct: number; }
+interface Bar { label: string; income: number; orders: number; heightPct: number; showLabel: boolean; }
 
 @Component({
   selector: 'app-merchant-analytics',
@@ -25,18 +25,20 @@ export class MerchantAnalyticsComponent implements OnInit {
   readonly loading = signal(true);
   readonly error   = signal<string | null>(null);
 
-  from        = isoDaysAgo(30);
-  to          = isoToday();
-  granularity: AnalyticsGranularity = 'Day';
+  from = isoDaysAgo(30);
+  to   = isoToday();
 
   readonly chartBars = computed<Bar[]>(() => {
     const series = this.data()?.activitySeries ?? [];
-    const max = Math.max(...series.map(s => s.income), 1);
-    return series.map(s => ({
+    const max    = Math.max(...series.map(s => s.income), 1);
+    const n      = series.length;
+    const step   = n <= 7 ? 1 : n <= 15 ? 2 : n <= 31 ? 5 : 7;
+    return series.map((s, i) => ({
       label:     s.day,
       income:    s.income,
       orders:    s.orders,
-      heightPct: s.income === 0 ? 0 : Math.max(Math.round((s.income / max) * 100), 6)
+      heightPct: s.income === 0 ? 0 : Math.max(Math.round((s.income / max) * 100), 6),
+      showLabel: i % step === 0
     }));
   });
 
@@ -53,7 +55,7 @@ export class MerchantAnalyticsComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.merchant.getAnalytics(this.from, this.to, this.granularity).subscribe({
+    this.merchant.getAnalytics(this.from, this.to).subscribe({
       next:  d  => { this.data.set(d); this.loading.set(false); },
       error: () => { this.error.set('No se pudieron cargar las métricas.'); this.loading.set(false); }
     });
