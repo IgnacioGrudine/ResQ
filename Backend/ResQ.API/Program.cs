@@ -103,6 +103,10 @@ builder.Services.Configure<MpSettings>(builder.Configuration.GetSection("Mercado
 builder.Services.Configure<ResQ.API.Models.Settings.GoogleSettings>(
     builder.Configuration.GetSection("Google"));
 
+// ── SMTP Settings ─────────────────────────────────────────────────────────────
+builder.Services.Configure<ResQ.API.Models.Settings.SmtpSettings>(
+    builder.Configuration.GetSection("Smtp"));
+
 // ── Hangfire ──────────────────────────────────────────────────────────────────
 var hangfireConn = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddHangfire(cfg => cfg
@@ -161,6 +165,7 @@ builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<ResQ.API.Services.Email.IEmailService, ResQ.API.Services.Email.SmtpEmailService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMerchantService, MerchantService>();
 builder.Services.AddScoped<ICatalogService, CatalogService>();

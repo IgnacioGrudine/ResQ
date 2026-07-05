@@ -14,6 +14,7 @@ using ResQ.API.Models.Settings;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
+using ResQ.API.Services.Email;
 using ResQ.API.Services.Encryption;
 using ResQ.API.Services.MercadoPago;
 using Microsoft.Extensions.Logging;
@@ -27,6 +28,7 @@ public class OrderService(
     IEncryptionService encryption,
     IMercadoPagoHttpClient mpClient,
     IMercadoPagoOAuthService oauthService,
+    IEmailService emailService,
     IOptions<MpSettings> mpOptions,
     IHostEnvironment env,
     ILogger<OrderService> logger) : IOrderService
@@ -180,6 +182,13 @@ public class OrderService(
         order.UpdatedAt   = DateTime.UtcNow;
         orders.Update(order);
         await orders.SaveChangesAsync(ct);
+
+        await emailService.SendReviewRequestAsync(
+            toEmail:      order.Consumer.User.Email,
+            consumerName: order.Consumer.FirstName,
+            merchantName: order.Merchant.BusinessName,
+            orderId:      order.Id,
+            ct:           ct);
 
         return Result.Ok(MapMerchantOrder(order));
     }

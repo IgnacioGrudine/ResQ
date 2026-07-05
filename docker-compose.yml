@@ -51,6 +51,12 @@ services:
       MercadoPago__UseTestMode: ${MP_USE_TEST_MODE:-false}
       Encryption__Key: ${ENCRYPTION_KEY}
       Google__ClientId: ${GOOGLE_CLIENT_ID}
+      Smtp__Host: ${SMTP_HOST:-smtp.gmail.com}
+      Smtp__Port: ${SMTP_PORT:-587}
+      Smtp__Username: ${SMTP_USERNAME}
+      Smtp__Password: ${SMTP_PASSWORD}
+      Smtp__FromEmail: ${SMTP_FROM_EMAIL}
+      Smtp__FromName: ${SMTP_FROM_NAME:-ResQ}
     depends_on:
       postgres:
         condition: service_healthy
