@@ -58,75 +58,245 @@
 
   <!-- ─── Main content ─── -->
   <main class="flex-1 md:ml-60 pb-20 md:pb-0 min-w-0">
+
+    <!-- ─── Header: identity (left) + notifications & profile (right) ─── -->
+    <header class="sticky top-0 z-30 flex items-center justify-between gap-3 h-16 px-4 md:px-8 bg-white/80 backdrop-blur border-b border-gray-100">
+
+      <!-- Merchant identity -->
+      <div class="flex items-center gap-3 min-w-0">
+        <!-- Logo (mobile only, since the sidebar logo is hidden) -->
+        <a routerLink="/panel" class="md:hidden flex items-center gap-1.5 shrink-0">
+          <svg lucideLeaf class="w-6 h-6 text-fern"></svg>
+        </a>
+        <div class="min-w-0">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-fern leading-none">Comercio</p>
+          <p class="font-bold text-evergreen truncate leading-tight">{{ businessName() || 'Mi comercio' }}</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+
+      <div class="relative">
+        <button
+          (click)="toggleDropdown()"
+          type="button"
+          aria-label="Notificaciones"
+          class="relative flex items-center justify-center w-10 h-10 rounded-full text-evergreen hover:bg-fern/10 transition-colors">
+          <svg lucideBell class="w-6 h-6"></svg>
+          @if (notifications.unreadCount() > 0) {
+            <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+              {{ notifications.unreadCount() > 99 ? '99+' : notifications.unreadCount() }}
+            </span>
+          }
+        </button>
+
+        @if (dropdownOpen()) {
+          <!-- Backdrop to close on outside click -->
+          <div class="fixed inset-0 z-30" (click)="closeDropdown()"></div>
+
+          <!-- Dropdown panel -->
+          <div class="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] z-40 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+              <h3 class="font-bold text-evergreen">Notificaciones</h3>
+              @if (notifications.unreadCount() > 0) {
+                <button
+                  (click)="markAllAsRead()"
+                  type="button"
+                  class="flex items-center gap-1 text-xs font-semibold text-fern hover:text-hunter transition-colors">
+                  <svg lucideCheckCheck class="w-4 h-4"></svg>
+                  Marcar todas
+                </button>
+              }
+            </div>
+
+            <div class="max-h-96 overflow-y-auto">
+              @for (n of notifications.notifications(); track n.id) {
+                <button
+                  (click)="onNotificationClick(n)"
+                  type="button"
+                  class="w-full flex items-start gap-3 px-4 py-3 text-left border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                  [ngClass]="{ 'bg-lime/20': !n.isRead }">
+                  <span
+                    class="shrink-0 flex items-center justify-center w-9 h-9 rounded-full"
+                    [ngClass]="n.type === 'OrderPaid'
+                      ? 'bg-fern/15 text-hunter'
+                      : 'bg-red-100 text-red-500'">
+                    @if (n.type === 'OrderPaid') {
+                      <svg lucideShoppingBag class="w-5 h-5"></svg>
+                    } @else {
+                      <svg lucideXCircle class="w-5 h-5"></svg>
+                    }
+                  </span>
+                  <span class="flex-1 min-w-0">
+                    <span class="flex items-center gap-2">
+                      <span class="font-semibold text-sm text-gray-900 truncate">{{ n.title }}</span>
+                      @if (!n.isRead) {
+                        <span class="shrink-0 w-2 h-2 rounded-full bg-fern"></span>
+                      }
+                    </span>
+                    <span class="block text-sm text-gray-600 truncate">{{ n.message }}</span>
+                    <span class="block text-xs text-gray-400 mt-0.5">{{ n.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                  </span>
+                </button>
+              } @empty {
+                <div class="px-4 py-10 text-center text-sm text-gray-400">
+                  No tenés notificaciones todavía.
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Profile menu -->
+      <div class="relative">
+        <button
+          (click)="toggleProfileMenu()"
+          type="button"
+          aria-label="Mi perfil"
+          class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-gray-100 transition-colors">
+          @if (photoUrl()) {
+            <img [src]="photoUrl()" alt="" class="w-9 h-9 rounded-full object-cover" />
+          } @else {
+            <span class="flex items-center justify-center w-9 h-9 rounded-full bg-fern text-white text-sm font-bold">
+              {{ initials() }}
+            </span>
+          }
+          <svg lucideChevronDown class="w-4 h-4 text-gray-400 hidden sm:block"></svg>
+        </button>
+
+        @if (profileMenuOpen()) {
+          <!-- Backdrop to close on outside click -->
+          <div class="fixed inset-0 z-30" (click)="closeProfileMenu()"></div>
+
+          <!-- Menu panel -->
+          <div class="absolute right-0 mt-2 w-60 max-w-[calc(100vw-2rem)] z-40 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+              @if (photoUrl()) {
+                <img [src]="photoUrl()" alt="" class="w-10 h-10 rounded-full object-cover shrink-0" />
+              } @else {
+                <span class="flex items-center justify-center w-10 h-10 rounded-full bg-fern text-white text-sm font-bold shrink-0">
+                  {{ initials() }}
+                </span>
+              }
+              <div class="min-w-0">
+                <p class="font-bold text-evergreen truncate leading-tight">{{ businessName() || 'Mi comercio' }}</p>
+                <p class="text-xs text-gray-400 leading-tight">Cuenta de comercio</p>
+              </div>
+            </div>
+
+            <a routerLink="/panel/profile"
+               (click)="closeProfileMenu()"
+               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+              <svg lucideStore class="w-5 h-5 text-hunter"></svg>
+              Mi Comercio
+            </a>
+
+            <button
+              (click)="logout()"
+              type="button"
+              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100">
+              <svg lucideLogOut class="w-5 h-5"></svg>
+              Cerrar sesión
+            </button>
+          </div>
+        }
+      </div>
+
+      </div>
+    </header>
+
     <router-outlet />
   </main>
 
   <!-- ─── Bottom nav (mobile) ─── -->
   <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 z-20">
-    <div class="flex items-center justify-around h-16 px-1">
+    <div class="grid grid-cols-5 items-stretch h-16">
 
       <a routerLink="/panel"
          [routerLinkActiveOptions]="{ exact: true }"
          routerLinkActive #rla1="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 transition-colors"
+         class="flex flex-col items-center justify-center gap-1 px-1 transition-colors"
          [class.text-evergreen]="rla1.isActive"
          [class.text-gray-400]="!rla1.isActive">
-        <svg lucideLayoutDashboard class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Inicio</span>
+        <svg lucideLayoutDashboard class="w-5 h-5 shrink-0"></svg>
+        <span class="text-[10px] font-medium leading-none">Inicio</span>
       </a>
 
       <a routerLink="/panel/packs"
          routerLinkActive #rla2="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 transition-colors"
+         class="flex flex-col items-center justify-center gap-1 px-1 transition-colors"
          [class.text-evergreen]="rla2.isActive"
          [class.text-gray-400]="!rla2.isActive">
-        <svg lucidePackage class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Packs</span>
+        <svg lucidePackage class="w-5 h-5 shrink-0"></svg>
+        <span class="text-[10px] font-medium leading-none">Packs</span>
       </a>
 
       <a routerLink="/panel/orders"
          routerLinkActive #rla3="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 transition-colors"
+         class="flex flex-col items-center justify-center gap-1 px-1 transition-colors"
          [class.text-evergreen]="rla3.isActive"
          [class.text-gray-400]="!rla3.isActive">
-        <svg lucideClipboardList class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Órdenes</span>
-      </a>
-
-      <a routerLink="/panel/analytics"
-         routerLinkActive #rla4="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 transition-colors"
-         [class.text-evergreen]="rla4.isActive"
-         [class.text-gray-400]="!rla4.isActive">
-        <svg lucideTrendingUp class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Analytics</span>
-      </a>
-
-      <a routerLink="/panel/reviews"
-         routerLinkActive #rla5="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 transition-colors"
-         [class.text-evergreen]="rla5.isActive"
-         [class.text-gray-400]="!rla5.isActive">
-        <svg lucideStar class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Reseñas</span>
+        <svg lucideClipboardList class="w-5 h-5 shrink-0"></svg>
+        <span class="text-[10px] font-medium leading-none">Órdenes</span>
       </a>
 
       <a routerLink="/panel/profile"
-         routerLinkActive #rla6="routerLinkActive"
-         class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 transition-colors"
-         [class.text-evergreen]="rla6.isActive"
-         [class.text-gray-400]="!rla6.isActive">
-        <svg lucideStore class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Comercio</span>
+         routerLinkActive #rla4="routerLinkActive"
+         class="flex flex-col items-center justify-center gap-1 px-1 transition-colors"
+         [class.text-evergreen]="rla4.isActive"
+         [class.text-gray-400]="!rla4.isActive">
+        <svg lucideStore class="w-5 h-5 shrink-0"></svg>
+        <span class="text-[10px] font-medium leading-none">Comercio</span>
       </a>
 
-      <button (click)="logout()"
-        class="flex flex-col items-center gap-0.5 px-2 pt-2 pb-1 text-red-400 transition-colors hover:text-red-500">
-        <svg lucideLogOut class="w-5 h-5"></svg>
-        <span class="text-[10px] font-medium">Salir</span>
+      <button (click)="toggleMore()" type="button"
+        class="flex flex-col items-center justify-center gap-1 px-1 transition-colors"
+        [class.text-evergreen]="moreOpen()"
+        [class.text-gray-400]="!moreOpen()">
+        <svg lucideEllipsis class="w-5 h-5 shrink-0"></svg>
+        <span class="text-[10px] font-medium leading-none">Más</span>
       </button>
 
     </div>
   </nav>
+
+  <!-- ─── "Más" bottom sheet (mobile) — Analytics & Reseñas ─── -->
+  @if (moreOpen()) {
+    <div class="md:hidden fixed inset-0 z-40">
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-black/40" (click)="closeMore()"></div>
+
+      <!-- Sheet -->
+      <div class="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl shadow-xl pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+        <div class="flex items-center justify-between px-5 pt-4 pb-2">
+          <h3 class="font-bold text-evergreen">Más opciones</h3>
+          <button (click)="closeMore()" type="button" aria-label="Cerrar"
+            class="flex items-center justify-center w-9 h-9 -mr-2 rounded-full text-gray-400 hover:bg-gray-100 transition-colors">
+            <svg lucideX class="w-5 h-5"></svg>
+          </button>
+        </div>
+
+        <a routerLink="/panel/analytics" (click)="closeMore()"
+           class="flex items-center gap-3 px-5 py-4 text-gray-700 hover:bg-gray-50 transition-colors">
+          <span class="flex items-center justify-center w-10 h-10 rounded-full bg-evergreen/10 text-evergreen shrink-0">
+            <svg lucideTrendingUp class="w-5 h-5"></svg>
+          </span>
+          <span class="flex-1 font-semibold">Analytics</span>
+          <svg lucideChevronRight class="w-5 h-5 text-gray-300 shrink-0"></svg>
+        </a>
+
+        <a routerLink="/panel/reviews" (click)="closeMore()"
+           class="flex items-center gap-3 px-5 py-4 text-gray-700 hover:bg-gray-50 transition-colors">
+          <span class="flex items-center justify-center w-10 h-10 rounded-full bg-evergreen/10 text-evergreen shrink-0">
+            <svg lucideStar class="w-5 h-5"></svg>
+          </span>
+          <span class="flex-1 font-semibold">Reseñas</span>
+          <svg lucideChevronRight class="w-5 h-5 text-gray-300 shrink-0"></svg>
+        </a>
+      </div>
+    </div>
+  }
 
 </div>
