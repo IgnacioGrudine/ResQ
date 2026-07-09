@@ -19,14 +19,20 @@
 
   <!-- ── Top bar ── -->
   <div class="sticky top-0 z-10 bg-evergreen shadow-md">
-    <div class="max-w-6xl mx-auto px-4 md:px-8 py-3 flex items-center gap-3">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center gap-4">
       <!-- Logo visible only on mobile (sidebar hides it on desktop) -->
       <div class="md:hidden flex items-center gap-1.5 shrink-0">
         <svg lucideLeaf class="w-6 h-6 text-lime"></svg>
         <span class="text-lg font-bold text-white">ResQ</span>
       </div>
+      <!-- Location (desktop only — gives the bar a purpose beyond the input) -->
+      <div class="hidden md:flex items-center gap-1.5 shrink-0 text-white/70">
+        <svg lucideMapPin class="w-4 h-4 text-lime shrink-0"></svg>
+        <span class="text-sm font-medium">Córdoba, Argentina</span>
+      </div>
+      <div class="hidden md:block w-px h-6 bg-white/15 shrink-0"></div>
       <!-- Search -->
-      <div class="flex-1 relative">
+      <div class="flex-1 md:max-w-md relative">
         <svg lucideSearch class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"></svg>
         <input
           [(ngModel)]="searchInput"
@@ -250,7 +256,7 @@
           </div>
           <div
             (click)="openPack(u.id)"
-            class="flex gap-3 sm:gap-4 bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.99] mb-6 sm:h-40">
+            class="group flex gap-3 sm:gap-4 bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.99] mb-6 sm:h-40">
             <div class="relative w-28 sm:w-48 shrink-0 bg-gradient-to-br from-evergreen to-hunter">
               @if (u.imageUrl) {
                 <img [src]="u.imageUrl" [alt]="u.name" class="w-full h-full object-cover">
@@ -263,14 +269,20 @@
                 {{ closesInLabel(u) }}
               </span>
             </div>
-            <div class="py-2.5 sm:py-4 pr-3 sm:pr-5 flex flex-col justify-center min-w-0 flex-1">
-              <p class="font-semibold text-gray-800 text-sm sm:text-lg leading-tight truncate">{{ u.name }}</p>
-              <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">{{ u.merchantName }}{{ u.distanceKm != null ? ' · ' + u.distanceKm + ' km' : '' }}</p>
-              <div class="flex items-baseline gap-1.5 sm:gap-2 mt-2 sm:mt-3 flex-wrap">
-                <span class="text-evergreen font-bold text-base sm:text-xl">${{ u.salePrice | number:'1.0-0' }}</span>
-                <span class="text-gray-300 text-xs sm:text-sm line-through">${{ u.originalPrice | number:'1.0-0' }}</span>
-                <span class="text-[11px] sm:text-xs text-fern font-semibold sm:ml-auto">{{ u.stockQuantity }} disp.</span>
+            <div class="py-2.5 sm:py-4 pr-3 sm:pr-5 flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-800 text-sm sm:text-lg leading-tight truncate">{{ u.name }}</p>
+                <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">{{ u.merchantName }}{{ u.distanceKm != null ? ' · ' + u.distanceKm + ' km' : '' }}</p>
+                <div class="flex items-baseline gap-1.5 sm:gap-2 mt-2 flex-wrap">
+                  <span class="text-evergreen font-bold text-base sm:text-xl">${{ u.salePrice | number:'1.0-0' }}</span>
+                  <span class="text-gray-300 text-xs sm:text-sm line-through">${{ u.originalPrice | number:'1.0-0' }}</span>
+                  <span class="text-[11px] sm:text-xs text-fern font-semibold">{{ u.stockQuantity }} disp.</span>
+                </div>
               </div>
+              <span class="hidden sm:flex shrink-0 items-center gap-1.5 px-5 py-2.5 rounded-full bg-evergreen text-white text-sm font-semibold group-hover:bg-hunter transition-colors">
+                Ver pack
+                <svg lucideChevronRight class="w-4 h-4"></svg>
+              </span>
             </div>
           </div>
         }

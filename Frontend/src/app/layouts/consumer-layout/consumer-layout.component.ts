@@ -1,16 +1,22 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX, LucideMap } from '@lucide/angular';
+import {
+  LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX,
+  LucideMap, LucideChevronsLeft, LucideChevronsRight
+} from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsumerService } from '../../core/services/consumer.service';
 import { Order } from '../../core/models/consumer.models';
+
+const SIDEBAR_COLLAPSED_KEY = 'resq.consumer.sidebarCollapsed';
 
 @Component({
   selector: 'app-consumer-layout',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule,
-            LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX, LucideMap],
+            LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX,
+            LucideMap, LucideChevronsLeft, LucideChevronsRight],
   templateUrl: './consumer-layout.component.html'
 })
 export class ConsumerLayoutComponent implements OnInit {
@@ -21,6 +27,9 @@ export class ConsumerLayoutComponent implements OnInit {
   private pendingQueue: Order[] = [];
 
   readonly pendingOrder = signal<Order | null>(null);
+
+  /** Desktop sidebar collapsed to icon-only mode. Persisted across sessions. */
+  readonly sidebarCollapsed = signal(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
 
   reviewRating  = 0;
   hoverRating   = 0;
@@ -34,6 +43,12 @@ export class ConsumerLayoutComponent implements OnInit {
         this.showNext();
       }
     });
+  }
+
+  toggleSidebar(): void {
+    const next = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(next);
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
   }
 
   private showNext(): void {

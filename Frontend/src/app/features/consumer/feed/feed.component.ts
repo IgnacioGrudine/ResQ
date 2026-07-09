@@ -10,6 +10,7 @@ import { Category, MerchantListItem, PackListItem } from '../../../core/models/c
 import {
   LucideSearch,
   LucideLeaf,
+  LucideMapPin,
   LucideClock,
   LucideX,
   LucideRefreshCw,
@@ -56,7 +57,7 @@ const URGENT_THRESHOLD_MINUTES = 120;
   standalone: true,
   imports: [
     FormsModule, DecimalPipe, NgTemplateOutlet,
-    LucideSearch, LucideLeaf, LucideClock, LucideX, LucideRefreshCw, LucideStar,
+    LucideSearch, LucideLeaf, LucideMapPin, LucideClock, LucideX, LucideRefreshCw, LucideStar,
     LucideWheat, LucideFish, LucideCoffee, LucideUtensilsCrossed, LucideSalad,
     LucideIceCreamCone, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideUtensils,
     LucideSlidersHorizontal, LucideChevronRight
