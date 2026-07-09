@@ -1,27 +1,66 @@
-import { Component, OnInit, DestroyRef, inject, signal } from '@angular/core';
+import { Component, OnInit, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { CatalogService, PackFilters } from '../../../core/services/catalog.service';
-import { Category, PackListItem } from '../../../core/models/catalog.models';
+import { Category, MerchantListItem, PackListItem } from '../../../core/models/catalog.models';
 import {
   LucideSearch,
   LucideLeaf,
-  LucideMapPin,
   LucideClock,
   LucideX,
-  LucideRefreshCw
+  LucideRefreshCw,
+  LucideStar,
+  LucideWheat,
+  LucideFish,
+  LucideCoffee,
+  LucideUtensilsCrossed,
+  LucideSalad,
+  LucideIceCreamCone,
+  LucideCakeSlice,
+  LucideCookie,
+  LucidePizza,
+  LucideFlame,
+  LucideUtensils,
+  LucideSlidersHorizontal,
+  LucideChevronRight
 } from '@lucide/angular';
 
 interface FilterCategory { id: number | null; name: string; }
 
+/** Maps a category name to its chip icon. Falls back to a generic utensils icon. */
+const CATEGORY_ICONS: Record<string, string> = {
+  'Panadería':   'wheat',
+  'Sushi':       'fish',
+  'Café':        'coffee',
+  'Restaurante': 'utensils-crossed',
+  'Vegano':      'salad',
+  'Heladería':   'ice-cream-cone',
+  'Pastelería':  'cake-slice',
+  'Postres':     'cookie',
+  'Pizzería':    'pizza',
+  'Parrilla':    'flame'
+};
+
+/** How many packs to reveal per "Cargar más" click, and initially. */
+const PACKS_PAGE_SIZE = 8;
+
+/** Packs closing within this many minutes are eligible for the "Termina pronto" spot. */
+const URGENT_THRESHOLD_MINUTES = 120;
+
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, LucideSearch, LucideLeaf, LucideMapPin, LucideClock, LucideX, LucideRefreshCw],
+  imports: [
+    FormsModule, DecimalPipe, NgTemplateOutlet,
+    LucideSearch, LucideLeaf, LucideClock, LucideX, LucideRefreshCw, LucideStar,
+    LucideWheat, LucideFish, LucideCoffee, LucideUtensilsCrossed, LucideSalad,
+    LucideIceCreamCone, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideUtensils,
+    LucideSlidersHorizontal, LucideChevronRight
+  ],
   templateUrl: './feed.component.html'
 })
 export class FeedComponent implements OnInit {
@@ -36,6 +75,9 @@ export class FeedComponent implements OnInit {
   readonly loading    = signal(false);
   readonly error      = signal<string | null>(null);
 
+  readonly merchants        = signal<MerchantListItem[]>([]);
+  readonly merchantsLoading = signal(false);
+
   searchInput         = '';
   selectedCategory: number | null = null;
   selectedMaxPrice    = '';
@@ -43,6 +85,12 @@ export class FeedComponent implements OnInit {
   userLat: number | null = null;
   userLon: number | null = null;
   locationDenied = false;
+
+  /** Whether the "Filtros" sheet (extra categories + distance + price) is expanded. */
+  readonly filtersOpen = signal(false);
+
+  /** How many non-urgent packs are currently revealed in the "Cerca tuyo" grid. */
+  readonly visiblePacksCount = signal(PACKS_PAGE_SIZE);
 
   readonly priceOptions = [
     { value: '',     label: 'Cualquier precio' },
@@ -59,6 +107,48 @@ export class FeedComponent implements OnInit {
     { value: '10', label: 'Hasta 10 km' },
   ];
 
+  // ── Computed ─────────────────────────────────────────────────────────────────
+
+  /** Up to 3 short-list categories rendered as quick chips; the rest live in the Filtros sheet. */
+  readonly quickCategories = computed(() => this.categories().slice(1, 4));
+
+  /** First 6 nearby merchants for the compact grid; "Ver todos" leads to the map for the rest. */
+  readonly topMerchants = computed(() => this.merchants().slice(0, 6));
+
+  /** The soonest-closing pack within the urgency window, or null if none qualifies. */
+  readonly urgentPack = computed<PackListItem | null>(() => {
+    let best: PackListItem | null = null;
+    let bestMinutes = Infinity;
+    for (const p of this.packs()) {
+      const mins = this.minutesUntilClose(p.pickupTimeEnd);
+      if (mins > 0 && mins <= URGENT_THRESHOLD_MINUTES && mins < bestMinutes) {
+        best = p;
+        bestMinutes = mins;
+      }
+    }
+    return best;
+  });
+
+  /** All packs except the one already featured in "Termina pronto", to avoid duplicates. */
+  readonly regularPacks = computed(() => {
+    const urgent = this.urgentPack();
+    return urgent ? this.packs().filter(p => p.id !== urgent.id) : this.packs();
+  });
+
+  readonly visiblePacks = computed(() => this.regularPacks().slice(0, this.visiblePacksCount()));
+
+  readonly hasMorePacks = computed(() => this.visiblePacksCount() < this.regularPacks().length);
+
+  /** Number of active filters not already covered by a quick chip, shown as a badge on "Filtros". */
+  readonly activeFilterCount = computed(() => {
+    let count = 0;
+    if (this.selectedMaxDistance) count++;
+    if (this.selectedMaxPrice) count++;
+    const quickIds = this.quickCategories().map(c => c.id);
+    if (this.selectedCategory !== null && !quickIds.includes(this.selectedCategory)) count++;
+    return count;
+  });
+
   ngOnInit(): void {
     // Debounced search: dispara solo cuando hay 0 chars (reset) o 3+
     this.searchSubject.pipe(
@@ -70,7 +160,50 @@ export class FeedComponent implements OnInit {
 
     this.loadCategories();
     this.loadPacks();
+    this.loadMerchants();
     this.requestLocation();
+  }
+
+  categoryIcon(name: string): string | null {
+    return CATEGORY_ICONS[name] ?? null;
+  }
+
+  /**
+   * Class string for a category chip. `display` overrides the default 'inline-flex' so
+   * responsive-only chips (e.g. 'hidden sm:inline-flex') don't fight an unprefixed base class.
+   */
+  chipClass(id: number | null, display = 'inline-flex'): string {
+    const base = `shrink-0 ${display} items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-medium transition-all active:scale-90`;
+    return base + (this.selectedCategory === id
+      ? ' bg-evergreen text-white shadow-sm'
+      : ' bg-white text-gray-600 border border-gray-200 hover:border-evergreen hover:text-evergreen');
+  }
+
+  loadMerchants(): void {
+    this.merchantsLoading.set(true);
+    this.catalog.getCatalog().subscribe({
+      next: merchants => {
+        const sorted = [...merchants]
+          .sort((a, b) => b.averageRating - a.averageRating)
+          .slice(0, 10);
+        this.merchants.set(sorted);
+        this.merchantsLoading.set(false);
+      },
+      error: () => this.merchantsLoading.set(false)
+    });
+  }
+
+  openMerchant(id: number): void {
+    this.router.navigate(['/merchant', id]);
+  }
+
+  goToMap(): void {
+    this.router.navigate(['/home/mapa']);
+  }
+
+  /** True when a merchant has no reviews yet — shown as "Nuevo" instead of a 0-star rating. */
+  isNewMerchant(m: MerchantListItem): boolean {
+    return m.reviewCount === 0;
   }
 
   onSearchChange(value: string): void {
@@ -102,6 +235,7 @@ export class FeedComponent implements OnInit {
   loadPacks(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.visiblePacksCount.set(PACKS_PAGE_SIZE);
 
     const filters: PackFilters = {
       lat:         this.userLat  ?? undefined,
@@ -118,8 +252,26 @@ export class FeedComponent implements OnInit {
     });
   }
 
+  loadMorePacks(): void {
+    this.visiblePacksCount.update(n => n + PACKS_PAGE_SIZE);
+  }
+
   selectCategory(id: number | null): void {
     this.selectedCategory = id;
+    this.filtersOpen.set(false);
+    this.loadPacks();
+  }
+
+  toggleFilters(): void {
+    this.filtersOpen.update(open => !open);
+  }
+
+  clearFilters(): void {
+    this.selectedCategory = null;
+    this.selectedMaxPrice = '';
+    this.selectedMaxDistance = '';
+    this.searchInput = '';
+    this.filtersOpen.set(false);
     this.loadPacks();
   }
 
@@ -134,6 +286,24 @@ export class FeedComponent implements OnInit {
 
   formatTime(t: string): string {
     return t.substring(0, 5);
+  }
+
+  /** Minutes from now until the given HH:mm(:ss) time occurs today. Negative if already passed. */
+  private minutesUntilClose(pickupTimeEnd: string): number {
+    const [h, m] = pickupTimeEnd.split(':').map(Number);
+    const now   = new Date();
+    const close = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m);
+    return Math.round((close.getTime() - now.getTime()) / 60000);
+  }
+
+  /** Human label for how soon a pack closes, e.g. "Cierra en 40 min" or "Cierra en 1h 30min". */
+  closesInLabel(pack: PackListItem): string {
+    const mins = this.minutesUntilClose(pack.pickupTimeEnd);
+    if (mins <= 0) return 'Cierra pronto';
+    if (mins < 60) return `Cierra en ${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m === 0 ? `Cierra en ${h}h` : `Cierra en ${h}h ${m}min`;
   }
 
   initials(name: string): string {
