@@ -110,8 +110,21 @@ export class FeedComponent implements OnInit {
 
   // ── Computed ─────────────────────────────────────────────────────────────────
 
-  /** Up to 3 short-list categories rendered as quick chips; the rest live in the Filtros sheet. */
-  readonly quickCategories = computed(() => this.categories().slice(1, 4));
+  /** Fixed set of categories rendered as quick chips; the rest live in the Filtros sheet. */
+  private static readonly QUICK_CATEGORY_NAMES = ['Panadería', 'Restaurante', 'Pizzería'];
+
+  readonly quickCategories = computed(() => {
+    const all = this.categories();
+    return FeedComponent.QUICK_CATEGORY_NAMES
+      .map(name => all.find(c => c.name === name))
+      .filter((c): c is FilterCategory => c !== undefined);
+  });
+
+  /** Every category not already shown as a quick chip, listed in the Filtros sheet. */
+  readonly otherCategories = computed(() => {
+    const quickIds = new Set(this.quickCategories().map(c => c.id));
+    return this.categories().slice(1).filter(c => !quickIds.has(c.id));
+  });
 
   /** First 6 nearby merchants for the compact grid; "Ver todos" leads to the map for the rest. */
   readonly topMerchants = computed(() => this.merchants().slice(0, 6));
