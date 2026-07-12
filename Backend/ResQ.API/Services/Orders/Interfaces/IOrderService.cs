@@ -75,4 +75,26 @@ public interface IOrderService
     /// or the order does not belong to this merchant.
     /// </returns>
     Task<Result<MerchantOrderSummaryResponse>> ConfirmPickupAsync(int merchantProfileId, string pickupCode, CancellationToken ct = default);
+
+    /// <summary>
+    /// Cancels a paid order on behalf of the consumer who placed it, issuing a full refund
+    /// through Mercado Pago and restoring the purchased quantity to the product's stock.
+    /// </summary>
+    /// <remarks>
+    /// Only orders in <see cref="Models.Enums.OrderStatus.Paid"/> status may be cancelled,
+    /// and only until the pickup window (<c>Product.PickupTimeEnd</c>, in Argentina local time)
+    /// closes for the day the order was placed. The refund is requested from Mercado Pago
+    /// before any local state changes, so a failed refund leaves the order untouched.
+    /// </remarks>
+    /// <param name="consumerProfileId">The identifier of the consumer profile requesting the cancellation.</param>
+    /// <param name="orderId">The identifier of the order to cancel.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result{T}"/> containing the updated <see cref="OrderSummaryResponse"/>;
+    /// fails with <see cref="Common.Errors.NotFoundError"/> if the order does not exist or does not
+    /// belong to the consumer, <see cref="Common.Errors.ConflictError"/> if the order is not in
+    /// <c>Paid</c> status or the pickup window has already closed, or
+    /// <see cref="Common.Errors.BadRequestError"/> if Mercado Pago rejects the refund.
+    /// </returns>
+    Task<Result<OrderSummaryResponse>> CancelOrderAsync(int consumerProfileId, int orderId, CancellationToken ct = default);
 }

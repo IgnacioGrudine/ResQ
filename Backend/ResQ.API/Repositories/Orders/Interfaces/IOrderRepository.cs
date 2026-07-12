@@ -72,4 +72,19 @@ public interface IOrderRepository : IGenericRepository<Order>
     /// belongs to the consumer, or <c>null</c> otherwise.
     /// </returns>
     Task<Order?> GetByIdForConsumerAsync(int orderId, int consumerProfileId, CancellationToken ct = default);
+
+    /// <summary>Tracked lookup of a single consumer order — used by the self-service cancellation flow.</summary>
+    /// <remarks>
+    /// Returns the order in a tracked state, with the product of each order detail loaded,
+    /// so the caller can both mutate <c>OrderStatus</c> and restore <c>Product.StockQuantity</c>
+    /// within the same <c>SaveChangesAsync</c> call.
+    /// </remarks>
+    /// <param name="orderId">The identifier of the order to retrieve.</param>
+    /// <param name="consumerProfileId">The identifier of the consumer profile that must own the order.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// The tracked <see cref="Order"/> with merchant and product data loaded if it belongs to
+    /// the consumer, or <c>null</c> otherwise.
+    /// </returns>
+    Task<Order?> GetByIdForConsumerTrackedAsync(int orderId, int consumerProfileId, CancellationToken ct = default);
 }

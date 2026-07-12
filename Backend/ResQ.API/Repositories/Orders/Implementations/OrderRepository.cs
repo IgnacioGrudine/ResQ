@@ -109,4 +109,23 @@ public class OrderRepository(ResQDbContext db) : GenericRepository<Order>(db), I
             .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
             .Include(o => o.Review)
             .FirstOrDefaultAsync(o => o.Id == orderId && o.ConsumerId == consumerProfileId, ct);
+
+    /// <summary>
+    /// Retrieves a single order by its identifier, scoped to the specified consumer profile,
+    /// in a tracked state with the merchant and each line item's product loaded.
+    /// Used by the self-service cancellation flow, which must mutate both the order's status
+    /// and the product's stock in the same transaction.
+    /// </summary>
+    /// <param name="orderId">The identifier of the order to retrieve.</param>
+    /// <param name="consumerProfileId">The identifier of the consumer profile that must own the order.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// The tracked <see cref="Order"/> with merchant and product data loaded if it belongs to
+    /// the consumer, or <c>null</c> if no such order exists or ownership does not match.
+    /// </returns>
+    public async Task<Order?> GetByIdForConsumerTrackedAsync(int orderId, int consumerProfileId, CancellationToken ct = default)
+        => await _set
+            .Include(o => o.Merchant)
+            .Include(o => o.OrderDetails).ThenInclude(od => od.Product)
+            .FirstOrDefaultAsync(o => o.Id == orderId && o.ConsumerId == consumerProfileId, ct);
 }

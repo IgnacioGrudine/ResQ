@@ -69,6 +69,23 @@ public class OrdersController(IOrderService orderService, IReviewService reviewS
         => (await orderService.GetOrderByIdAsync(id, User.GetProfileId(), ct)).ToActionResult();
 
     /// <summary>
+    /// Cancels a paid order before its pickup window closes, issuing a full refund via
+    /// Mercado Pago and restoring the purchased quantity to the product's stock.
+    /// Requires role: <c>Consumer</c>.
+    /// </summary>
+    /// <param name="id">The identifier of the order to cancel.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// 200 OK with the updated <see cref="OrderSummaryResponse"/>;
+    /// 404 Not Found if the order does not exist or does not belong to the consumer;
+    /// 409 Conflict if the order is not <c>Paid</c> or its pickup window already closed;
+    /// 400 Bad Request if Mercado Pago rejects the refund.
+    /// </returns>
+    [HttpPost("{id:int}/cancel")]
+    public async Task<ActionResult<OrderSummaryResponse>> CancelOrder(int id, CancellationToken ct)
+        => (await orderService.CancelOrderAsync(User.GetProfileId(), id, ct)).ToActionResult();
+
+    /// <summary>
     /// Submits a review for a completed order. The order must be in <c>PickedUp</c> status
     /// and must not already have a review. Only the consumer who placed the order may review it.
     /// Requires role: <c>Consumer</c>.

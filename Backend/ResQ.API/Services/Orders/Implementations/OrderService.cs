@@ -17,6 +17,7 @@ using ResQ.API.Repositories.Orders;
 using ResQ.API.Services.Email;
 using ResQ.API.Services.Encryption;
 using ResQ.API.Services.MercadoPago;
+using ResQ.API.Services.Notifications;
 using Microsoft.Extensions.Logging;
 
 namespace ResQ.API.Services.Orders;
@@ -29,12 +30,20 @@ public class OrderService(
     IMercadoPagoHttpClient mpClient,
     IMercadoPagoOAuthService oauthService,
     IEmailService emailService,
+    INotificationService notificationService,
     IOptions<MpSettings> mpOptions,
     IHostEnvironment env,
     ILogger<OrderService> logger) : IOrderService
 {
     private readonly MpSettings _mp = mpOptions.Value;
     private const decimal PlatformFeeRate = 0.10m;
+
+    /// <summary>
+    /// Argentina has observed a fixed UTC-3 offset with no daylight saving since 2009,
+    /// so this lookup is safe to cache once per service instance.
+    /// </summary>
+    private static readonly TimeZoneInfo ArgentinaTimeZone =
+        TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
 
     // ─── Internal value object ────────────────────────────────────────────────
 
@@ -191,6 +200,136 @@ public class OrderService(
             ct:           ct);
 
         return Result.Ok(MapMerchantOrder(order));
+    }
+
+    // ─── Public: Cancel ───────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Cancels a paid order on behalf of the consumer who placed it: requests a full refund
+    /// from Mercado Pago, then — only once MP confirms it — marks the order cancelled, zeroes
+    /// its platform fee and merchant earnings, and restores the purchased quantity to stock.
+    /// </summary>
+    /// <param name="consumerProfileId">The identifier of the consumer profile requesting the cancellation.</param>
+    /// <param name="orderId">The identifier of the order to cancel.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// The updated <see cref="OrderSummaryResponse"/> on success.
+    /// Fails with <see cref="NotFoundError"/> if the order does not exist or does not belong
+    /// to the consumer, <see cref="ConflictError"/> if the order is not <c>Paid</c> or the
+    /// pickup window has already closed, or <see cref="BadRequestError"/> if Mercado Pago
+    /// rejects the refund.
+    /// </returns>
+    public async Task<Result<OrderSummaryResponse>> CancelOrderAsync(
+        int consumerProfileId, int orderId, CancellationToken ct = default)
+    {
+        var order = await orders.GetByIdForConsumerTrackedAsync(orderId, consumerProfileId, ct);
+        if (order is null)
+            return Result.Fail(new NotFoundError("Orden no encontrada."));
+
+        if (order.OrderStatus != OrderStatus.Paid)
+            return Result.Fail(new ConflictError(order.OrderStatus switch
+            {
+                OrderStatus.Pending   => "La orden todavía no fue pagada, no hay nada que cancelar.",
+                OrderStatus.PickedUp  => "Esta orden ya fue retirada, no se puede cancelar.",
+                OrderStatus.Cancelled => "Esta orden ya fue cancelada.",
+                _                     => "Esta orden no se puede cancelar."
+            }));
+
+        var detail  = order.OrderDetails.First();
+        var product = detail.Product;
+
+        // The pickup window has no explicit date on the product — it's assumed to fall on
+        // the same calendar day the order was placed. Cancellation stays open until that
+        // window closes (PickupTimeEnd), not when it opens, so a purchase made mid-window
+        // (or after it starts) still leaves the consumer a chance to back out.
+        var cutoff = ToArgentinaTime(order.CreatedAt).Date.Add(product.PickupTimeEnd.ToTimeSpan());
+        if (ToArgentinaTime(DateTime.UtcNow) >= cutoff)
+            return Result.Fail(new ConflictError("La ventana de retiro ya cerró, no se puede cancelar la orden."));
+
+        var credentialResult = await ValidateAndRefreshCredentialAsync(order.MerchantId, ct);
+        if (credentialResult.IsFailed) return credentialResult.ToResult<OrderSummaryResponse>();
+
+        var accessToken   = encryption.Decrypt(credentialResult.Value.AccessToken);
+        var refundResult  = await RefundPaymentAsync(order.MpPaymentId!.Value, accessToken, ct);
+        if (refundResult.IsFailed) return refundResult.ToResult<OrderSummaryResponse>();
+
+        order.OrderStatus      = OrderStatus.Cancelled;
+        order.PlatformFee      = 0m;
+        order.MerchantEarnings = 0m;
+        order.UpdatedAt        = DateTime.UtcNow;
+        orders.Update(order);
+
+        product.StockQuantity += detail.Quantity;
+        product.UpdatedAt      = DateTime.UtcNow;
+        products.Update(product);
+
+        await orders.SaveChangesAsync(ct);
+
+        await NotifyOrderCancelledByConsumerAsync(order);
+
+        return Result.Ok(MapConsumerOrder(order));
+    }
+
+    /// <summary>
+    /// Converts a UTC timestamp to Argentina local time (fixed UTC-3, no daylight saving).
+    /// </summary>
+    /// <param name="utc">The UTC timestamp to convert.</param>
+    private static DateTime ToArgentinaTime(DateTime utc)
+        => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), ArgentinaTimeZone);
+
+    /// <summary>
+    /// Requests a full refund of the given Mercado Pago payment, using the merchant's own
+    /// access token since the payment was collected into the merchant's marketplace account.
+    /// </summary>
+    /// <param name="paymentId">The Mercado Pago payment ID to refund.</param>
+    /// <param name="accessToken">The merchant's decrypted Mercado Pago access token.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result"/> if MP accepted the refund; otherwise a failed result
+    /// with a <see cref="BadRequestError"/>.
+    /// </returns>
+    private async Task<Result> RefundPaymentAsync(long paymentId, string accessToken, CancellationToken ct)
+    {
+        // An empty body triggers a full refund of the payment's total amount.
+        // MP requires a fresh idempotency key per refund attempt on this endpoint.
+        var content  = new StringContent("{}", Encoding.UTF8, "application/json");
+        var response = await mpClient.PostAsync(
+            $"/v1/payments/{paymentId}/refunds", content, accessToken, ct, Guid.NewGuid().ToString());
+
+        if (response.IsSuccessStatusCode) return Result.Ok();
+
+        var responseBody = await response.Content.ReadAsStringAsync(ct);
+        logger.LogError(
+            "[MP] Refund failed for payment {PaymentId} ({Status}): {Body}",
+            paymentId, (int)response.StatusCode, responseBody);
+
+        return Result.Fail(new BadRequestError(
+            "No se pudo procesar el reembolso en Mercado Pago. Intentá nuevamente en unos minutos."));
+    }
+
+    /// <summary>
+    /// Creates an in-app "order cancelled" notification for the merchant, triggered by the
+    /// consumer's own cancellation action. Wrapped defensively so a notification failure
+    /// never blocks the cancellation itself.
+    /// </summary>
+    /// <param name="order">The order that was just cancelled, with its line items loaded.</param>
+    private async Task NotifyOrderCancelledByConsumerAsync(Order order)
+    {
+        try
+        {
+            var packName = order.OrderDetails.FirstOrDefault()?.Product?.Name ?? $"Orden #{order.Id}";
+
+            await notificationService.CreateAsync(
+                order.MerchantId,
+                NotificationType.OrderCancelled,
+                "Orden cancelada por el consumidor",
+                packName,
+                order.Id);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[Notification] Failed to create OrderCancelled notification for order #{OrderId}", order.Id);
+        }
     }
 
     // ─── CreateOrder steps ────────────────────────────────────────────────────
