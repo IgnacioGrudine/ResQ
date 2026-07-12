@@ -43,6 +43,13 @@ export class RolePickerComponent implements AfterViewInit {
       callback: (res: { credential: string }) =>
         this.ngZone.run(() => this.handleGoogleCallback(res))
     });
+
+    // GSI renders a fixed-width iframe — clamp it to the card's actual content
+    // width so it doesn't overflow narrow mobile viewports (368 is only safe
+    // on the desktop-width card).
+    const containerWidth = this.googleBtn.nativeElement.parentElement?.clientWidth;
+    const buttonWidth = containerWidth ? Math.min(368, containerWidth) : 368;
+
     google.accounts.id.renderButton(this.googleBtn.nativeElement, {
       type: 'standard',
       shape: 'rectangular',
@@ -50,7 +57,7 @@ export class RolePickerComponent implements AfterViewInit {
       text: 'continue_with',
       size: 'large',
       locale: 'es',
-      width: 368
+      width: buttonWidth
     });
   }
 
