@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ConsumerService } from '../../../core/services/consumer.service';
+import { OrderService } from '../../../core/services/order.service';
 import { Order, OrderStatus } from '../../../core/models/consumer.models';
-import { LucideShoppingBag, LucideChevronLeft, LucideChevronRight, LucideStar, LucideX } from '@lucide/angular';
+import { LucideShoppingBag, LucideChevronLeft, LucideChevronRight, LucideStar, LucideX, LucideTriangleAlert } from '@lucide/angular';
 
 type FilterTab = 'active' | 'cancelled' | 'completed' | 'all';
 
@@ -12,11 +14,12 @@ const PAGE_SIZE = 5;
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucideShoppingBag, LucideChevronLeft, LucideChevronRight, LucideStar, LucideX],
+  imports: [DecimalPipe, FormsModule, LucideShoppingBag, LucideChevronLeft, LucideChevronRight, LucideStar, LucideX, LucideTriangleAlert],
   templateUrl: './orders.component.html'
 })
 export class OrdersComponent implements OnInit {
   private readonly consumer = inject(ConsumerService);
+  private readonly orderService = inject(OrderService);
 
   readonly orders  = signal<Order[]>([]);
   readonly loading = signal(true);
@@ -26,7 +29,12 @@ export class OrdersComponent implements OnInit {
   reviewRating   = 0;
   hoverRating    = 0;
   reviewComment  = '';
-  submitting     = false;
+  readonly submitting = signal(false);
+
+  // Cancel modal state
+  cancelOrderId: number | null = null;
+  readonly cancelling  = signal(false);
+  readonly cancelError = signal('');
 
   private _activeTab: FilterTab = 'active';
   page = 1;
@@ -99,7 +107,7 @@ export class OrdersComponent implements OnInit {
     this.reviewRating  = 0;
     this.hoverRating   = 0;
     this.reviewComment = '';
-    this.submitting    = false;
+    this.submitting.set(false);
   }
 
   closeReviewModal(): void {
@@ -111,9 +119,9 @@ export class OrdersComponent implements OnInit {
   }
 
   submitReview(): void {
-    if (!this.reviewOrderId || this.reviewRating === 0 || this.submitting) return;
+    if (!this.reviewOrderId || this.reviewRating === 0 || this.submitting()) return;
 
-    this.submitting = true;
+    this.submitting.set(true);
     this.consumer.submitReview(this.reviewOrderId, {
       rating:  this.reviewRating,
       comment: this.reviewComment.trim() || undefined
@@ -124,7 +132,39 @@ export class OrdersComponent implements OnInit {
         );
         this.closeReviewModal();
       },
-      error: () => { this.submitting = false; }
+      error: () => { this.submitting.set(false); }
+    });
+  }
+
+  // ── Cancel modal ─────────────────────────────────────────────────────────
+
+  openCancelModal(orderId: number): void {
+    this.cancelOrderId = orderId;
+    this.cancelling.set(false);
+    this.cancelError.set('');
+  }
+
+  closeCancelModal(): void {
+    this.cancelOrderId = null;
+  }
+
+  confirmCancel(): void {
+    if (!this.cancelOrderId || this.cancelling()) return;
+
+    this.cancelling.set(true);
+    this.cancelError.set('');
+
+    this.orderService.cancelOrder(this.cancelOrderId).subscribe({
+      next: () => {
+        this.orders.update(list =>
+          list.map(o => o.id === this.cancelOrderId ? { ...o, orderStatus: 'Cancelled' as OrderStatus } : o)
+        );
+        this.closeCancelModal();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.cancelling.set(false);
+        this.cancelError.set(err.error?.detail ?? 'No se pudo cancelar la orden. Intentá de nuevo.');
+      }
     });
   }
 }

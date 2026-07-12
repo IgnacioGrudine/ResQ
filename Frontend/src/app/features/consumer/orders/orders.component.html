@@ -79,6 +79,17 @@
             </div>
           }
 
+          <!-- Cancel CTA (only for Paid orders) -->
+          @if (order.orderStatus === 'Paid') {
+            <div class="mx-4 mb-4">
+              <button (click)="openCancelModal(order.id)"
+                class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-100 transition-colors">
+                <svg lucideX class="w-4 h-4"></svg>
+                Cancelar pedido
+              </button>
+            </div>
+          }
+
           <!-- Review CTA (only for PickedUp orders without a review yet) -->
           @if (order.orderStatus === 'PickedUp' && !order.hasReview) {
             <div class="mx-4 mb-4">
@@ -167,11 +178,11 @@
 
       <!-- Submit -->
       <button (click)="submitReview()"
-        [disabled]="reviewRating === 0 || submitting"
+        [disabled]="reviewRating === 0 || submitting()"
         class="w-full py-3 rounded-xl font-semibold text-sm transition-all
                bg-evergreen text-white hover:bg-evergreen/90
                disabled:opacity-40 disabled:cursor-not-allowed">
-        @if (submitting) {
+        @if (submitting()) {
           <span class="flex items-center justify-center gap-2">
             <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             Enviando...
@@ -180,6 +191,57 @@
           Enviar reseña
         }
       </button>
+    </div>
+  </div>
+}
+
+<!-- ── Cancel Confirmation Modal ── -->
+@if (cancelOrderId !== null) {
+  <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+       (click)="closeCancelModal()">
+    <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-xl p-6"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-gray-800">¿Cancelar pedido?</h2>
+        <button (click)="closeCancelModal()"
+          class="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 transition-colors">
+          <svg lucideX class="w-5 h-5"></svg>
+        </button>
+      </div>
+
+      <p class="text-sm text-gray-500 mb-5">
+        Se reembolsará el 100% del monto pagado a tu medio de pago. Esta acción no se puede deshacer.
+      </p>
+
+      @if (cancelError()) {
+        <div class="mb-4 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <svg lucideTriangleAlert class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"></svg>
+          <p class="text-red-700 text-sm">{{ cancelError() }}</p>
+        </div>
+      }
+
+      <div class="flex gap-3">
+        <button (click)="closeCancelModal()"
+          class="flex-1 py-3 rounded-xl font-semibold text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+          Volver
+        </button>
+        <button (click)="confirmCancel()"
+          [disabled]="cancelling()"
+          class="flex-1 py-3 rounded-xl font-semibold text-sm transition-all
+                 bg-red-600 text-white hover:bg-red-700
+                 disabled:opacity-40 disabled:cursor-not-allowed">
+          @if (cancelling()) {
+            <span class="flex items-center justify-center gap-2">
+              <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              Cancelando...
+            </span>
+          } @else {
+            Sí, cancelar
+          }
+        </button>
+      </div>
     </div>
   </div>
 }

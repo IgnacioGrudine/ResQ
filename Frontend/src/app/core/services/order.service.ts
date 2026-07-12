@@ -18,4 +18,8 @@ export class OrderService {
   getOrderById(id: number): Observable<OrderSummary> {
     return this.http.get<OrderSummary>(`/api/orders/${id}`);
   }
+
+  cancelOrder(id: number): Observable<OrderSummary> {
+    return this.http.post<OrderSummary>(`/api/orders/${id}/cancel`, {});
+  }
 }
