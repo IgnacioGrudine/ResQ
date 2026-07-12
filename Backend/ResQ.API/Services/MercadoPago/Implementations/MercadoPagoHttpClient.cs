@@ -45,13 +45,19 @@ public class MercadoPagoHttpClient(HttpClient http) : IMercadoPagoHttpClient
     /// Optional plaintext Bearer token. When <see langword="null"/>, no <c>Authorization</c> header is added.
     /// </param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="idempotencyKey">
+    /// Optional value sent as the <c>X-Idempotency-Key</c> header. Required by MP write
+    /// endpoints such as payment refunds; omitted entirely when <see langword="null"/>.
+    /// </param>
     /// <returns>The raw <see cref="HttpResponseMessage"/> from Mercado Pago.</returns>
     public async Task<HttpResponseMessage> PostAsync(
-        string path, HttpContent content, string? bearerToken = null, CancellationToken ct = default)
+        string path, HttpContent content, string? bearerToken = null, CancellationToken ct = default, string? idempotencyKey = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, path) { Content = content };
         if (bearerToken is not null)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+        if (idempotencyKey is not null)
+            request.Headers.Add("X-Idempotency-Key", idempotencyKey);
         return await http.SendAsync(request, ct);
     }
 }

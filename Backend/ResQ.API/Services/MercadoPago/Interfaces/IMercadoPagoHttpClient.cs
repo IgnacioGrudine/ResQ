@@ -29,6 +29,12 @@ public interface IMercadoPagoHttpClient
     /// the initial OAuth token exchange.
     /// </param>
     /// <param name="ct">Cancellation token.</param>
+    /// <param name="idempotencyKey">
+    /// Optional value for the <c>X-Idempotency-Key</c> header, required by write endpoints
+    /// such as payment refunds so a retried request is not applied twice. Pass <c>null</c>
+    /// (the default) for endpoints that don't require it.
+    /// </param>
     /// <returns>The raw <see cref="HttpResponseMessage"/> returned by the Mercado Pago API.</returns>
-    Task<HttpResponseMessage> PostAsync(string path, HttpContent content, string? bearerToken = null, CancellationToken ct = default);
+    Task<HttpResponseMessage> PostAsync(
+        string path, HttpContent content, string? bearerToken = null, CancellationToken ct = default, string? idempotencyKey = null);
 }
