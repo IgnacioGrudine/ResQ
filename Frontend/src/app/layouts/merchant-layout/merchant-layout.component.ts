@@ -17,12 +17,16 @@ import {
   LucideChevronDown,
   LucideChevronRight,
   LucideEllipsis,
-  LucideX
+  LucideX,
+  LucideChevronsLeft,
+  LucideChevronsRight
 } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 import { MerchantService } from '../../core/services/merchant.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { MerchantNotification } from '../../core/models/notification.models';
+
+const SIDEBAR_COLLAPSED_KEY = 'resq.merchant.sidebarCollapsed';
 
 @Component({
   selector: 'app-merchant-layout',
@@ -30,7 +34,8 @@ import { MerchantNotification } from '../../core/models/notification.models';
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, DatePipe, NgClass,
     LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore, LucideTrendingUp, LucideLogOut,
-    LucideBell, LucideCheckCheck, LucideShoppingBag, LucideXCircle, LucideChevronDown, LucideChevronRight, LucideEllipsis, LucideX
+    LucideBell, LucideCheckCheck, LucideShoppingBag, LucideXCircle, LucideChevronDown, LucideChevronRight, LucideEllipsis, LucideX,
+    LucideChevronsLeft, LucideChevronsRight
   ],
   templateUrl: './merchant-layout.component.html'
 })
@@ -39,6 +44,9 @@ export class MerchantLayoutComponent implements OnInit, OnDestroy {
   private readonly merchant = inject(MerchantService);
   private readonly router = inject(Router);
   readonly notifications = inject(NotificationService);
+
+  /** Desktop sidebar collapsed to icon-only mode. Persisted across sessions. */
+  readonly sidebarCollapsed = signal(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
 
   /** Whether the notification dropdown is currently open. */
   readonly dropdownOpen = signal(false);
@@ -102,6 +110,12 @@ export class MerchantLayoutComponent implements OnInit, OnDestroy {
 
   closeMore(): void {
     this.moreOpen.set(false);
+  }
+
+  toggleSidebar(): void {
+    const next = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(next);
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
   }
 
   onNotificationClick(notification: MerchantNotification): void {
