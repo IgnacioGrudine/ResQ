@@ -25,8 +25,12 @@ public class MerchantAnalyticsResponse
     /// <summary>Net earnings of the previous equal-length period, for comparison.</summary>
     public decimal PreviousEarnings { get; set; }
 
-    /// <summary>Percentage change in earnings versus the previous period (can be negative).</summary>
-    public decimal EarningsGrowthPct { get; set; }
+    /// <summary>
+    /// Percentage change in earnings versus the previous period (can be negative).
+    /// <c>null</c> when the previous period had zero earnings — there's no valid baseline
+    /// to compute a percentage against, so the frontend shows a "Nuevo" badge instead of a number.
+    /// </summary>
+    public decimal? EarningsGrowthPct { get; set; }
 
     // ── 📦 Orders (period) ──
 

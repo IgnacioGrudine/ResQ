@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { MerchantAnalytics, ReportFormat } from '../../../core/models/merchant.models';
 import {
-  LucideRefreshCw, LucideTrendingUp, LucideTrendingDown, LucideStar, LucidePackage
+  LucideRefreshCw, LucideTrendingUp, LucideTrendingDown, LucideStar, LucidePackage, LucideSprout
 } from '@lucide/angular';
 
 interface Bar { label: string; income: number; orders: number; heightPct: number; showLabel: boolean; }
@@ -14,7 +14,7 @@ interface Bar { label: string; income: number; orders: number; heightPct: number
   standalone: true,
   imports: [
     DecimalPipe, FormsModule,
-    LucideRefreshCw, LucideTrendingUp, LucideTrendingDown, LucideStar, LucidePackage
+    LucideRefreshCw, LucideTrendingUp, LucideTrendingDown, LucideStar, LucidePackage, LucideSprout
   ],
   templateUrl: './merchant-analytics.component.html'
 })

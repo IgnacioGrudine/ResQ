@@ -39,7 +39,7 @@ export interface MerchantAnalytics {
   earnings: number;
   averageOrderValue: number;
   previousEarnings: number;
-  earningsGrowthPct: number;
+  earningsGrowthPct: number | null;
   completedOrders: number;
   cancelledOrders: number;
   cancellationRate: number;

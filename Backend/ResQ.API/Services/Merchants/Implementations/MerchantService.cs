@@ -395,9 +395,12 @@ public class MerchantService(
             Earnings          = earnings,
             AverageOrderValue = revenue.Count > 0 ? Math.Round(gmv / revenue.Count, 0) : 0,
             PreviousEarnings  = prevEarnings,
+            // null when the previous period has no earnings to compare against — a flat
+            // "+100%" in that case would be meaningless (true regardless of scale), so the
+            // frontend shows a "Nuevo" badge instead of a fabricated percentage.
             EarningsGrowthPct = prevEarnings > 0
                                     ? Math.Round((earnings - prevEarnings) / prevEarnings * 100, 1)
-                                    : (earnings > 0 ? 100 : 0),
+                                    : null,
             CompletedOrders   = completed,
             CancelledOrders   = cancelled,
             CancellationRate  = inRange.Count > 0 ? Math.Round((decimal)cancelled / inRange.Count * 100, 1) : 0,
