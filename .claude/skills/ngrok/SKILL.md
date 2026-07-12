@@ -1,14 +1,8 @@
 ---
 name: ngrok
 description: Levanta, verifica o reinicia el túnel ngrok para exponer el stack Docker de ResQ a internet (necesario para el callback OAuth de Mercado Pago). Úsalo cuando el usuario pida levantar ngrok, cuando el callback de MP falle por error de conexión, o cuando el túnel esté apuntando al puerto incorrecto.
-allowed-tools: Bash(curl *), PowerShell(*)
+allowed-tools: PowerShell(*)
 shell: powershell
----
-
-## Estado actual del túnel
-
-!`curl -s http://localhost:4040/api/tunnels 2>&1`
-
 ---
 
 ## Tu trabajo
@@ -40,9 +34,19 @@ localhost:80   ← nginx Docker
 
 ### Paso 1 — Verificar si ngrok ya está corriendo
 
-Mirá el output del `curl` de arriba.
+Ejecutar:
 
-**Escenario A — ngrok no está corriendo** (el curl da error de conexión):
+```powershell
+try {
+    $r = Invoke-WebRequest -Uri "http://localhost:4040/api/tunnels" -UseBasicParsing -ErrorAction Stop
+    $t = ($r.Content | ConvertFrom-Json).tunnels[0]
+    Write-Host "addr=$($t.config.addr) url=$($t.public_url)"
+} catch {
+    Write-Host "ngrok no está corriendo"
+}
+```
+
+**Escenario A — ngrok no está corriendo** (`ngrok no está corriendo`):
 → Saltar directamente al Paso 3.
 
 **Escenario B — ngrok está corriendo pero apunta al puerto INCORRECTO** (addr ≠ `http://localhost:80`):
