@@ -151,6 +151,7 @@ builder.Services.AddHttpClient<IMercadoPagoHttpClient, MercadoPagoHttpClient>(cl
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
 builder.Services.AddScoped<IConsumerProfileRepository, ConsumerProfileRepository>();
 builder.Services.AddScoped<IMerchantProfileRepository, MerchantProfileRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();

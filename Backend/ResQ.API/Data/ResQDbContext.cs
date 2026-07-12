@@ -17,6 +17,7 @@ public class ResQDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<ConsumerProfile> ConsumerProfiles => Set<ConsumerProfile>();
     public DbSet<MerchantProfile> MerchantProfiles => Set<MerchantProfile>();
 
