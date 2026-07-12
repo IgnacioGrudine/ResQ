@@ -7,6 +7,8 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { CatalogService, PackFilters } from '../../../core/services/catalog.service';
 import { Category, MerchantListItem, PackListItem } from '../../../core/models/catalog.models';
+import { ResqSelectComponent } from '../../../shared/ui/select/resq-select.component';
+import { ResqOptionComponent } from '../../../shared/ui/select/resq-option.component';
 import {
   LucideSearch,
   LucideLeaf,
@@ -56,7 +58,7 @@ const URGENT_THRESHOLD_MINUTES = 120;
   selector: 'app-feed',
   standalone: true,
   imports: [
-    FormsModule, DecimalPipe, NgTemplateOutlet,
+    FormsModule, DecimalPipe, NgTemplateOutlet, ResqSelectComponent, ResqOptionComponent,
     LucideSearch, LucideLeaf, LucideMapPin, LucideClock, LucideX, LucideRefreshCw, LucideStar,
     LucideWheat, LucideFish, LucideCoffee, LucideUtensilsCrossed, LucideSalad,
     LucideIceCreamCone, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideUtensils,

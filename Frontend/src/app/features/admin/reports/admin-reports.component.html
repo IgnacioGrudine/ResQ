@@ -53,11 +53,11 @@
       </div>
       <h3 class="font-bold text-gray-800">Reporte por comercio</h3>
       <p class="text-sm text-gray-400 mt-1 flex-1">Detalle de órdenes de un comercio puntual.</p>
-      <select [(ngModel)]="selectedMerchantId" class="border border-gray-200 rounded-lg px-3 py-2 text-sm my-3 bg-white">
+      <resq-select [(ngModel)]="selectedMerchantId" class="my-3">
         @for (m of merchants(); track m.id) {
-          <option [ngValue]="m.id">{{ m.businessName }}</option>
+          <resq-option [value]="m.id">{{ m.businessName }}</resq-option>
         }
-      </select>
+      </resq-select>
       <div class="flex gap-2">
         <button (click)="byMerchant('Pdf')" [disabled]="!selectedMerchantId" class="flex-1 bg-red-50 text-red-600 border border-red-200 rounded-lg py-2 text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-40">PDF</button>
         <button (click)="byMerchant('Excel')" [disabled]="!selectedMerchantId" class="flex-1 bg-green-50 text-green-700 border border-green-200 rounded-lg py-2 text-sm font-semibold hover:bg-green-100 transition-colors disabled:opacity-40">Excel</button>

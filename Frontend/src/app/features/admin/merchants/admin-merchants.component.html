@@ -12,19 +12,17 @@
 
     <!-- ── Filters ── -->
     <div class="flex flex-wrap gap-2">
-      <select [(ngModel)]="activeFilter" (ngModelChange)="applyFilters()"
-        class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="">Estado: todos</option>
-        <option value="true">Activos</option>
-        <option value="false">Inactivos</option>
-      </select>
-      <select [(ngModel)]="mpFilter" (ngModelChange)="applyFilters()"
-        class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="">Mercado Pago: todos</option>
-        <option value="Connected">Conectado</option>
-        <option value="Disconnected">Desconectado</option>
-        <option value="TokenExpired">Token vencido</option>
-      </select>
+      <resq-select [(ngModel)]="activeFilter" (ngModelChange)="applyFilters()" class="w-40">
+        <resq-option value="">Estado: todos</resq-option>
+        <resq-option value="true">Activos</resq-option>
+        <resq-option value="false">Inactivos</resq-option>
+      </resq-select>
+      <resq-select [(ngModel)]="mpFilter" (ngModelChange)="applyFilters()" class="w-52">
+        <resq-option value="">Mercado Pago: todos</resq-option>
+        <resq-option value="Connected">Conectado</resq-option>
+        <resq-option value="Disconnected">Desconectado</resq-option>
+        <resq-option value="TokenExpired">Token vencido</resq-option>
+      </resq-select>
     </div>
 
     @if (loading()) {

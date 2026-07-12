@@ -118,23 +118,21 @@
         <p class="text-xs font-bold text-gray-700 mb-2">Distancia y precio</p>
         <div class="flex flex-col sm:flex-row gap-2">
           @if (userLat !== null) {
-            <select [(ngModel)]="selectedMaxDistance" (ngModelChange)="loadPacks()"
-              class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50 text-gray-600 focus:outline-none focus:border-evergreen cursor-pointer">
+            <resq-select class="flex-1" [(ngModel)]="selectedMaxDistance" (ngModelChange)="loadPacks()">
               @for (opt of distanceOptions; track opt.value) {
-                <option [value]="opt.value">{{ opt.label }}</option>
+                <resq-option [value]="opt.value">{{ opt.label }}</resq-option>
               }
-            </select>
+            </resq-select>
           } @else if (locationDenied) {
             <p class="flex-1 text-xs text-gray-400 flex items-center px-1">
               Activá la ubicación para filtrar por distancia
             </p>
           }
-          <select [(ngModel)]="selectedMaxPrice" (ngModelChange)="loadPacks()"
-            class="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-2.5 bg-gray-50 text-gray-600 focus:outline-none focus:border-evergreen cursor-pointer">
+          <resq-select class="flex-1" [(ngModel)]="selectedMaxPrice" (ngModelChange)="loadPacks()">
             @for (opt of priceOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
+              <resq-option [value]="opt.value">{{ opt.label }}</resq-option>
             }
-          </select>
+          </resq-select>
         </div>
 
         @if (activeFilterCount() > 0 || selectedCategory !== null) {

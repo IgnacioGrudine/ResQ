@@ -2,12 +2,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminUserListItem, PagedResponse } from '../../../core/models/admin.models';
+import { ResqSelectComponent } from '../../../shared/ui/select/resq-select.component';
+import { ResqOptionComponent } from '../../../shared/ui/select/resq-option.component';
 import { LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [FormsModule, LucideChevronLeft, LucideChevronRight],
+  imports: [FormsModule, ResqSelectComponent, ResqOptionComponent, LucideChevronLeft, LucideChevronRight],
   templateUrl: './admin-users.component.html'
 })
 export class AdminUsersComponent implements OnInit {

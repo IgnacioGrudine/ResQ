@@ -2,12 +2,14 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminMerchantListItem, ReportFormat } from '../../../core/models/admin.models';
+import { ResqSelectComponent } from '../../../shared/ui/select/resq-select.component';
+import { ResqOptionComponent } from '../../../shared/ui/select/resq-option.component';
 import { LucideFileText, LucideTrophy, LucideStore } from '@lucide/angular';
 
 @Component({
   selector: 'app-admin-reports',
   standalone: true,
-  imports: [FormsModule, LucideFileText, LucideTrophy, LucideStore],
+  imports: [FormsModule, ResqSelectComponent, ResqOptionComponent, LucideFileText, LucideTrophy, LucideStore],
   templateUrl: './admin-reports.component.html'
 })
 export class AdminReportsComponent implements OnInit {

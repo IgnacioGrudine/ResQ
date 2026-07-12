@@ -12,19 +12,17 @@
 
     <!-- ── Filters ── -->
     <div class="flex flex-wrap gap-2">
-      <select [(ngModel)]="roleFilter" (ngModelChange)="applyFilters()"
-        class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="">Rol: todos</option>
-        <option value="Consumer">Consumidor</option>
-        <option value="Merchant">Comercio</option>
-        <option value="Admin">Admin</option>
-      </select>
-      <select [(ngModel)]="activeFilter" (ngModelChange)="applyFilters()"
-        class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
-        <option value="">Estado: todos</option>
-        <option value="true">Activos</option>
-        <option value="false">Inactivos</option>
-      </select>
+      <resq-select [(ngModel)]="roleFilter" (ngModelChange)="applyFilters()" class="w-40">
+        <resq-option value="">Rol: todos</resq-option>
+        <resq-option value="Consumer">Consumidor</resq-option>
+        <resq-option value="Merchant">Comercio</resq-option>
+        <resq-option value="Admin">Admin</resq-option>
+      </resq-select>
+      <resq-select [(ngModel)]="activeFilter" (ngModelChange)="applyFilters()" class="w-40">
+        <resq-option value="">Estado: todos</resq-option>
+        <resq-option value="true">Activos</resq-option>
+        <resq-option value="false">Inactivos</resq-option>
+      </resq-select>
     </div>
 
     @if (loading()) {

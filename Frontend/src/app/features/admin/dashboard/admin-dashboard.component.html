@@ -18,12 +18,11 @@
         <span class="text-white/40">→</span>
         <input type="date" [(ngModel)]="to"
           class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
-        <select [(ngModel)]="granularity"
-          class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]">
-          <option class="text-gray-800" value="Day">Por día</option>
-          <option class="text-gray-800" value="Week">Por semana</option>
-          <option class="text-gray-800" value="Month">Por mes</option>
-        </select>
+        <resq-select [(ngModel)]="granularity" variant="dark" class="w-36">
+          <resq-option value="Day">Por día</resq-option>
+          <resq-option value="Week">Por semana</resq-option>
+          <resq-option value="Month">Por mes</resq-option>
+        </resq-select>
         <button (click)="load()"
           class="flex items-center gap-1.5 bg-lime text-evergreen text-sm font-semibold rounded-lg px-4 py-2 hover:bg-lime/90 transition-colors">
           <svg lucideRefreshCw class="w-4 h-4"></svg>

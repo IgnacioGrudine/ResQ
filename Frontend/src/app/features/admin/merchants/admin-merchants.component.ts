@@ -5,6 +5,8 @@ import { AdminService } from '../../../core/services/admin.service';
 import {
   AdminMerchantDetail, AdminMerchantListItem, PagedResponse
 } from '../../../core/models/admin.models';
+import { ResqSelectComponent } from '../../../shared/ui/select/resq-select.component';
+import { ResqOptionComponent } from '../../../shared/ui/select/resq-option.component';
 import {
   LucideChevronLeft, LucideChevronRight, LucideX, LucideStore, LucideSearch
 } from '@lucide/angular';
@@ -12,7 +14,10 @@ import {
 @Component({
   selector: 'app-admin-merchants',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucideChevronLeft, LucideChevronRight, LucideX, LucideStore, LucideSearch],
+  imports: [
+    DecimalPipe, FormsModule, ResqSelectComponent, ResqOptionComponent,
+    LucideChevronLeft, LucideChevronRight, LucideX, LucideStore, LucideSearch
+  ],
   templateUrl: './admin-merchants.component.html'
 })
 export class AdminMerchantsComponent implements OnInit {

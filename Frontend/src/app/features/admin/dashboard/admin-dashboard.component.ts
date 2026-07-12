@@ -3,6 +3,8 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminDashboard, ReportGranularity } from '../../../core/models/admin.models';
+import { ResqSelectComponent } from '../../../shared/ui/select/resq-select.component';
+import { ResqOptionComponent } from '../../../shared/ui/select/resq-option.component';
 import {
   LucideRefreshCw, LucideTrendingUp, LucideStore, LucideUsers,
   LucideStar, LucidePackage, LucideTriangleAlert, LucideInfo
@@ -14,7 +16,7 @@ interface Bar { label: string; value: number; orders: number; heightPct: number;
   selector: 'app-admin-dashboard',
   standalone: true,
   imports: [
-    DecimalPipe, FormsModule,
+    DecimalPipe, FormsModule, ResqSelectComponent, ResqOptionComponent,
     LucideRefreshCw, LucideTrendingUp, LucideStore, LucideUsers,
     LucideStar, LucidePackage, LucideTriangleAlert, LucideInfo
   ],
