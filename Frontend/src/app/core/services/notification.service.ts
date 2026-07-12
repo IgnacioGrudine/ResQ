@@ -1,6 +1,17 @@
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MerchantNotification } from '../models/notification.models';
+
+const DISMISSED_KEY = 'resq.merchant.dismissedNotificationIds';
+
+function loadDismissedIds(): Set<number> {
+  try {
+    const raw = localStorage.getItem(DISMISSED_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
 
 /**
  * Manages the merchant's in-app notifications shown in the panel header bell.
@@ -20,8 +31,17 @@ export class NotificationService implements OnDestroy {
   private readonly _notifications = signal<MerchantNotification[]>([]);
   private readonly _unreadCount = signal(0);
 
-  /** The merchant's most recent notifications, newest first. */
-  readonly notifications = this._notifications.asReadonly();
+  /**
+   * IDs of read notifications the merchant dismissed from the bell dropdown.
+   * Purely a display preference — persisted per-browser via localStorage, never
+   * sent to the backend. The underlying notification rows are never deleted.
+   */
+  private readonly _dismissedIds = signal<Set<number>>(loadDismissedIds());
+
+  /** The merchant's most recent notifications, newest first, minus any the merchant dismissed. */
+  readonly notifications = computed(() =>
+    this._notifications().filter(n => !this._dismissedIds().has(n.id))
+  );
   /** Number of unread notifications, used for the bell badge. */
   readonly unreadCount = this._unreadCount.asReadonly();
 
@@ -84,6 +104,20 @@ export class NotificationService implements OnDestroy {
     this._unreadCount.set(0);
 
     this.http.patch<void>(`${this.base}/read-all`, {}).subscribe({ error: () => {} });
+  }
+
+  /**
+   * Hides a read notification from the bell dropdown, in this browser only.
+   * No-op for unread notifications — read it first, then dismiss it.
+   */
+  dismiss(id: number): void {
+    const target = this._notifications().find(n => n.id === id);
+    if (!target || !target.isRead) return;
+
+    const next = new Set(this._dismissedIds());
+    next.add(id);
+    this._dismissedIds.set(next);
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...next]));
   }
 
   ngOnDestroy(): void {
