@@ -28,3 +28,12 @@ export interface ClientAuthResponse {
   role: 'Consumer' | 'Merchant' | 'Admin';
   profileId: number | null;
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}

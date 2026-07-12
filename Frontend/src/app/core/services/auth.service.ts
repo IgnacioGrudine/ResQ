@@ -4,9 +4,11 @@ import { Router } from '@angular/router';
 import { Observable, tap, finalize } from 'rxjs';
 import {
   ClientAuthResponse,
+  ForgotPasswordRequest,
   LoginRequest,
   RegisterConsumerRequest,
-  RegisterMerchantRequest
+  RegisterMerchantRequest,
+  ResetPasswordRequest
 } from '../models/auth.models';
 
 interface SessionState {
@@ -61,6 +63,14 @@ export class AuthService {
     return this.http
       .post<ClientAuthResponse>('/api/auth/refresh', {}, { withCredentials: true })
       .pipe(tap(res => this.setSession(res)));
+  }
+
+  forgotPassword(request: ForgotPasswordRequest): Observable<void> {
+    return this.http.post<void>('/api/auth/forgot-password', request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<void> {
+    return this.http.post<void>('/api/auth/reset-password', request);
   }
 
   logout(): void {
