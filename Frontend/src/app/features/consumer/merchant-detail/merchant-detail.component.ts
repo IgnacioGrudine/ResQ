@@ -12,7 +12,6 @@ import {
   LucidePhone,
   LucideStar,
   LucideClock,
-  LucideChevronRight,
   LucideStore
 } from '@lucide/angular';
 
@@ -22,7 +21,7 @@ import {
   imports: [
     DecimalPipe,
     LucideArrowLeft, LucideLeaf, LucideMapPin, LucidePhone,
-    LucideStar, LucideClock, LucideChevronRight, LucideStore
+    LucideStar, LucideClock, LucideStore
   ],
   templateUrl: './merchant-detail.component.html'
 })
@@ -59,6 +58,13 @@ export class MerchantDetailComponent implements OnInit {
   discountPercent(original: number, sale: number): number {
     if (!original) return 0;
     return Math.round((1 - sale / original) * 100);
+  }
+
+  productTypeLabel(type: string): string {
+    const t = type?.toLowerCase();
+    if (t === 'surprisepack')  return 'Pack Sorpresa';
+    if (t === 'explicititem')  return 'Producto exacto';
+    return type;
   }
 
   formatTime(t: string): string { return t.substring(0, 5); }
