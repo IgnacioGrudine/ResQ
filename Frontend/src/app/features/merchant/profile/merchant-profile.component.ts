@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -20,7 +21,7 @@ type Tab = 'perfil' | 'categorias' | 'pagos';
   selector: 'app-merchant-profile',
   standalone: true,
   imports: [
-    DecimalPipe, FormsModule,
+    DecimalPipe, FormsModule, RouterLink,
     LucideStore, LucideSave, LucideLeaf, LucideCheck, LucideCamera,
     LucideLink, LucideLink2Off, LucideAlertCircle,
     LucideTag, LucideWallet, LucideStar, LucidePackage

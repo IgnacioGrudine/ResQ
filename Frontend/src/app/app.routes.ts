@@ -161,6 +161,18 @@ export const routes: Routes = [
         .then(m => m.MerchantDetailComponent)
   },
 
+  // ── Legal (público, sin guard) ───────────────────────────────────
+  {
+    path: 'legal/terminos',
+    loadComponent: () =>
+      import('./features/legal/terminos/terminos.component').then(m => m.TerminosComponent)
+  },
+  {
+    path: 'legal/faq',
+    loadComponent: () =>
+      import('./features/legal/faq/faq.component').then(m => m.FaqComponent)
+  },
+
   // ── Mercado Pago OAuth callback ─────────────────────────────────
   {
     path: 'mp/callback',

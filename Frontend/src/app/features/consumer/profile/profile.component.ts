@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ConsumerService } from '../../../core/services/consumer.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConsumerProfile } from '../../../core/models/consumer.models';
@@ -9,7 +10,7 @@ import { LucideSave, LucideLeaf, LucideCheck, LucideShoppingBag, LucideWallet } 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, DecimalPipe, LucideSave, LucideLeaf, LucideCheck, LucideShoppingBag, LucideWallet],
+  imports: [FormsModule, DecimalPipe, RouterLink, LucideSave, LucideLeaf, LucideCheck, LucideShoppingBag, LucideWallet],
   templateUrl: './profile.component.html'
 })
 export class ProfileComponent implements OnInit {

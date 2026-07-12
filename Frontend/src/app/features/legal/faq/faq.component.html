@@ -1,0 +1,64 @@
+<div class="min-h-screen bg-gray-50">
+
+  <!-- ── Top bar ── -->
+  <header class="bg-evergreen px-4 md:px-8 py-5">
+    <div class="max-w-3xl mx-auto flex items-center gap-3">
+      <a routerLink="/" class="flex items-center gap-1.5 text-white/70 hover:text-white text-sm font-medium transition-colors">
+        <svg lucideArrowLeft class="w-4 h-4"></svg>
+        Volver
+      </a>
+      <div class="flex-1"></div>
+      <div class="flex items-center gap-2">
+        <svg lucideLeaf class="w-5 h-5 text-lime"></svg>
+        <span class="text-white font-bold">ResQ</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-3xl mx-auto px-4 md:px-8 py-10">
+
+    <div class="flex items-center gap-3 mb-2">
+      <div class="w-10 h-10 rounded-xl bg-lime/40 flex items-center justify-center shrink-0">
+        <svg lucideMessageCircle class="w-5 h-5 text-hunter"></svg>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-bold text-evergreen">Preguntas Frecuentes</h1>
+    </div>
+    <p class="text-sm text-gray-400 mb-8">Resolvé tus dudas sobre cómo usar ResQ.</p>
+
+    <div class="flex flex-col gap-2.5">
+      @for (item of items; track item.question; let i = $index) {
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <button type="button" (click)="toggle(i)"
+            class="w-full flex items-center justify-between gap-3 px-5 py-4 text-left">
+            <span class="text-sm font-semibold text-gray-700">{{ item.question }}</span>
+            <svg lucideChevronDown
+              class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200"
+              [class.rotate-180]="openIndex() === i">
+            </svg>
+          </button>
+          @if (openIndex() === i) {
+            <p class="px-5 pb-4 text-sm text-gray-500 leading-relaxed">{{ item.answer }}</p>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ── Contacto ── -->
+    <div class="mt-8 bg-evergreen rounded-2xl p-6 text-center flex flex-col items-center gap-3">
+      <svg lucideMail class="w-6 h-6 text-lime"></svg>
+      <h2 class="text-white font-bold">¿Tenés una duda, reclamo o sugerencia?</h2>
+      <p class="text-white/70 text-sm">Escribinos y te respondemos a la brevedad.</p>
+      <a href="mailto:soporte@resq.app"
+        class="mt-1 px-5 py-2.5 rounded-xl bg-white text-evergreen font-semibold text-sm hover:bg-lime transition-colors">
+        soporte&#64;resq.app
+      </a>
+    </div>
+
+    <!-- Branding footer -->
+    <div class="flex items-center justify-center gap-1.5 text-gray-300 text-xs pt-8">
+      <svg lucideLeaf class="w-3.5 h-3.5"></svg>
+      ResQ &mdash; Menos desperdicio, más impacto
+    </div>
+
+  </div>
+</div>
