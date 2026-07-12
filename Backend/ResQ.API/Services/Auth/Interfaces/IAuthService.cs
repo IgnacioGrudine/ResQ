@@ -65,4 +65,25 @@ public interface IAuthService
     /// if the token does not exist.
     /// </returns>
     Task<Result> LogoutAsync(string refreshToken, CancellationToken ct = default);
+
+    /// <summary>
+    /// Starts the password-reset flow for the given email. Always succeeds regardless of
+    /// whether the email is registered, to avoid leaking account existence to the caller.
+    /// </summary>
+    /// <param name="email">The email address supplied on the "forgot password" form.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Always a successful <see cref="Result"/>.</returns>
+    Task<Result> ForgotPasswordAsync(string email, CancellationToken ct = default);
+
+    /// <summary>
+    /// Completes the password-reset flow: validates the token, sets the new password,
+    /// and revokes all of the user's active refresh tokens.
+    /// </summary>
+    /// <param name="request">Contains the opaque reset token and the new plaintext password.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// A successful <see cref="Result"/> on success; a failed result with a
+    /// <c>BadRequestError</c> if the token is invalid, expired, or already used.
+    /// </returns>
+    Task<Result> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken ct = default);
 }

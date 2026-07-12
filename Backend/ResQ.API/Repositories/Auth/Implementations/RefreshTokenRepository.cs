@@ -30,4 +30,16 @@ public class RefreshTokenRepository(ResQDbContext db) : GenericRepository<Refres
             .Include(rt => rt.User)
                 .ThenInclude(u => u.UserRoles)
             .FirstOrDefaultAsync(rt => rt.Token == token, ct);
+
+    /// <summary>
+    /// Retrieves every non-revoked, unexpired refresh token for the given user, tracked
+    /// so the caller can revoke them in place.
+    /// </summary>
+    /// <param name="userId">The identifier of the user whose active tokens are requested.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A collection of the user's currently active refresh tokens.</returns>
+    public async Task<IEnumerable<RefreshToken>> GetActiveByUserIdAsync(int userId, CancellationToken ct = default)
+        => await _set
+            .Where(rt => rt.UserId == userId && !rt.IsRevoked && rt.ExpiresAt > DateTime.UtcNow)
+            .ToListAsync(ct);
 }

@@ -82,6 +82,27 @@ public class AuthController(
             .ToActionResult(ClearRefreshCookie);
 
     /// <summary>
+    /// Starts the password-reset flow for the given email address.
+    /// Always returns 204 No Content, whether or not the email is registered,
+    /// to avoid leaking account existence.
+    /// </summary>
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(
+        [FromBody] ForgotPasswordRequest request,
+        CancellationToken ct)
+        => (await authService.ForgotPasswordAsync(request.Email, ct)).ToActionResult();
+
+    /// <summary>
+    /// Completes the password-reset flow using the token emailed to the user.
+    /// </summary>
+    /// <remarks>Returns 400 Bad Request if the token is invalid, expired, or already used.</remarks>
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] ResetPasswordRequest request,
+        CancellationToken ct)
+        => (await authService.ResetPasswordAsync(request, ct)).ToActionResult();
+
+    /// <summary>
     /// Authenticates (or registers) a user via Google Sign-In.
     /// Verifies the Google id_token server-side, then finds or creates a consumer account.
     /// </summary>
