@@ -19,6 +19,7 @@ using ResQ.API.Repositories.Orders;
 using ResQ.API.Services.Email;
 using ResQ.API.Services.Encryption;
 using ResQ.API.Services.MercadoPago;
+using ResQ.API.Services.Notifications;
 using ResQ.API.Services.Orders;
 
 namespace ResQ.Tests.Services;
@@ -32,6 +33,7 @@ public class OrderServiceTests
     private readonly Mock<IMercadoPagoHttpClient> _mpClient = new();
     private readonly Mock<IMercadoPagoOAuthService> _oauthService = new();
     private readonly Mock<IEmailService> _emailService = new();
+    private readonly Mock<INotificationService> _notificationService = new();
     private readonly Mock<IHostEnvironment> _env = new();
 
     private readonly IOptions<MpSettings> _mpOptions = Options.Create(new MpSettings
@@ -48,6 +50,7 @@ public class OrderServiceTests
         _mpClient.Object,
         _oauthService.Object,
         _emailService.Object,
+        _notificationService.Object,
         _mpOptions,
         _env.Object,
         NullLogger<OrderService>.Instance);

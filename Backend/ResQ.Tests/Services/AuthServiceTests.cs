@@ -7,6 +7,7 @@ using ResQ.API.Models.Enums;
 using ResQ.API.Models.Settings;
 using ResQ.API.Repositories.Auth;
 using ResQ.API.Services.Auth;
+using ResQ.API.Services.Email;
 using ResQ.API.Services.Jwt;
 using ResQ.API.Services.Password;
 
@@ -21,13 +22,20 @@ public class AuthServiceTests
     private readonly Mock<IRefreshTokenRepository> _refreshTokens = new();
     private readonly Mock<IConsumerProfileRepository> _consumerProfiles = new();
     private readonly Mock<IMerchantProfileRepository> _merchantProfiles = new();
+    private readonly Mock<IPasswordResetTokenRepository> _passwordResetTokens = new();
     private readonly Mock<IPasswordService> _password = new();
     private readonly Mock<IJwtService> _jwt = new();
+    private readonly Mock<IEmailService> _email = new();
 
     private readonly IOptions<JwtSettings> _jwtOptions = Options.Create(new JwtSettings
     {
         AccessTokenExpirationMinutes = 15,
         RefreshTokenExpirationDays   = 7
+    });
+
+    private readonly IOptions<MpSettings> _mpOptions = Options.Create(new MpSettings
+    {
+        FrontendBaseUrl = "https://resq.test"
     });
 
     private AuthService CreateSut() => new(
@@ -36,9 +44,12 @@ public class AuthServiceTests
         _refreshTokens.Object,
         _consumerProfiles.Object,
         _merchantProfiles.Object,
+        _passwordResetTokens.Object,
         _password.Object,
         _jwt.Object,
-        _jwtOptions);
+        _email.Object,
+        _jwtOptions,
+        _mpOptions);
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
