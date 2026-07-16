@@ -19,7 +19,7 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     question: 'Olvidé mi contraseña, ¿cómo la recupero?',
-    answer: 'Por el momento no contamos con recuperación automática por email. Si quedaste afuera de tu cuenta, escribinos y te ayudamos a restablecerla manualmente.'
+    answer: 'Desde "¿Olvidaste tu contraseña?" en el login, ingresás tu email y te mandamos un enlace de un solo uso, válido por 1 hora, para elegir una nueva. Si tu cuenta es solo con Google, iniciá sesión con Google en vez de restablecer.'
   },
   {
     question: '¿Cómo reservo y pago un pack?',
@@ -30,12 +30,8 @@ const FAQ_ITEMS: FaqItem[] = [
     answer: 'Mostrás el código QR/alfanumérico en el comercio, dentro de la franja horaria de retiro publicada.'
   },
   {
-    question: '¿Qué pasa si no retiro a tiempo?',
-    answer: 'El pack queda perdido, sin reembolso, una vez pasado el horario de retiro.'
-  },
-  {
     question: '¿Puedo cancelar una reserva ya pagada?',
-    answer: 'Por el momento no. Una vez pagado, el pack queda confirmado hasta el horario de retiro.'
+    answer: 'Sí. Podés cancelarla desde "Mis Órdenes" en cualquier momento antes de que cierre la franja horaria de retiro de ese pack, y te reembolsamos el pago completo. Una vez cerrada esa ventana, o si ya lo retiraste, no se puede cancelar.'
   },
   {
     question: '¿Qué medios de pago acepta ResQ?',
