@@ -115,22 +115,18 @@
           </div>
 
           @if (chartBars().length) {
-            <div class="flex items-end gap-1 overflow-x-auto pb-1" style="height: 9rem">
+            <div class="flex items-end gap-1 overflow-x-auto pb-1">
               @for (bar of chartBars(); track bar.label) {
-                <div class="flex-1 min-w-[14px] flex flex-col items-center justify-end h-full group relative">
-                  <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
-                    ${{ bar.value | number:'1.0-0' }} · {{ bar.orders }} ord.
+                <div class="shrink-0 w-9 flex flex-col items-center group relative">
+                  <div class="w-full h-36 flex flex-col justify-end">
+                    <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
+                      ${{ bar.value | number:'1.0-0' }} · {{ bar.orders }} ord.
+                    </div>
+                    <div class="w-full rounded-t-md transition-all duration-300"
+                      [style.height.%]="bar.heightPct"
+                      [class]="bar.value === 0 ? 'bg-gray-100' : 'bg-fern hover:bg-evergreen'"></div>
                   </div>
-                  <div class="w-full rounded-t-md transition-all duration-300"
-                    [style.height.%]="bar.heightPct"
-                    [class]="bar.value === 0 ? 'bg-gray-100' : 'bg-fern hover:bg-evergreen'"></div>
-                </div>
-              }
-            </div>
-            <div class="flex gap-1 mt-2">
-              @for (bar of chartBars(); track bar.label) {
-                <div class="flex-1 min-w-[14px] text-center">
-                  <span class="text-[9px] text-gray-400">{{ bar.label }}</span>
+                  <span class="text-[9px] text-gray-400 mt-1 whitespace-nowrap">{{ bar.label }}</span>
                 </div>
               }
             </div>
