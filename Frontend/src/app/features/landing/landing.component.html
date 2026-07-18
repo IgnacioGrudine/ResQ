@@ -68,39 +68,74 @@
             <svg lucideCheck class="w-4 h-4 text-lime"></svg> Sin costo de registro
           </span>
           <span class="flex items-center gap-1.5">
-            <svg lucideCheck class="w-4 h-4 text-lime"></svg> Packs desde $500
+            <svg lucideCheck class="w-4 h-4 text-lime"></svg> Cancelás cuando quieras
           </span>
         </div>
       </div>
 
-      <!-- Ilustración placeholder -->
-      <div class="hidden md:flex justify-center items-center">
-        <div class="relative w-80 h-80">
-          <!-- Círculo decorativo de fondo -->
-          <div class="absolute inset-0 rounded-full bg-hunter opacity-50"></div>
-          <div class="absolute inset-8 rounded-full bg-fern opacity-40"></div>
-          <!-- Emoji central -->
-          <div class="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            <svg lucideShoppingBag class="w-20 h-20 text-lime"></svg>
-            <span class="text-lime font-semibold text-lg">Pack Sorpresa</span>
-            <span class="text-gray-300 text-sm">Hasta 70% de descuento</span>
+      <!-- Foto real del hero -->
+      <div class="hidden md:block relative">
+        <div class="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/5]">
+          <img
+            src="https://images.unsplash.com/photo-1652903037144-ec4146b48c4d?auto=format&fit=crop&w=1200&q=80"
+            alt="Vitrina de comercio gastronómico llena de productos recién hechos"
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-evergreen/70 via-transparent to-transparent"></div>
+        </div>
+
+        <!-- Chip flotante -->
+        <div class="absolute -bottom-5 -left-5 bg-white rounded-2xl shadow-xl px-5 py-4 flex items-center gap-3 max-w-[240px]">
+          <div class="w-10 h-10 rounded-full bg-lime/40 flex items-center justify-center shrink-0">
+            <svg lucideShoppingBag class="w-5 h-5 text-hunter"></svg>
+          </div>
+          <div>
+            <p class="text-evergreen font-bold text-sm leading-tight">Pack sorpresa</p>
+            <p class="text-gray-500 text-xs">El precio lo pone el comercio</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════ CÓMO FUNCIONA ═══════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════ 3 PROBLEMAS, 1 SOLUCIÓN ═══════════════════════════════════════ -->
   <section class="bg-white py-20">
     <div class="max-w-6xl mx-auto px-6">
       <div class="text-center mb-14">
+        <h2 class="text-3xl md:text-4xl font-bold text-evergreen">Tres problemas. Una sola app.</h2>
+        <p class="text-gray-500 mt-3 text-lg max-w-2xl mx-auto">
+          Cada pack que se rescata resuelve algo distinto para cada uno de nosotros.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        @for (pillar of pillars; track pillar.title) {
+          <div class="rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+            <div class="aspect-[4/3] overflow-hidden">
+              <img [src]="pillar.imageUrl" [alt]="pillar.imageAlt" class="w-full h-full object-cover" />
+            </div>
+            <div class="p-6 flex flex-col gap-2">
+              <span class="text-hunter text-xs font-bold uppercase tracking-wider">{{ pillar.eyebrow }}</span>
+              <h3 class="text-xl font-bold text-evergreen">{{ pillar.title }}</h3>
+              <p class="text-gray-600 text-sm leading-relaxed">{{ pillar.description }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ CÓMO FUNCIONA ═══════════════════════════════════════ -->
+  <section class="bg-lime py-20">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-14">
         <h2 class="text-3xl md:text-4xl font-bold text-evergreen">¿Cómo funciona para vos?</h2>
-        <p class="text-gray-500 mt-3 text-lg">Tres pasos y tu pack sorpresa está en tus manos.</p>
+        <p class="text-hunter mt-3 text-lg">Tres pasos y tu pack sorpresa está en tus manos.</p>
       </div>
 
       <div class="grid md:grid-cols-3 gap-8">
         @for (step of steps; track step.number) {
-          <resq-card variant="lime" [hover]="false">
+          <resq-card variant="default" [hover]="false">
             <div class="flex flex-col items-center text-center gap-4">
               <div class="w-12 h-12 rounded-full bg-hunter text-white font-bold text-xl flex items-center justify-center shadow-md">
                 {{ step.number }}
@@ -108,30 +143,6 @@
               <div>
                 <h3 class="text-xl font-bold text-evergreen">{{ step.title }}</h3>
                 <p class="text-gray-600 mt-2 text-sm leading-relaxed">{{ step.description }}</p>
-              </div>
-            </div>
-          </resq-card>
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════ TRIPLE IMPACTO ═══════════════════════════════════════ -->
-  <section class="bg-lime py-20">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center mb-14">
-        <h2 class="text-3xl md:text-4xl font-bold text-evergreen">El impacto de cada rescate</h2>
-        <p class="text-hunter mt-3 text-lg">Cada pack que comprás genera un triple impacto positivo.</p>
-      </div>
-
-      <div class="grid md:grid-cols-3 gap-8">
-        @for (impact of impacts; track impact.title) {
-          <resq-card variant="default" [hover]="true">
-            <div class="flex flex-col gap-4">
-              <ng-container [ngComponentOutlet]="impact.icon" [ngComponentOutletInputs]="{ size: 40, color: '#31572C' }" />
-              <div>
-                <h3 class="text-xl font-bold text-evergreen">{{ impact.title }}</h3>
-                <p class="text-gray-600 mt-2 text-sm leading-relaxed">{{ impact.description }}</p>
               </div>
             </div>
           </resq-card>
@@ -173,20 +184,6 @@
               </svg>
             </div>
             <span class="text-white font-medium">{{ feature }}</span>
-          </div>
-        }
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════ STATS ═══════════════════════════════════════ -->
-  <section class="bg-white py-16">
-    <div class="max-w-6xl mx-auto px-6">
-      <div class="grid grid-cols-3 gap-8 text-center">
-        @for (stat of stats; track stat.label) {
-          <div class="flex flex-col gap-1">
-            <span class="text-4xl md:text-5xl font-bold text-hunter">{{ stat.value }}</span>
-            <span class="text-gray-500 text-sm md:text-base">{{ stat.label }}</span>
           </div>
         }
       </div>
