@@ -176,7 +176,7 @@
 
                 <div class="relative h-16 sm:h-20 bg-gradient-to-br from-evergreen to-hunter overflow-hidden">
                   @if (m.photoUrl) {
-                    <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+                    <img [safeImg]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
                   } @else {
                     <div class="absolute inset-0 flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                       {{ initials(m.businessName) }}
@@ -257,7 +257,7 @@
             class="group flex gap-3 sm:gap-4 bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.99] mb-6 sm:h-40">
             <div class="relative w-28 sm:w-48 shrink-0 bg-gradient-to-br from-evergreen to-hunter">
               @if (u.imageUrl) {
-                <img [src]="u.imageUrl" [alt]="u.name" class="w-full h-full object-cover">
+                <img [safeImg]="u.imageUrl" [alt]="u.name" class="w-full h-full object-cover">
               } @else {
                 <div class="absolute inset-0 flex items-center justify-center">
                   <svg lucideLeaf class="w-8 h-8 text-white/30"></svg>
@@ -297,7 +297,7 @@
                 <!-- Image -->
                 <div class="relative aspect-[4/3] bg-gradient-to-br from-evergreen to-hunter overflow-hidden">
                   @if (pack.imageUrl) {
-                    <img [src]="pack.imageUrl" [alt]="pack.name"
+                    <img [safeImg]="pack.imageUrl" [alt]="pack.name"
                       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                   } @else {
                     <div class="absolute inset-0 flex items-center justify-center">

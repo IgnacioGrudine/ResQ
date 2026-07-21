@@ -5,6 +5,7 @@ import { DecimalPipe } from '@angular/common';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { environment } from '../../../../environments/environment';
 import { MerchantDetail } from '../../../core/models/catalog.models';
+import { SafeImgDirective } from '../../../shared/directives/safe-img.directive';
 import {
   LucideArrowLeft,
   LucideLeaf,
@@ -19,7 +20,7 @@ import {
   selector: 'app-merchant-detail',
   standalone: true,
   imports: [
-    DecimalPipe,
+    DecimalPipe, SafeImgDirective,
     LucideArrowLeft, LucideLeaf, LucideMapPin, LucidePhone,
     LucideStar, LucideClock, LucideStore
   ],

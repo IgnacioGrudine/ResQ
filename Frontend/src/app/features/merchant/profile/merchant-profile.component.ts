@@ -9,6 +9,7 @@ import { MercadoPagoService } from '../../../core/services/mercadopago.service';
 import { MerchantProfile, MerchantDashboard, UpdateMerchantProfilePayload } from '../../../core/models/merchant.models';
 import { Category } from '../../../core/models/catalog.models';
 import { environment } from '../../../../environments/environment';
+import { SafeImgDirective } from '../../../shared/directives/safe-img.directive';
 import {
   LucideStore, LucideSave, LucideLeaf, LucideCheck, LucideCamera,
   LucideLink, LucideLink2Off, LucideAlertCircle,
@@ -21,7 +22,7 @@ type Tab = 'perfil' | 'categorias' | 'pagos';
   selector: 'app-merchant-profile',
   standalone: true,
   imports: [
-    DecimalPipe, FormsModule, RouterLink,
+    DecimalPipe, FormsModule, RouterLink, SafeImgDirective,
     LucideStore, LucideSave, LucideLeaf, LucideCheck, LucideCamera,
     LucideLink, LucideLink2Off, LucideAlertCircle,
     LucideTag, LucideWallet, LucideStar, LucidePackage

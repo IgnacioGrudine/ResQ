@@ -12,6 +12,7 @@ import {
 import { CatalogService } from '../../../core/services/catalog.service';
 import { environment } from '../../../../environments/environment';
 import { MerchantListItem } from '../../../core/models/catalog.models';
+import { SafeImgDirective } from '../../../shared/directives/safe-img.directive';
 
 // Default map center: Córdoba, Argentina
 const CORDOBA_CENTER = { lat: -31.4201, lng: -64.1888 };
@@ -45,7 +46,7 @@ function loadGoogleMaps(): Promise<void> {
 @Component({
   selector: 'app-consumer-map',
   standalone: true,
-  imports: [DecimalPipe, LucideMapPin, LucideStar, LucideX, LucideChevronRight],
+  imports: [DecimalPipe, SafeImgDirective, LucideMapPin, LucideStar, LucideX, LucideChevronRight],
   templateUrl: './map.component.html'
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {

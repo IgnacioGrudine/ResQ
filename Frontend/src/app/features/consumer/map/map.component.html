@@ -38,7 +38,7 @@
           <!-- Photo -->
           <div class="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-gradient-to-br from-evergreen to-hunter flex items-center justify-center">
             @if (m.photoUrl) {
-              <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+              <img [safeImg]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
             } @else {
               <span class="text-white font-bold text-lg">{{ initials(m.businessName) }}</span>
             }

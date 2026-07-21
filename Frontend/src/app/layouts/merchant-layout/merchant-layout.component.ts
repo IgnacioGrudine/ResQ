@@ -25,6 +25,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { MerchantService } from '../../core/services/merchant.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { MerchantNotification } from '../../core/models/notification.models';
+import { SafeImgDirective } from '../../shared/directives/safe-img.directive';
 
 const SIDEBAR_COLLAPSED_KEY = 'resq.merchant.sidebarCollapsed';
 
@@ -32,7 +33,7 @@ const SIDEBAR_COLLAPSED_KEY = 'resq.merchant.sidebarCollapsed';
   selector: 'app-merchant-layout',
   standalone: true,
   imports: [
-    RouterOutlet, RouterLink, RouterLinkActive, DatePipe, NgClass,
+    RouterOutlet, RouterLink, RouterLinkActive, DatePipe, NgClass, SafeImgDirective,
     LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore, LucideTrendingUp, LucideLogOut,
     LucideBell, LucideCheckCheck, LucideShoppingBag, LucideXCircle, LucideChevronDown, LucideChevronRight, LucideEllipsis, LucideX,
     LucideChevronsLeft, LucideChevronsRight

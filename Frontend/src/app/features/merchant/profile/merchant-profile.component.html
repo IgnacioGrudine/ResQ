@@ -14,7 +14,7 @@
       <!-- Avatar clickeable -->
       <div class="relative w-20 h-20 mx-auto cursor-pointer group" (click)="triggerFileInput()">
         @if (photoPreview() || p.photoUrl) {
-          <img [src]="photoPreview() ?? p.photoUrl" alt="Foto del comercio"
+          <img [safeImg]="photoPreview() ?? p.photoUrl" alt="Foto del comercio"
             class="w-20 h-20 rounded-full object-cover border-2 border-white/30">
         } @else {
           <div class="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-white text-2xl font-bold">

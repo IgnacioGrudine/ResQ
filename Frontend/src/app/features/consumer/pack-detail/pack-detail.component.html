@@ -40,7 +40,7 @@
           <div class="relative w-full h-48 md:w-56 md:h-full md:shrink-0">
             <div class="w-full h-full bg-gradient-to-br from-evergreen to-hunter">
               @if (p.imageUrl) {
-                <img [src]="p.imageUrl" [alt]="p.name" class="w-full h-full object-cover">
+                <img [safeImg]="p.imageUrl" [alt]="p.name" class="w-full h-full object-cover">
               } @else {
                 <div class="absolute inset-0 flex items-center justify-center">
                   <svg lucideLeaf class="w-16 h-16 text-white/20"></svg>
@@ -90,7 +90,7 @@
           <button (click)="openMerchant(m.id)" class="w-full flex items-center gap-3 text-left">
             <div class="w-11 h-11 rounded-full overflow-hidden shrink-0 bg-evergreen flex items-center justify-center">
               @if (m.photoUrl) {
-                <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+                <img [safeImg]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
               } @else {
                 <span class="text-white font-bold text-sm">{{ initials(m.businessName) }}</span>
               }
@@ -145,7 +145,7 @@
                     class="shrink-0 w-44 bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
                     <div class="aspect-[4/3] bg-gradient-to-br from-evergreen to-hunter relative overflow-hidden">
                       @if (prod.imageUrl) {
-                        <img [src]="prod.imageUrl" [alt]="prod.name" class="w-full h-full object-cover">
+                        <img [safeImg]="prod.imageUrl" [alt]="prod.name" class="w-full h-full object-cover">
                       } @else {
                         <div class="absolute inset-0 flex items-center justify-center">
                           <svg lucideLeaf class="w-7 h-7 text-white/30"></svg>

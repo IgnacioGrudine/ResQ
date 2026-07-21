@@ -37,7 +37,7 @@
         <div class="flex items-center gap-4">
           <div class="w-16 h-16 rounded-2xl overflow-hidden shrink-0 bg-evergreen flex items-center justify-center">
             @if (m.photoUrl) {
-              <img [src]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
+              <img [safeImg]="m.photoUrl" [alt]="m.businessName" class="w-full h-full object-cover">
             } @else {
               <span class="text-white font-bold text-xl">{{ initials(m.businessName) }}</span>
             }
@@ -90,7 +90,7 @@
                 class="bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]">
                 <div class="aspect-[4/3] bg-gradient-to-br from-evergreen to-hunter relative overflow-hidden">
                   @if (prod.imageUrl) {
-                    <img [src]="prod.imageUrl" [alt]="prod.name" class="w-full h-full object-cover">
+                    <img [safeImg]="prod.imageUrl" [alt]="prod.name" class="w-full h-full object-cover">
                   } @else {
                     <div class="absolute inset-0 flex items-center justify-center">
                       <svg lucideLeaf class="w-8 h-8 text-white/30"></svg>

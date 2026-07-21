@@ -7,6 +7,7 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { OrderService } from '../../../core/services/order.service';
 import { environment } from '../../../../environments/environment';
 import { PackListItem, MerchantDetail } from '../../../core/models/catalog.models';
+import { SafeImgDirective } from '../../../shared/directives/safe-img.directive';
 import {
   LucideArrowLeft,
   LucideLeaf,
@@ -26,7 +27,7 @@ import {
   selector: 'app-pack-detail',
   standalone: true,
   imports: [
-    DecimalPipe,
+    DecimalPipe, SafeImgDirective,
     LucideArrowLeft, LucideLeaf, LucideMapPin, LucideClock,
     LucidePhone, LucideStar, LucideChevronRight, LucidePackage, LucideStore,
     LucideShoppingCart, LucideMinus, LucidePlus

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { MercadoPagoService } from '../../../core/services/mercadopago.service';
 import { MerchantProduct, ProductPayload } from '../../../core/models/merchant.models';
+import { SafeImgDirective } from '../../../shared/directives/safe-img.directive';
 import {
   LucidePackage,
   LucidePlus,
@@ -31,7 +32,7 @@ interface PackForm {
 @Component({
   selector: 'app-merchant-packs',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink],
+  imports: [DecimalPipe, FormsModule, SafeImgDirective, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink],
   templateUrl: './packs.component.html'
 })
 export class PacksComponent implements OnInit {

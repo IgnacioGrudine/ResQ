@@ -61,7 +61,7 @@
             <!-- Thumbnail -->
             <div class="relative aspect-[16/7] bg-gradient-to-br from-evergreen to-hunter overflow-hidden">
               @if (p.imageUrl) {
-                <img [src]="p.imageUrl" [alt]="p.name" class="w-full h-full object-cover">
+                <img [safeImg]="p.imageUrl" [alt]="p.name" class="w-full h-full object-cover">
               } @else {
                 <div class="absolute inset-0 flex items-center justify-center">
                   <svg lucideImage class="w-8 h-8 text-white/20"></svg>
