@@ -59,7 +59,7 @@ public class MerchantService(
             Latitude           = m.Latitude,
             Longitude          = m.Longitude,
             ContactPhone       = m.ContactPhone,
-            PhotoUrl           = m.PhotoUrl,
+            PhotoUrl           = imageStorage.ResolvePublicUrl(m.PhotoUrl),
             Categories         = m.MerchantCategories.Select(mc => mc.Category.Name).ToList(),
             AverageRating      = m.Reviews.Any() ? Math.Round((decimal)m.Reviews.Average(r => r.Rating), 1) : 0,
             ReviewCount        = m.Reviews.Count,
@@ -96,7 +96,7 @@ public class MerchantService(
             Latitude       = merchant.Latitude,
             Longitude      = merchant.Longitude,
             ContactPhone   = merchant.ContactPhone,
-            PhotoUrl       = merchant.PhotoUrl,
+            PhotoUrl       = imageStorage.ResolvePublicUrl(merchant.PhotoUrl),
             Categories     = merchant.MerchantCategories
                                  .Select(mc => new CategoryResponse { Id = mc.CategoryId, Name = mc.Category.Name })
                                  .ToList(),
@@ -549,12 +549,12 @@ public class MerchantService(
     /// </summary>
     /// <param name="p">The product entity to map.</param>
     /// <returns>A populated <see cref="ProductResponse"/> DTO.</returns>
-    private static ProductResponse MapProduct(Models.Catalog.Product p) => new()
+    private ProductResponse MapProduct(Models.Catalog.Product p) => new()
     {
         Id              = p.Id,
         Name            = p.Name,
         Description     = p.Description,
-        ImageUrl        = p.ImageUrl,
+        ImageUrl        = imageStorage.ResolvePublicUrl(p.ImageUrl),
         ProductType     = p.ProductType.ToString(),
         OriginalPrice   = p.OriginalPrice,
         SalePrice       = p.SalePrice,
@@ -570,7 +570,7 @@ public class MerchantService(
     /// </summary>
     /// <param name="m">The merchant profile entity with <c>MerchantCategories</c> and their <c>Category</c> navigation properties loaded.</param>
     /// <returns>A populated <see cref="MerchantProfileResponse"/> DTO.</returns>
-    private static MerchantProfileResponse MapMerchantProfile(Models.Auth.MerchantProfile m) => new()
+    private MerchantProfileResponse MapMerchantProfile(Models.Auth.MerchantProfile m) => new()
     {
         Id                 = m.Id,
         BusinessName       = m.BusinessName,
@@ -579,7 +579,7 @@ public class MerchantService(
         Latitude           = m.Latitude,
         Longitude          = m.Longitude,
         ContactPhone       = m.ContactPhone,
-        PhotoUrl           = m.PhotoUrl,
+        PhotoUrl           = imageStorage.ResolvePublicUrl(m.PhotoUrl),
         MpConnectionStatus = m.MpConnectionStatus.ToString(),
         Categories         = m.MerchantCategories
                                .Select(mc => new CategoryResponse { Id = mc.CategoryId, Name = mc.Category.Name })

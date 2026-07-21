@@ -36,8 +36,9 @@ public class ImageStorageService(IMinioClient minio, IOptions<MinioSettings> opt
     /// </param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
-    /// The full public URL of the uploaded object in the format
-    /// <c>{PublicBaseUrl}/{BucketName}/{folder}/{uuid}{extension}</c>.
+    /// The bucket-relative object path in the format <c>{BucketName}/{folder}/{uuid}{extension}</c>,
+    /// deliberately without the host so it survives the public base URL changing later (see
+    /// <see cref="ResolvePublicUrl"/>).
     /// </returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown if the file's content type is not in the allowlist, or if the file exceeds 5 MB.
@@ -64,7 +65,21 @@ public class ImageStorageService(IMinioClient minio, IOptions<MinioSettings> opt
             .WithObjectSize(file.Length)
             .WithContentType(file.ContentType), ct);
 
-        return $"{_settings.PublicBaseUrl}/{_settings.BucketName}/{objectKey}";
+        return $"{_settings.BucketName}/{objectKey}";
+    }
+
+    /// <inheritdoc />
+    public string? ResolvePublicUrl(string? storedValue)
+    {
+        if (string.IsNullOrEmpty(storedValue)) return storedValue;
+
+        // Already a full URL — either a legacy value stored before this method existed, or an
+        // external link (e.g. seeded demo data pointing at a public image host). Leave it as-is.
+        if (storedValue.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            storedValue.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return storedValue;
+
+        return $"{_settings.PublicBaseUrl}/{storedValue}";
     }
 
     /// <summary>

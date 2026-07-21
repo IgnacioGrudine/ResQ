@@ -5,6 +5,7 @@ using ResQ.API.DTOs.Merchants;
 using ResQ.API.DTOs.Shared;
 using ResQ.API.Repositories.Catalog;
 using ResQ.API.Services.Merchants;
+using ResQ.API.Services.Storage;
 
 namespace ResQ.API.Services.Catalog;
 
@@ -20,7 +21,8 @@ namespace ResQ.API.Services.Catalog;
 public class CatalogService(
     IMerchantService merchantService,
     IProductRepository productRepository,
-    ICategoryRepository categoryRepository) : ICatalogService
+    ICategoryRepository categoryRepository,
+    IImageStorageService imageStorage) : ICatalogService
 {
     /// <summary>
     /// Returns all food categories available in the platform.
@@ -146,12 +148,12 @@ public class CatalogService(
     /// Pass <c>null</c> when the consumer's location is not available.
     /// </param>
     /// <returns>A populated <see cref="PackListItemResponse"/> DTO.</returns>
-    private static PackListItemResponse MapPack(Models.Catalog.Product p, double? distanceKm = null) => new()
+    private PackListItemResponse MapPack(Models.Catalog.Product p, double? distanceKm = null) => new()
     {
         Id                    = p.Id,
         Name                  = p.Name,
         Description           = p.Description,
-        ImageUrl              = p.ImageUrl,
+        ImageUrl              = imageStorage.ResolvePublicUrl(p.ImageUrl),
         ProductType           = p.ProductType.ToString(),
         OriginalPrice         = p.OriginalPrice,
         SalePrice             = p.SalePrice,

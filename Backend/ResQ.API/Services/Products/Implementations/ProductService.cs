@@ -234,12 +234,12 @@ public class ProductService(
     /// </summary>
     /// <param name="p">The product entity to map.</param>
     /// <returns>A populated <see cref="ProductResponse"/> DTO.</returns>
-    private static ProductResponse MapProduct(Product p) => new()
+    private ProductResponse MapProduct(Product p) => new()
     {
         Id              = p.Id,
         Name            = p.Name,
         Description     = p.Description,
-        ImageUrl        = p.ImageUrl,
+        ImageUrl        = imageStorage.ResolvePublicUrl(p.ImageUrl),
         ProductType     = p.ProductType.ToString(),
         OriginalPrice   = p.OriginalPrice,
         SalePrice       = p.SalePrice,
