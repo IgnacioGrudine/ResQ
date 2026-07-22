@@ -2,12 +2,14 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { MerchantService } from '../../../core/services/merchant.service';
 import { MerchantReview } from '../../../core/models/merchant.models';
-import { LucideStar, LucideMessageSquare } from '@lucide/angular';
+import { LucideStar, LucideMessageSquare, LucideChevronLeft, LucideChevronRight } from '@lucide/angular';
+
+const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-merchant-reviews',
   standalone: true,
-  imports: [DecimalPipe, LucideStar, LucideMessageSquare],
+  imports: [DecimalPipe, LucideStar, LucideMessageSquare, LucideChevronLeft, LucideChevronRight],
   templateUrl: './reviews.component.html'
 })
 export class ReviewsComponent implements OnInit {
@@ -15,6 +17,21 @@ export class ReviewsComponent implements OnInit {
 
   readonly reviews = signal<MerchantReview[]>([]);
   readonly loading = signal(true);
+
+  page = 1;
+
+  get pagedReviews(): MerchantReview[] {
+    const start = (this.page - 1) * PAGE_SIZE;
+    return this.reviews().slice(start, start + PAGE_SIZE);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.reviews().length / PAGE_SIZE));
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages) this.page = p;
+  }
 
   readonly average = computed(() => {
     const list = this.reviews();
