@@ -11,23 +11,21 @@
         }
       </div>
 
-      <!-- Filters -->
+      <!-- Filters: reload automatically as soon as a value changes -->
       <div class="flex flex-wrap items-center gap-2">
-        <input type="date" [(ngModel)]="from"
+        <input type="date" [ngModel]="from" (ngModelChange)="from = $event; load()"
           class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
         <span class="text-white/40">→</span>
-        <input type="date" [(ngModel)]="to"
+        <input type="date" [ngModel]="to" (ngModelChange)="to = $event; load()"
           class="bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
-        <resq-select [(ngModel)]="granularity" variant="dark" class="w-36">
+        <resq-select [ngModel]="granularity" (ngModelChange)="granularity = $event; load()" variant="dark" class="w-36">
           <resq-option value="Day">Por día</resq-option>
           <resq-option value="Week">Por semana</resq-option>
           <resq-option value="Month">Por mes</resq-option>
         </resq-select>
-        <button (click)="load()"
-          class="flex items-center gap-1.5 bg-lime text-evergreen text-sm font-semibold rounded-lg px-4 py-2 hover:bg-lime/90 transition-colors">
-          <svg lucideRefreshCw class="w-4 h-4"></svg>
-          Aplicar
-        </button>
+        @if (loading()) {
+          <svg lucideRefreshCw class="w-4 h-4 text-lime animate-spin"></svg>
+        }
       </div>
     </div>
   </div>

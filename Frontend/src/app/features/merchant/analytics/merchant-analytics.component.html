@@ -10,16 +10,15 @@
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <div class="flex items-center gap-2 w-full sm:w-auto">
-          <input type="date" [(ngModel)]="from"
+          <input type="date" [ngModel]="from" (ngModelChange)="from = $event; load()"
             class="flex-1 min-w-0 sm:flex-none bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
           <span class="text-white/40 shrink-0">→</span>
-          <input type="date" [(ngModel)]="to"
+          <input type="date" [ngModel]="to" (ngModelChange)="to = $event; load()"
             class="flex-1 min-w-0 sm:flex-none bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-2 [color-scheme:dark]" />
         </div>
-        <button (click)="load()"
-          class="flex items-center justify-center gap-1.5 w-full sm:w-auto bg-lime text-evergreen text-sm font-semibold rounded-lg px-4 py-2 hover:bg-lime/90 transition-colors">
-          <svg lucideRefreshCw class="w-4 h-4"></svg> Aplicar
-        </button>
+        @if (loading()) {
+          <svg lucideRefreshCw class="w-4 h-4 text-lime animate-spin shrink-0"></svg>
+        }
       </div>
     </div>
   </div>
