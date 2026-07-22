@@ -55,7 +55,7 @@
 
     @else {
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        @for (p of packs(); track p.id) {
+        @for (p of pagedPacks(); track p.id) {
           <div class="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
 
             <!-- Thumbnail -->
@@ -131,6 +131,26 @@
           </div>
         }
       </div>
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-between bg-white rounded-2xl shadow-sm px-5 py-3 mt-3">
+          <button (click)="setPage(page() - 1)" [disabled]="page() === 1"
+            class="flex items-center gap-1.5 text-sm font-medium text-gray-500 disabled:opacity-30 hover:text-evergreen transition-colors disabled:cursor-not-allowed">
+            <svg lucideChevronLeft class="w-4 h-4"></svg>
+            Anterior
+          </button>
+
+          <span class="text-sm text-gray-400">
+            Página <span class="font-bold text-gray-700">{{ page() }}</span> de <span class="font-bold text-gray-700">{{ totalPages() }}</span>
+          </span>
+
+          <button (click)="setPage(page() + 1)" [disabled]="page() === totalPages()"
+            class="flex items-center gap-1.5 text-sm font-medium text-gray-500 disabled:opacity-30 hover:text-evergreen transition-colors disabled:cursor-not-allowed">
+            Siguiente
+            <svg lucideChevronRight class="w-4 h-4"></svg>
+          </button>
+        </div>
+      }
     }
 
   </div>
@@ -150,7 +170,7 @@
         <div class="p-5 flex flex-col gap-4">
           <!-- Name -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre del pack</label>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre del pack <span class="text-red-500">*</span></label>
             <input [(ngModel)]="form.name" type="text" placeholder="Ej: Pack Sorpresa Dulce"
               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
           </div>
@@ -182,12 +202,12 @@
           <!-- Prices -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Precio original</label>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Precio original <span class="text-red-500">*</span></label>
               <input [(ngModel)]="form.originalPrice" type="number" min="0" placeholder="1500"
                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Precio de venta</label>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Precio de venta <span class="text-red-500">*</span></label>
               <input [(ngModel)]="form.salePrice" type="number" min="0" placeholder="700"
                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
             </div>
@@ -195,7 +215,7 @@
 
           <!-- Stock -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Stock disponible</label>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Stock disponible <span class="text-red-500">*</span></label>
             <input [(ngModel)]="form.stockQuantity" type="number" min="0" placeholder="5"
               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
           </div>
@@ -203,12 +223,12 @@
           <!-- Pickup times -->
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Retiro desde</label>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Retiro desde <span class="text-red-500">*</span></label>
               <input [(ngModel)]="form.pickupTimeStart" type="time"
                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Retiro hasta</label>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Retiro hasta <span class="text-red-500">*</span></label>
               <input [(ngModel)]="form.pickupTimeEnd" type="time"
                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20">
             </div>
@@ -216,7 +236,7 @@
 
           <!-- Image picker -->
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Imagen del pack (opcional)</label>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Imagen del pack <span class="text-red-500">*</span></label>
             <div class="relative aspect-[16/7] rounded-xl overflow-hidden bg-gradient-to-br from-evergreen to-hunter cursor-pointer group"
               (click)="triggerImageInput()">
               @if (imagePreview()) {

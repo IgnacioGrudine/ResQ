@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MerchantService } from '../../../core/services/merchant.service';
@@ -14,8 +14,12 @@ import {
   LucideClock,
   LucideCamera,
   LucideImage,
-  LucideLink
+  LucideLink,
+  LucideChevronLeft,
+  LucideChevronRight
 } from '@lucide/angular';
+
+const PAGE_SIZE = 4;
 
 interface PackForm {
   name: string;
@@ -32,7 +36,7 @@ interface PackForm {
 @Component({
   selector: 'app-merchant-packs',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, SafeImgDirective, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink],
+  imports: [DecimalPipe, FormsModule, SafeImgDirective, LucidePackage, LucidePlus, LucidePencil, LucideTrash2, LucideX, LucideClock, LucideCamera, LucideImage, LucideLink, LucideChevronLeft, LucideChevronRight],
   templateUrl: './packs.component.html'
 })
 export class PacksComponent implements OnInit {
@@ -43,6 +47,19 @@ export class PacksComponent implements OnInit {
 
   readonly packs   = signal<MerchantProduct[]>([]);
   readonly loading = signal(true);
+
+  readonly page = signal(1);
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.packs().length / PAGE_SIZE)));
+
+  readonly pagedPacks = computed(() => {
+    const start = (this.page() - 1) * PAGE_SIZE;
+    return this.packs().slice(start, start + PAGE_SIZE);
+  });
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages()) this.page.set(p);
+  }
 
   /** Whether the merchant has a live Mercado Pago connection. Packs cannot be published without it. */
   readonly mpConnected    = signal(false);
@@ -145,6 +162,7 @@ export class PacksComponent implements OnInit {
   private validate(): string | null {
     const f = this.form;
     if (!f.name.trim()) return 'El nombre es obligatorio.';
+    if (!this.pendingImageFile && !f.imageUrl.trim()) return 'La imagen del pack es obligatoria.';
     if (f.originalPrice == null || f.originalPrice <= 0) return 'El precio original debe ser mayor a 0.';
     if (f.salePrice == null || f.salePrice <= 0) return 'El precio de venta debe ser mayor a 0.';
     if (f.salePrice >= f.originalPrice) return 'El precio de venta debe ser menor al original.';
@@ -198,6 +216,7 @@ export class PacksComponent implements OnInit {
     this.formOpen.set(false);
     this.pendingImageFile = null;
     this.imagePreview.set(null);
+    this.page.set(1);
     this.load();
   }
 
@@ -214,7 +233,11 @@ export class PacksComponent implements OnInit {
 
   confirmDelete(id: number): void {
     this.merchant.deleteProduct(id).subscribe({
-      next: () => { this.deletingId.set(null); this.packs.update(list => list.filter(x => x.id !== id)); }
+      next: () => {
+        this.deletingId.set(null);
+        this.packs.update(list => list.filter(x => x.id !== id));
+        if (this.page() > this.totalPages()) this.page.set(this.totalPages());
+      }
     });
   }
 
