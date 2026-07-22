@@ -11,6 +11,9 @@ import { ResqCardComponent } from '../../shared/ui';
   templateUrl: './landing.component.html'
 })
 export class LandingComponent {
+  /** Footer copyright year — computed so it never goes stale. */
+  readonly currentYear = new Date().getFullYear();
+
   /** The three problems ResQ solves at once, each grounded in a real photo, not an icon. */
   readonly pillars = [
     {

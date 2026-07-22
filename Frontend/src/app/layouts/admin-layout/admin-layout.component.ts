@@ -31,6 +31,9 @@ export class AdminLayoutComponent {
   /** Desktop sidebar collapsed to icon-only mode. Persisted across sessions. */
   readonly sidebarCollapsed = signal(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
 
+  /** Footer copyright year — computed so it never goes stale. */
+  readonly currentYear = new Date().getFullYear();
+
   toggleSidebar(): void {
     const next = !this.sidebarCollapsed();
     this.sidebarCollapsed.set(next);

@@ -62,6 +62,9 @@ export class MerchantLayoutComponent implements OnInit, OnDestroy {
   readonly businessName = signal<string>('');
   readonly photoUrl = signal<string | null>(null);
 
+  /** Footer copyright year — computed so it never goes stale. */
+  readonly currentYear = new Date().getFullYear();
+
   /** Up to two uppercase initials derived from the business name, for the avatar fallback. */
   readonly initials = computed(() => {
     const words = this.businessName().trim().split(/\s+/).filter(Boolean);
