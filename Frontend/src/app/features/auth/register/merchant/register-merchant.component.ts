@@ -53,6 +53,7 @@ export class RegisterMerchantComponent implements OnInit, AfterViewInit {
   readonly apiError     = signal('');
   readonly geoDetected  = signal(false);
   readonly photoPreview = signal<string | null>(null);
+  readonly showPhotoError = signal(false);
   pendingPhoto: File | null = null;
 
   readonly categories    = signal<Category[]>([]);
@@ -112,6 +113,7 @@ export class RegisterMerchantComponent implements OnInit, AfterViewInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     this.pendingPhoto = file;
+    this.showPhotoError.set(false);
     const reader = new FileReader();
     reader.onload = () => this.photoPreview.set(reader.result as string);
     reader.readAsDataURL(file);
@@ -171,7 +173,9 @@ export class RegisterMerchantComponent implements OnInit, AfterViewInit {
   isCatSelected(id: number): boolean { return this.selectedCategoryIds.has(id); }
 
   onSubmit(): void {
-    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    const missingPhoto = !this.pendingPhoto;
+    this.showPhotoError.set(missingPhoto);
+    if (this.form.invalid || missingPhoto) { this.form.markAllAsTouched(); return; }
     this.loading.set(true);
     this.apiError.set('');
     const v = this.form.getRawValue();
@@ -186,14 +190,10 @@ export class RegisterMerchantComponent implements OnInit, AfterViewInit {
       longitude:    v.longitude!
     }).subscribe({
       next: () => {
-        if (this.pendingPhoto) {
-          this.merchantService.uploadPhoto(this.pendingPhoto).subscribe({
-            next:  () => this.goToCatStep(),
-            error: () => this.goToCatStep()
-          });
-        } else {
-          this.goToCatStep();
-        }
+        this.merchantService.uploadPhoto(this.pendingPhoto!).subscribe({
+          next:  () => this.goToCatStep(),
+          error: () => this.goToCatStep()
+        });
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);

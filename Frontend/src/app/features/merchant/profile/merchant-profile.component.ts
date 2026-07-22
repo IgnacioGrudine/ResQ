@@ -55,6 +55,7 @@ export class MerchantProfileComponent implements OnInit {
   readonly saved      = signal(false);
   readonly savingCats = signal(false);
   readonly savedCats  = signal(false);
+  readonly formError  = signal<string | null>(null);
 
   readonly uploadingPhoto   = signal(false);
   readonly photoPreview     = signal<string | null>(null);
@@ -141,7 +142,18 @@ export class MerchantProfileComponent implements OnInit {
 
   isSelected(id: number): boolean { return this.selectedCategoryIds.has(id); }
 
+  private validateProfile(): string | null {
+    if (!this.form.businessName.trim()) return 'El nombre del comercio es obligatorio.';
+    if (!this.form.address.trim())      return 'La dirección es obligatoria.';
+    if (!this.form.contactPhone.trim()) return 'El teléfono de contacto es obligatorio.';
+    if (!this.profile()?.photoUrl)      return 'Subí una foto de tu comercio antes de guardar.';
+    return null;
+  }
+
   saveProfileData(): void {
+    const err = this.validateProfile();
+    if (err) { this.formError.set(err); return; }
+    this.formError.set(null);
     this.saving.set(true);
     this.merchant.updateProfile(this.buildPayload()).subscribe({
       next: updated => {

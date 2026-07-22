@@ -21,6 +21,7 @@ export class ProfileComponent implements OnInit {
   readonly loading  = signal(true);
   readonly saving   = signal(false);
   readonly saved    = signal(false);
+  readonly formError = signal<string | null>(null);
 
   form = { firstName: '', lastName: '', phoneNumber: '' };
 
@@ -36,6 +37,11 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
+    if (!this.form.firstName.trim() || !this.form.lastName.trim()) {
+      this.formError.set('El nombre y el apellido son obligatorios.');
+      return;
+    }
+    this.formError.set(null);
     this.saving.set(true);
     this.consumer.updateProfile(this.form).subscribe({
       next: updated => {

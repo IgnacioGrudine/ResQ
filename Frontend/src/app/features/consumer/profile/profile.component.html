@@ -43,23 +43,27 @@
         <div class="flex flex-col gap-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre</label>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Nombre <span class="text-red-500">*</span></label>
               <input [(ngModel)]="form.firstName" type="text"
                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 transition-colors">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Apellido</label>
+              <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Apellido <span class="text-red-500">*</span></label>
               <input [(ngModel)]="form.lastName" type="text"
                 class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 transition-colors">
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Teléfono</label>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Teléfono (opcional)</label>
             <input [(ngModel)]="form.phoneNumber" type="tel" placeholder="+54 351 000-0000"
               class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-evergreen focus:ring-2 focus:ring-evergreen/20 transition-colors">
           </div>
         </div>
+
+        @if (formError()) {
+          <p class="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2.5 mt-4">{{ formError() }}</p>
+        }
 
         <!-- Save button -->
         <button (click)="saveProfile()" [disabled]="saving()"
