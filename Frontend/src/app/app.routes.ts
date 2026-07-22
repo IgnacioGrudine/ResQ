@@ -155,20 +155,28 @@ export const routes: Routes = [
     ]
   },
 
-  // ── Detail screens (no consumer layout) ────────────────────────
+  // ── Detail screens (wrapped in the consumer layout so the sidebar/bottom-nav ──
+  // ── stays visible; the empty parent path keeps the URLs unchanged) ──────────
   {
-    path: 'packs/:id',
+    path: '',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/consumer/pack-detail/pack-detail.component')
-        .then(m => m.PackDetailComponent)
-  },
-  {
-    path: 'merchant/:id',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/consumer/merchant-detail/merchant-detail.component')
-        .then(m => m.MerchantDetailComponent)
+      import('./layouts/consumer-layout/consumer-layout.component')
+        .then(m => m.ConsumerLayoutComponent),
+    children: [
+      {
+        path: 'packs/:id',
+        loadComponent: () =>
+          import('./features/consumer/pack-detail/pack-detail.component')
+            .then(m => m.PackDetailComponent)
+      },
+      {
+        path: 'merchant/:id',
+        loadComponent: () =>
+          import('./features/consumer/merchant-detail/merchant-detail.component')
+            .then(m => m.MerchantDetailComponent)
+      }
+    ]
   },
 
   // ── Legal (público, sin guard) ───────────────────────────────────
