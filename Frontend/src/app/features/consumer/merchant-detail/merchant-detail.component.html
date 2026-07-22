@@ -127,23 +127,72 @@
       @if (m.recentReviews.length) {
         <div>
           <h3 class="font-bold text-gray-700 mb-3 px-1">Reseñas</h3>
-          <div class="flex flex-col gap-3">
-            @for (rev of m.recentReviews; track rev.id) {
-              <div class="bg-white rounded-xl p-4 shadow-sm">
-                <div class="flex items-center gap-1 mb-2">
-                  @for (s of stars(rev.rating); track s) {
-                    <svg lucideStar class="w-3.5 h-3.5"
-                      [class]="s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
-                    </svg>
-                  }
-                  <span class="text-xs text-gray-400 ml-auto">{{ formatDate(rev.createdAt) }}</span>
-                </div>
-                @if (rev.comment) {
-                  <p class="text-sm text-gray-600 leading-relaxed">{{ rev.comment }}</p>
-                }
-              </div>
+
+          <!-- Filtro por estrellas -->
+          <div class="flex flex-wrap gap-2 mb-3 px-1">
+            <button (click)="setRatingFilter(0)"
+              class="text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+              [class]="selectedRating() === 0
+                ? 'bg-evergreen text-white'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'">
+              Todas ({{ m.recentReviews.length }})
+            </button>
+            @for (row of ratingCounts(); track row.star) {
+              <button (click)="setRatingFilter(row.star)"
+                class="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+                [class]="selectedRating() === row.star
+                  ? 'bg-evergreen text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'">
+                {{ row.star }}
+                <svg lucideStar class="w-3 h-3"
+                  [class]="selectedRating() === row.star ? 'fill-white' : 'fill-amber-400 text-amber-400'">
+                </svg>
+                ({{ row.count }})
+              </button>
             }
           </div>
+
+          @if (!filteredReviews().length) {
+            <div class="bg-white rounded-xl p-6 shadow-sm text-center">
+              <p class="text-sm text-gray-400">No hay reseñas con ese filtro.</p>
+            </div>
+          } @else {
+            <div class="flex flex-col gap-3">
+              @for (rev of pagedReviews(); track rev.id) {
+                <div class="bg-white rounded-xl p-4 shadow-sm">
+                  <div class="flex items-center gap-1 mb-2">
+                    @for (s of stars(rev.rating); track s) {
+                      <svg lucideStar class="w-3.5 h-3.5"
+                        [class]="s <= rev.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'">
+                      </svg>
+                    }
+                    <span class="text-xs text-gray-400 ml-auto">{{ formatDate(rev.createdAt) }}</span>
+                  </div>
+                  @if (rev.comment) {
+                    <p class="text-sm text-gray-600 leading-relaxed">{{ rev.comment }}</p>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (totalPages() > 1) {
+              <div class="flex items-center justify-between bg-white rounded-xl shadow-sm px-4 py-2.5 mt-3">
+                <button (click)="setPage(page() - 1)" [disabled]="page() === 1"
+                  class="flex items-center gap-1 text-xs font-medium text-gray-500 disabled:opacity-30 hover:text-evergreen transition-colors disabled:cursor-not-allowed">
+                  <svg lucideChevronLeft class="w-3.5 h-3.5"></svg>
+                  Anterior
+                </button>
+                <span class="text-xs text-gray-400">
+                  Página <span class="font-bold text-gray-700">{{ page() }}</span> de <span class="font-bold text-gray-700">{{ totalPages() }}</span>
+                </span>
+                <button (click)="setPage(page() + 1)" [disabled]="page() === totalPages()"
+                  class="flex items-center gap-1 text-xs font-medium text-gray-500 disabled:opacity-30 hover:text-evergreen transition-colors disabled:cursor-not-allowed">
+                  Siguiente
+                  <svg lucideChevronRight class="w-3.5 h-3.5"></svg>
+                </button>
+              </div>
+            }
+          }
         </div>
       }
 

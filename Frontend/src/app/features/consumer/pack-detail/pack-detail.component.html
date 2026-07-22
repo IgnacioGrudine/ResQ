@@ -171,7 +171,7 @@
           <div>
             <h3 class="font-bold text-gray-700 mb-3 px-1">Reseñas del comercio</h3>
             <div class="flex flex-col gap-3">
-              @for (rev of m.recentReviews; track rev.id) {
+              @for (rev of m.recentReviews.slice(0, 5); track rev.id) {
                 <div class="bg-white rounded-xl p-4 shadow-sm">
                   <div class="flex items-center gap-1 mb-2">
                     @for (s of stars(rev.rating); track s) {
@@ -187,6 +187,12 @@
                 </div>
               }
             </div>
+            @if (m.recentReviews.length > 5) {
+              <button (click)="openMerchant(m.id)"
+                class="w-full mt-3 py-2.5 rounded-xl text-sm font-semibold text-evergreen bg-evergreen/8 hover:bg-evergreen/12 transition-colors">
+                Ver todas las reseñas ({{ m.reviewCount }})
+              </button>
+            }
           </div>
         }
 

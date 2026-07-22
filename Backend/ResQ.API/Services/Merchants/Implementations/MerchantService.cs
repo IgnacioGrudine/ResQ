@@ -74,7 +74,8 @@ public class MerchantService(
 
     /// <summary>
     /// Returns the full public profile of a single merchant, including their active packs,
-    /// categories, aggregated rating, and the 10 most recent reviews.
+    /// categories, aggregated rating, and all of their reviews (newest first) so the client
+    /// can paginate and filter by star rating without losing data behind a server-side cap.
     /// </summary>
     /// <param name="merchantId">The merchant profile ID.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -105,7 +106,6 @@ public class MerchantService(
             ActiveProducts = merchant.Products.Select(MapProduct).ToList(),
             RecentReviews  = merchant.Reviews
                                  .OrderByDescending(r => r.CreatedAt)
-                                 .Take(10)
                                  .Select(r => new ReviewResponse
                                  {
                                      Id        = r.Id,

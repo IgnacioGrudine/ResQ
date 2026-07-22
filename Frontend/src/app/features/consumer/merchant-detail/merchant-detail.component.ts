@@ -13,8 +13,12 @@ import {
   LucidePhone,
   LucideStar,
   LucideClock,
-  LucideStore
+  LucideStore,
+  LucideChevronLeft,
+  LucideChevronRight
 } from '@lucide/angular';
+
+const PAGE_SIZE = 5;
 
 @Component({
   selector: 'app-merchant-detail',
@@ -22,7 +26,7 @@ import {
   imports: [
     DecimalPipe, SafeImgDirective,
     LucideArrowLeft, LucideLeaf, LucideMapPin, LucidePhone,
-    LucideStar, LucideClock, LucideStore
+    LucideStar, LucideClock, LucideStore, LucideChevronLeft, LucideChevronRight
   ],
   templateUrl: './merchant-detail.component.html'
 })
@@ -35,6 +39,41 @@ export class MerchantDetailComponent implements OnInit {
   readonly merchant = signal<MerchantDetail | null>(null);
   readonly loading  = signal(true);
   readonly error    = signal<string | null>(null);
+
+  readonly selectedRating = signal(0); // 0 = todas
+  readonly page = signal(1);
+
+  // Counts per star (5→1), only over ratings that actually have reviews.
+  readonly ratingCounts = computed(() => {
+    const list = this.merchant()?.recentReviews ?? [];
+    return [5, 4, 3, 2, 1]
+      .map(star => ({ star, count: list.filter(r => r.rating === star).length }))
+      .filter(row => row.count > 0);
+  });
+
+  readonly filteredReviews = computed(() => {
+    const list = this.merchant()?.recentReviews ?? [];
+    const rating = this.selectedRating();
+    return rating === 0 ? list : list.filter(r => r.rating === rating);
+  });
+
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredReviews().length / PAGE_SIZE))
+  );
+
+  readonly pagedReviews = computed(() => {
+    const start = (this.page() - 1) * PAGE_SIZE;
+    return this.filteredReviews().slice(start, start + PAGE_SIZE);
+  });
+
+  setRatingFilter(rating: number): void {
+    this.selectedRating.set(rating);
+    this.page.set(1);
+  }
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages()) this.page.set(p);
+  }
 
   readonly staticMapUrl = computed(() => {
     const m = this.merchant();
