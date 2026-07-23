@@ -378,8 +378,9 @@ public class ProductServiceTests
 
         _products.Setup(p => p.GetByIdForMerchantAsync(1, 10, It.IsAny<CancellationToken>()))
                  .ReturnsAsync(product);
-        _imageStorage.Setup(s => s.UploadAsync(mockFile.Object, "products/10", It.IsAny<CancellationToken>()))
+        _imageStorage.Setup(s => s.UploadAsync(It.IsAny<IFormFile>(), "products/10", It.IsAny<CancellationToken>()))
                      .ReturnsAsync(newUrl);
+        _imageStorage.Setup(s => s.ResolvePublicUrl(newUrl)).Returns(newUrl);
         _products.Setup(p => p.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         var sut = CreateSut();

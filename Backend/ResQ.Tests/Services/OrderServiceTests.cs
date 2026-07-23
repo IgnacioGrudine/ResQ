@@ -562,7 +562,13 @@ public class OrderServiceTests
         OrderStatus  = status,
         PickupCode   = status == OrderStatus.Paid ? "PAID01" : "ABC123",
         CreatedAt    = DateTime.UtcNow,
-        Consumer     = new ConsumerProfile { FirstName = "Ana", LastName = "López" },
+        Consumer     = new ConsumerProfile
+        {
+            FirstName = "Ana",
+            LastName  = "López",
+            User      = new User { Email = "ana@example.com" }
+        },
+        Merchant     = new MerchantProfile { BusinessName = "La Panadería del Centro" },
         OrderDetails = []
     };
 }

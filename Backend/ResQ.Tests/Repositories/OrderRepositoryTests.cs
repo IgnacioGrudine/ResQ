@@ -28,8 +28,13 @@ public class OrderRepositoryTests : IDisposable
 
     private async Task<ConsumerProfile> SeedConsumerAsync(string firstName = "Ana")
     {
+        var user = new User { Email = $"{firstName.ToLower()}@example.com", CreatedAt = DateTime.UtcNow };
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
         var consumer = new ConsumerProfile
         {
+            UserId    = user.Id,
             FirstName = firstName,
             LastName  = "López",
             CreatedAt = DateTime.UtcNow
