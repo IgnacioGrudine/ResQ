@@ -36,8 +36,10 @@ public class GoogleAuthService(
                     Audience = [_google.ClientId]
                 });
         }
-        catch (InvalidJwtException)
+        catch (Exception ex) when (ex is InvalidJwtException or ArgumentException)
         {
+            // ArgumentException covers null/empty idToken — Google's SDK throws that
+            // before it even gets to parsing the JWT, ahead of InvalidJwtException.
             return Result.Fail(new UnauthorizedError("Token de Google inválido o expirado."));
         }
 

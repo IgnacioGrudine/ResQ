@@ -110,7 +110,7 @@ public class JwtService(IOptions<JwtSettings> jwtOptions) : IJwtService
             ValidateLifetime        = false, // ignora expiración intencionalmente
         };
 
-        var handler = new JwtSecurityTokenHandler();
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
 
         try
         {
