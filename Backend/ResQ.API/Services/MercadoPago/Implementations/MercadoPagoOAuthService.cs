@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentResults;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ResQ.API.Common.Errors;
 using ResQ.API.Models.Enums;
@@ -24,7 +25,8 @@ public class MercadoPagoOAuthService(
     IEncryptionService encryption,
     IMerchantMpCredentialRepository credentialRepo,
     IMerchantProfileRepository merchantRepo,
-    IProductRepository productRepo) : IMercadoPagoOAuthService
+    IProductRepository productRepo,
+    ILogger<MercadoPagoOAuthService> logger) : IMercadoPagoOAuthService
 {
     private readonly MpSettings _mp = mpOptions.Value;
 
@@ -132,7 +134,19 @@ public class MercadoPagoOAuthService(
 
         var content = new FormUrlEncodedContent(form);
 
-        var response = await mpClient.PostAsync("/oauth/token", content, ct: ct);
+        HttpResponseMessage response;
+        try
+        {
+            response = await mpClient.PostAsync("/oauth/token", content, ct: ct);
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException)
+        {
+            // Called synchronously from the checkout path (ValidateAndRefreshCredentialAsync)
+            // whenever a merchant's token is expiring soon — a slow/unreachable MP here would
+            // otherwise surface as a raw unhandled exception mid-checkout for the consumer.
+            logger.LogWarning(ex, "[MP] Token refresh timed out or failed to connect for merchant #{MerchantId}", merchantProfileId);
+            return Result.Fail(new BadRequestError("Mercado Pago tardó demasiado en responder. Intentá de nuevo en unos segundos."));
+        }
 
         if (!response.IsSuccessStatusCode)
         {
@@ -234,7 +248,17 @@ public class MercadoPagoOAuthService(
 
         var content = new FormUrlEncodedContent(form);
 
-        var response = await mpClient.PostAsync("/oauth/token", content, ct: ct);
+        HttpResponseMessage response;
+        try
+        {
+            response = await mpClient.PostAsync("/oauth/token", content, ct: ct);
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException)
+        {
+            logger.LogWarning(ex, "[MP] Code exchange timed out or failed to connect");
+            return Result.Fail(new BadRequestError(
+                "Mercado Pago tardó demasiado en responder. Intentá conectar tu cuenta de nuevo."));
+        }
 
         if (!response.IsSuccessStatusCode)
         {

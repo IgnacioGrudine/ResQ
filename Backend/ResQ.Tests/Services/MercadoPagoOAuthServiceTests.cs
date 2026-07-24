@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using FluentResults;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using ResQ.API.Models.Auth;
@@ -38,7 +39,8 @@ public class MercadoPagoOAuthServiceTests
         _encryption.Object,
         _credentialRepo.Object,
         _merchantRepo.Object,
-        _productRepo.Object);
+        _productRepo.Object,
+        NullLogger<MercadoPagoOAuthService>.Instance);
 
     private static HttpResponseMessage BuildTokenResponse(
         string accessToken = "access-tok", string refreshToken = "refresh-tok",

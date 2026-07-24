@@ -292,9 +292,19 @@ public class OrderService(
     {
         // An empty body triggers a full refund of the payment's total amount.
         // MP requires a fresh idempotency key per refund attempt on this endpoint.
-        var content  = new StringContent("{}", Encoding.UTF8, "application/json");
-        var response = await mpClient.PostAsync(
-            $"/v1/payments/{paymentId}/refunds", content, accessToken, ct, Guid.NewGuid().ToString());
+        var content = new StringContent("{}", Encoding.UTF8, "application/json");
+        HttpResponseMessage response;
+        try
+        {
+            response = await mpClient.PostAsync(
+                $"/v1/payments/{paymentId}/refunds", content, accessToken, ct, Guid.NewGuid().ToString());
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException)
+        {
+            logger.LogWarning(ex, "[MP] Refund request timed out or failed to connect for payment {PaymentId}", paymentId);
+            return Result.Fail(new BadRequestError(
+                "Mercado Pago tardó demasiado en responder. Intentá cancelar de nuevo en unos segundos."));
+        }
 
         if (response.IsSuccessStatusCode) return Result.Ok();
 
@@ -525,7 +535,11 @@ public class OrderService(
                 Success: $"{frontendBase}/pago/exitoso?orderId={order.Id}",
                 Failure: $"{frontendBase}/pago/fallido?orderId={order.Id}",
                 Pending: $"{frontendBase}/pago/pendiente?orderId={order.Id}"),
-            AutoReturn:          env.IsProduction() ? "approved" : null,
+            // Always redirect the consumer back to ResQ automatically after payment — this
+            // requires back_urls to be public HTTPS (frontendBase), which is already mandatory
+            // in every environment for MP_REDIRECT_URI/MP_NOTIFICATION_URL to work at all, so
+            // there's no environment where gating this off actually helps.
+            AutoReturn:          "approved",
             NotificationUrl:     _mp.NotificationUrl,
             StatementDescriptor: "RESQ",
             BinaryMode:          false,            // Allow "pending" status (required for cash payments)
@@ -540,8 +554,23 @@ public class OrderService(
         var requestJson = JsonSerializer.Serialize(body);
         logger.LogInformation("[MP] Sending preference request: {Body}", requestJson);
 
-        var content  = new StringContent(requestJson, Encoding.UTF8, "application/json");
-        var response = await mpClient.PostAsync("/checkout/preferences", content, accessToken, ct);
+        var content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+        HttpResponseMessage response;
+        try
+        {
+            response = await mpClient.PostAsync("/checkout/preferences", content, accessToken, ct);
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException)
+        {
+            // The HttpClient has a 30s timeout (see Program.cs). Without this catch, a slow
+            // MP response would surface as a raw unhandled exception via the global error
+            // middleware — a scary stack trace instead of an actionable message — and leave
+            // the consumer's "Creando orden..." button spinning the whole time with no hint
+            // of what's happening.
+            logger.LogWarning(ex, "[MP] Preference request timed out or failed to connect for order #{OrderId}", order.Id);
+            return Result.Fail(new BadRequestError(
+                "Mercado Pago tardó demasiado en responder. Intentá de nuevo en unos segundos."));
+        }
 
         var responseBody = await response.Content.ReadAsStringAsync(ct);
         logger.LogInformation("[MP] Preference response ({Status}): {Body}", (int)response.StatusCode, responseBody);
