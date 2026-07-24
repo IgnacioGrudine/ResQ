@@ -3,12 +3,14 @@
   <!-- ─── Sidebar (desktop) ─── -->
   <aside
     [class]="'hidden md:flex md:flex-col md:fixed md:inset-y-0 bg-evergreen z-20 px-4 py-8 gap-8 transition-[width] duration-200 ' + (sidebarCollapsed() ? 'md:w-[72px]' : 'md:w-60')">
-    <a routerLink="/panel" class="flex items-center gap-2 px-2 min-w-0" [class.justify-center]="sidebarCollapsed()" [class.gap-0]="sidebarCollapsed()">
-      <svg lucideLeaf class="w-7 h-7 text-lime shrink-0"></svg>
-      @if (!sidebarCollapsed()) {
-        <span class="text-xl font-bold text-white truncate">ResQ <span class="text-lime text-sm font-semibold">Comercio</span></span>
-      }
-    </a>
+    <div class="flex items-center px-2" [class.justify-center]="sidebarCollapsed()">
+      <a routerLink="/panel" class="flex items-center gap-2 min-w-0" [class.gap-0]="sidebarCollapsed()">
+        <svg lucideLeaf class="w-7 h-7 text-lime shrink-0"></svg>
+        @if (!sidebarCollapsed()) {
+          <span class="text-xl font-bold text-white truncate">ResQ <span class="text-lime text-sm font-semibold">Comercio</span></span>
+        }
+      </a>
+    </div>
 
     <nav class="flex flex-col gap-1 flex-1">
       <a routerLink="/panel"
@@ -63,24 +65,24 @@
     </nav>
 
     <div class="flex flex-col gap-1">
+      <button (click)="toggleSidebar()"
+        [title]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:bg-white/10 hover:text-white transition-colors font-medium w-full"
+        [class.justify-center]="sidebarCollapsed()">
+        @if (sidebarCollapsed()) {
+          <svg lucideChevronsRight class="w-5 h-5 shrink-0"></svg>
+        } @else {
+          <svg lucideChevronsLeft class="w-5 h-5 shrink-0"></svg>
+          <span>Colapsar</span>
+        }
+      </button>
+
       <button (click)="logout()"
         [title]="sidebarCollapsed() ? 'Cerrar sesión' : ''"
         class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:bg-white/10 hover:text-red-300 transition-colors font-medium w-full"
         [class.justify-center]="sidebarCollapsed()">
         <svg lucideLogOut class="w-5 h-5 shrink-0"></svg>
         @if (!sidebarCollapsed()) { Cerrar sesión }
-      </button>
-
-      <button (click)="toggleSidebar()"
-        [title]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
-        class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:bg-white/10 hover:text-white/80 transition-colors"
-        [class.justify-center]="sidebarCollapsed()">
-        @if (sidebarCollapsed()) {
-          <svg lucideChevronsRight class="w-4 h-4 shrink-0"></svg>
-        } @else {
-          <svg lucideChevronsLeft class="w-4 h-4 shrink-0"></svg>
-          <span class="text-xs">Colapsar</span>
-        }
       </button>
 
       @if (!sidebarCollapsed()) {
