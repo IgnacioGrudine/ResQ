@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using ResQ.API.Models.Enums;
 using ResQ.API.Models.Orders;
 using ResQ.API.Models.Settings;
+using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Services.Notifications;
@@ -27,6 +28,7 @@ public class MpWebhookProcessorService(
     IMercadoPagoHttpClient mpClient,
     IOptions<MpSettings> mpOptions,
     IOrderRepository orderRepo,
+    IProductRepository productRepo,
     IMpWebhookEventRepository webhookEventRepo,
     INotificationService notificationService,
     ILogger<MpWebhookProcessorService> logger) : IMpWebhookProcessorService
@@ -103,6 +105,17 @@ public class MpWebhookProcessorService(
                     order.MpPaymentId = payment.Id;
                     order.UpdatedAt   = DateTime.UtcNow;
                     orderRepo.Update(order);
+
+                    // Stock is only ever committed here, at confirmed payment — never at order
+                    // creation. An abandoned or rejected checkout must never reduce availability.
+                    foreach (var detail in order.OrderDetails)
+                    {
+                        var product = detail.Product;
+                        product.StockQuantity = Math.Max(0, product.StockQuantity - detail.Quantity);
+                        product.UpdatedAt      = DateTime.UtcNow;
+                        productRepo.Update(product);
+                    }
+
                     await orderRepo.SaveChangesAsync();
 
                     await NotifyOrderPaidAsync(order);

@@ -280,7 +280,7 @@ public class OrderServiceTests
     }
 
     [Fact]
-    public async Task CreateOrderAsync_WhenAllValid_CreatesOrderDeductsStockAndReturnsMpCheckoutUrl()
+    public async Task CreateOrderAsync_WhenAllValid_CreatesOrderAndReturnsMpCheckoutUrl()
     {
         // Arrange
         const int consumerProfileId = 5;
@@ -308,7 +308,39 @@ public class OrderServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal("PREF999", result.Value.MpPreferenceId);
         Assert.Equal("https://mp.com/pref999", result.Value.MpCheckoutUrl);
-        Assert.Equal(8, product.StockQuantity); // 10 - 2
+    }
+
+    [Fact]
+    public async Task CreateOrderAsync_WhenAllValid_DoesNotDeductStockUntilPaymentIsConfirmed()
+    {
+        // Arrange — stock must stay untouched at order creation; it's only committed once
+        // Mercado Pago confirms the payment (see MpWebhookProcessorService), so an abandoned
+        // or rejected checkout never costs the merchant real availability.
+        const int consumerProfileId = 5;
+        var product = BuildActiveProduct(stock: 10);
+        var credential = BuildActiveCredential();
+
+        _products.Setup(p => p.GetByIdWithMerchantAsync(1, It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(product);
+        _credentials.Setup(c => c.GetByMerchantIdAsync(product.MerchantId, It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(credential);
+        _encryption.Setup(e => e.Decrypt(credential.AccessToken)).Returns("plain-token");
+        _orders.Setup(o => o.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()))
+               .Returns(Task.CompletedTask);
+        _orders.Setup(o => o.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        _mpClient.Setup(c => c.PostAsync(It.IsAny<string>(), It.IsAny<HttpContent>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(BuildMpSuccessResponse("PREF999", "https://mp.com/pref999"));
+        _env.Setup(e => e.EnvironmentName).Returns("Development");
+
+        var sut = CreateSut();
+
+        // Act
+        var result = await sut.CreateOrderAsync(consumerProfileId, new CreateOrderRequest { ProductId = 1, Quantity = 2 });
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(10, product.StockQuantity);
+        _products.Verify(p => p.Update(It.IsAny<Product>()), Times.Never);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

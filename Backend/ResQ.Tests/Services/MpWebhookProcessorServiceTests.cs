@@ -3,10 +3,12 @@ using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+using ResQ.API.Models.Catalog;
 using ResQ.API.Models.Enums;
 using ResQ.API.Models.MercadoPago;
 using ResQ.API.Models.Orders;
 using ResQ.API.Models.Settings;
+using ResQ.API.Repositories.Catalog;
 using ResQ.API.Repositories.MercadoPago;
 using ResQ.API.Repositories.Orders;
 using ResQ.API.Services.MercadoPago;
@@ -18,6 +20,7 @@ public class MpWebhookProcessorServiceTests
 {
     private readonly Mock<IMercadoPagoHttpClient> _mpClient = new();
     private readonly Mock<IOrderRepository> _orderRepo = new();
+    private readonly Mock<IProductRepository> _productRepo = new();
     private readonly Mock<IMpWebhookEventRepository> _webhookEventRepo = new();
     private readonly Mock<INotificationService> _notificationService = new();
 
@@ -30,6 +33,7 @@ public class MpWebhookProcessorServiceTests
         _mpClient.Object,
         _mpOptions,
         _orderRepo.Object,
+        _productRepo.Object,
         _webhookEventRepo.Object,
         _notificationService.Object,
         NullLogger<MpWebhookProcessorService>.Instance);
@@ -182,6 +186,34 @@ public class MpWebhookProcessorServiceTests
             order.MerchantId, NotificationType.OrderPaid, It.IsAny<string>(), It.IsAny<string>(), order.Id, It.IsAny<CancellationToken>()),
             Times.Once);
         Assert.Equal(WebhookProcessingStatus.Processed, ev.ProcessingStatus);
+    }
+
+    [Fact]
+    public async Task ProcessPaymentAsync_WhenApprovedAndOrderPending_DecrementsStockForEachLineItem()
+    {
+        // Arrange — stock must only ever be committed once payment is confirmed approved,
+        // never at order creation (see OrderService.PersistOrderAsync).
+        _mpClient.Setup(c => c.GetAsync("/v1/payments/555", "admin-token", It.IsAny<CancellationToken>()))
+                 .ReturnsAsync(BuildPaymentResponse());
+
+        var product = new Product { Id = 1, MerchantId = 10, Name = "Pack Sorpresa", StockQuantity = 5 };
+        var order   = BuildOrder(OrderStatus.Pending);
+        order.OrderDetails = [new OrderDetail { ProductId = product.Id, Quantity = 2, UnitPrice = 400m, Product = product }];
+
+        _orderRepo.Setup(o => o.GetByExternalReferenceAsync("ext-ref-1", It.IsAny<CancellationToken>())).ReturnsAsync(order);
+        _orderRepo.Setup(o => o.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        var ev = BuildWebhookEvent();
+        _webhookEventRepo.Setup(r => r.GetByNotificationIdAsync(555, It.IsAny<CancellationToken>())).ReturnsAsync(ev);
+        _webhookEventRepo.Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        var sut = CreateSut();
+
+        // Act
+        await sut.ProcessPaymentAsync(555, 555);
+
+        // Assert
+        Assert.Equal(3, product.StockQuantity); // 5 - 2
+        _productRepo.Verify(p => p.Update(product), Times.Once);
     }
 
     [Fact]

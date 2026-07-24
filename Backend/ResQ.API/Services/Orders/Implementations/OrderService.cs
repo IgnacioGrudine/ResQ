@@ -84,7 +84,7 @@ public class OrderService(
         var amounts = CalculateAmounts(product.SalePrice, request.Quantity);
         var order   = BuildOrder(consumerProfileId, product, request.Quantity, amounts);
 
-        await PersistOrderAsync(order, product, request.Quantity, ct);
+        await PersistOrderAsync(order, ct);
 
         var accessToken = encryption.Decrypt(credential.AccessToken);
         var prefResult  = await CreateMpPreferenceAsync(order, product.Name, accessToken, ct);
@@ -449,23 +449,20 @@ public class OrderService(
     };
 
     /// <summary>
-    /// Persists the new order and decrements the product's available stock
-    /// in a single <c>SaveChangesAsync</c> call, ensuring both changes are committed
-    /// atomically within the same EF Core transaction.
+    /// Persists the new order in <see cref="OrderStatus.Pending"/> status.
     /// </summary>
+    /// <remarks>
+    /// Deliberately does NOT touch <see cref="Product.StockQuantity"/> — stock must only be
+    /// decremented once Mercado Pago confirms the payment as approved (see
+    /// <c>MpWebhookProcessorService.ProcessPaymentAsync</c>). If the consumer abandons checkout
+    /// or the payment is rejected, the order simply stays Pending/Cancelled and no stock was
+    /// ever committed, so it remains available for other consumers to buy.
+    /// </remarks>
     /// <param name="order">The order entity to insert, including its OrderDetail collection.</param>
-    /// <param name="product">The product whose stock must be decremented.</param>
-    /// <param name="quantity">Number of units to subtract from the product's stock.</param>
     /// <param name="ct">Cancellation token.</param>
-    private async Task PersistOrderAsync(
-        Order order, Product product, int quantity, CancellationToken ct)
+    private async Task PersistOrderAsync(Order order, CancellationToken ct)
     {
         await orders.AddAsync(order, ct);
-
-        product.StockQuantity -= quantity;
-        product.UpdatedAt      = DateTime.UtcNow;
-        products.Update(product);
-
         await orders.SaveChangesAsync(ct);
     }
 
