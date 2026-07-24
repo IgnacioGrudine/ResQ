@@ -67,7 +67,7 @@ public interface IOrderService
     /// merchant and marks the corresponding order as picked up.
     /// </summary>
     /// <param name="merchantProfileId">The identifier of the merchant profile confirming the pickup.</param>
-    /// <param name="pickupCode">The alphanumeric or QR pickup code presented by the consumer at the point of collection.</param>
+    /// <param name="pickupCode">The alphanumeric pickup code presented by the consumer at the point of collection.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// A successful <see cref="Result{T}"/> containing the updated <see cref="MerchantOrderSummaryResponse"/>

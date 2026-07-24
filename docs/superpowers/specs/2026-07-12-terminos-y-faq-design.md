@@ -36,7 +36,7 @@ Ruta: `/legal/terminos`. Estructura (adaptada del molde de la cátedra):
 3. **Registro y cuentas** — Existen dos tipos de cuenta (Consumidor, Comercio); el usuario es
    responsable de la confidencialidad de su contraseña y de la actividad realizada con su cuenta.
 4. **Operaciones habilitadas** — Reservar un pack, pagarlo a través de Mercado Pago, y retirarlo
-   presentando el código QR/alfanumérico dentro de la franja horaria publicada por el comercio.
+   presentando el código alfanumérico dentro de la franja horaria publicada por el comercio.
 5. **Costos y forma de pago** — El consumidor paga el precio publicado por el comercio a través
    de Mercado Pago; ResQ cobra una comisión de plataforma al comercio por cada venta procesada;
    ResQ no es parte de la relación de consumo entre comercio y consumidor más allá de facilitar
@@ -69,7 +69,7 @@ acordeón simple:
    email; si quedás afuera de tu cuenta, escribinos y te ayudamos a restablecerla manualmente.
 5. **¿Cómo reservo y pago un pack?** Elegís un pack en el mapa o el feed, pagás con Mercado
    Pago y recibís un código de retiro.
-6. **¿Cómo retiro mi pack?** Mostrás el código QR/alfanumérico en el comercio, dentro de la
+6. **¿Cómo retiro mi pack?** Mostrás el código alfanumérico en el comercio, dentro de la
    franja horaria publicada.
 7. **¿Qué pasa si no retiro a tiempo?** El pack queda perdido, sin reembolso, pasado el horario
    de retiro.

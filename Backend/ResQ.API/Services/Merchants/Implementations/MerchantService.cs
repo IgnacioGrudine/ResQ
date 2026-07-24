@@ -205,7 +205,7 @@ public class MerchantService(
     /// orders belonging to the authenticated merchant.
     /// </summary>
     /// <param name="merchantProfileId">The profile ID extracted from the authenticated user's JWT claims.</param>
-    /// <param name="pickupCode">The alphanumeric or QR-encoded pickup code presented by the consumer.</param>
+    /// <param name="pickupCode">The alphanumeric pickup code presented by the consumer.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// A successful <see cref="Result{MerchantOrderSummaryResponse}"/> with the confirmed order,

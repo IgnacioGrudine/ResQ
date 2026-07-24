@@ -36,7 +36,7 @@ public interface IOrderRepository : IGenericRepository<Order>
     /// pickup-confirmation flow where the order status must be mutated.
     /// </remarks>
     /// <param name="merchantId">The identifier of the merchant confirming the pickup.</param>
-    /// <param name="pickupCode">The alphanumeric or QR pickup code presented by the consumer.</param>
+    /// <param name="pickupCode">The alphanumeric pickup code presented by the consumer.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>
     /// The tracked <see cref="Order"/> if a pending paid order with the given pickup code

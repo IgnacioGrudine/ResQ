@@ -27,7 +27,7 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     question: '¿Cómo retiro mi pack?',
-    answer: 'Mostrás el código QR/alfanumérico en el comercio, dentro de la franja horaria de retiro publicada.'
+    answer: 'Mostrás el código alfanumérico en el comercio, dentro de la franja horaria de retiro publicada.'
   },
   {
     question: '¿Puedo cancelar una reserva ya pagada?',
