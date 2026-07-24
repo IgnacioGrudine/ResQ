@@ -43,7 +43,9 @@ export class OrdersComponent implements OnInit {
 
   ngOnInit(): void {
     this.consumer.getOrders().subscribe({
-      next:  orders => { this.orders.set(orders); this.loading.set(false); },
+      // Pending orders are checkouts that never got a confirmed payment (abandoned or
+      // rejected) — nothing the consumer can act on, so they're excluded everywhere here.
+      next:  orders => { this.orders.set(orders.filter(o => o.orderStatus !== 'Pending')); this.loading.set(false); },
       error: ()     => this.loading.set(false)
     });
   }

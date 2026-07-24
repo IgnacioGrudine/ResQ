@@ -42,7 +42,9 @@ export class MerchantOrdersComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.merchant.getOrders().subscribe({
-      next:  o  => { this.orders.set(o); this.loading.set(false); },
+      // Orders still in backend "Pending" status are checkouts with no confirmed payment
+      // yet (abandoned or rejected) — nothing the merchant can act on, so excluded here.
+      next:  o  => { this.orders.set(o.filter(x => x.orderStatus !== 'Pending')); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
   }
