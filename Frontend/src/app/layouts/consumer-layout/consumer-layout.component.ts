@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -20,8 +21,9 @@ const SIDEBAR_COLLAPSED_KEY = 'resq.consumer.sidebarCollapsed';
   templateUrl: './consumer-layout.component.html'
 })
 export class ConsumerLayoutComponent implements OnInit {
-  private readonly auth     = inject(AuthService);
-  private readonly consumer = inject(ConsumerService);
+  private readonly auth       = inject(AuthService);
+  private readonly consumer   = inject(ConsumerService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Queue of orders awaiting a review
   private pendingQueue: Order[] = [];
@@ -37,10 +39,22 @@ export class ConsumerLayoutComponent implements OnInit {
   submitting    = false;
 
   ngOnInit(): void {
+    this.loadPendingQueue();
+
+    // A review can also be submitted directly from "Mis Órdenes" — refresh this queue when
+    // that happens so we never re-prompt for an order that was just reviewed elsewhere.
+    this.consumer.ordersChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadPendingQueue());
+  }
+
+  private loadPendingQueue(): void {
     this.consumer.getOrders().subscribe({
       next: orders => {
-        this.pendingQueue = orders.filter(o => o.orderStatus === 'PickedUp' && !o.hasReview);
-        this.showNext();
+        const currentId = this.pendingOrder()?.id;
+        this.pendingQueue = orders.filter(o =>
+          o.orderStatus === 'PickedUp' && !o.hasReview && o.id !== currentId);
+        if (!this.pendingOrder()) this.showNext();
       }
     });
   }
@@ -65,6 +79,13 @@ export class ConsumerLayoutComponent implements OnInit {
 
   dismiss(): void { this.showNext(); }
 
+  ratingLabel(): string {
+    const labels: Record<number, string> = {
+      1: 'Malo', 2: 'Regular', 3: 'Bueno', 4: 'Muy bueno', 5: 'Excelente'
+    };
+    return labels[this.hoverRating || this.reviewRating] ?? '';
+  }
+
   submitReview(): void {
     const order = this.pendingOrder();
     if (!order || this.reviewRating === 0 || this.submitting) return;
@@ -74,7 +95,12 @@ export class ConsumerLayoutComponent implements OnInit {
       rating:  this.reviewRating,
       comment: this.reviewComment.trim() || undefined
     }).subscribe({
-      next:  () => this.showNext(),
+      next: () => {
+        // Let any already-loaded page (e.g. "Mis Órdenes") know this order now has a
+        // review, since this modal can pop up over any route with its own stale copy.
+        this.consumer.notifyOrdersChanged();
+        this.showNext();
+      },
       error: () => { this.submitting = false; }
     });
   }

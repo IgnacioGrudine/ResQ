@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -20,6 +21,7 @@ const PAGE_SIZE = 5;
 export class OrdersComponent implements OnInit {
   private readonly consumer = inject(ConsumerService);
   private readonly orderService = inject(OrderService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly orders  = signal<Order[]>([]);
   readonly loading = signal(true);
@@ -42,6 +44,17 @@ export class OrdersComponent implements OnInit {
   get activeTab(): FilterTab { return this._activeTab; }
 
   ngOnInit(): void {
+    this.load();
+
+    // The global auto-review modal (ConsumerLayoutComponent) can pop up over this page and
+    // submit a review without this component ever knowing — refetch when that happens so a
+    // just-reviewed order doesn't keep showing "Dejar reseña" from stale local state.
+    this.consumer.ordersChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.load());
+  }
+
+  private load(): void {
     this.consumer.getOrders().subscribe({
       // Pending orders are checkouts that never got a confirmed payment (abandoned or
       // rejected) — nothing the consumer can act on, so they're excluded everywhere here.
@@ -132,6 +145,9 @@ export class OrdersComponent implements OnInit {
         this.orders.update(list =>
           list.map(o => o.id === this.reviewOrderId ? { ...o, hasReview: true } : o)
         );
+        // Let the global auto-review modal know too, in case it already has this same
+        // order queued from an earlier fetch — otherwise it could prompt for it again.
+        this.consumer.notifyOrdersChanged();
         this.closeReviewModal();
       },
       error: () => { this.submitting.set(false); }

@@ -136,24 +136,24 @@
     <div class="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden">
 
       <!-- Banner superior -->
-      <div class="bg-evergreen px-6 pt-6 pb-5 text-center">
+      <div class="bg-evergreen px-6 pt-7 pb-6 text-center">
         <div class="flex justify-center mb-3">
-          <div class="w-12 h-12 rounded-full bg-white/15 flex items-center justify-center">
-            <svg lucideStar class="w-6 h-6 text-amber-300 fill-amber-300"></svg>
+          <div class="w-14 h-14 rounded-full bg-white/15 flex items-center justify-center ring-1 ring-white/20">
+            <svg lucideStar class="w-7 h-7 text-amber-300 fill-amber-300"></svg>
           </div>
         </div>
-        <h2 class="text-white font-bold text-lg">¿Cómo estuvo tu pedido?</h2>
-        <p class="text-white/70 text-sm mt-1">
+        <h2 class="text-white font-bold text-xl">¿Cómo estuvo tu pedido?</h2>
+        <p class="text-white/60 text-sm mt-1.5">
           <span class="font-semibold text-white/90">{{ pendingOrder()!.merchantName }}</span>
           — contanos tu experiencia
         </p>
       </div>
 
       <!-- Body -->
-      <div class="px-6 py-5">
+      <div class="px-6 py-6">
 
         <!-- Estrellas -->
-        <div class="flex justify-center gap-3 mb-5">
+        <div class="flex justify-center gap-2.5">
           @for (star of [1,2,3,4,5]; track star) {
             <button (click)="setRating(star)"
                     (mouseenter)="hoverRating = star"
@@ -168,21 +168,24 @@
           }
         </div>
 
+        <!-- Label de calificación -->
+        <p class="h-5 text-center text-sm font-semibold text-evergreen mt-2 mb-4">{{ ratingLabel() }}</p>
+
         <!-- Comentario -->
         <textarea
           [(ngModel)]="reviewComment"
-          placeholder="¿Qué te pareció el pack? (opcional)"
+          placeholder="¿Qué te pareció el pack?"
           rows="3"
           maxlength="500"
-          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-evergreen/30 focus:border-evergreen/50 transition mb-4">
+          class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-evergreen/30 focus:border-evergreen/50 transition mb-5">
         </textarea>
 
         <!-- Acciones -->
         <button (click)="submitReview()"
           [disabled]="reviewRating === 0 || submitting"
-          class="w-full py-3 rounded-xl font-semibold text-sm transition-all mb-2
-                 bg-evergreen text-white hover:bg-evergreen/90
-                 disabled:opacity-40 disabled:cursor-not-allowed">
+          class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all mb-2 shadow-sm
+                 bg-evergreen text-white hover:bg-hunter
+                 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
           @if (submitting) {
             <span class="flex items-center justify-center gap-2">
               <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
