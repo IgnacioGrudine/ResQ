@@ -207,6 +207,9 @@
         @if (buyError()) {
           <p class="text-xs text-red-500 text-center font-medium px-2">{{ buyError() }}</p>
         }
+        @if (buying()) {
+          <p class="text-xs text-gray-400 text-center px-2">Puede tardar unos segundos, no cierres esta pantalla.</p>
+        }
         <div class="flex items-center gap-3">
           <div class="flex items-center gap-1 border border-gray-200 rounded-xl overflow-hidden shrink-0">
             <button (click)="decrementQty()" [disabled]="quantity() <= 1 || buying()"
