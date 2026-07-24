@@ -23,6 +23,8 @@ import {
   LucidePlus
 } from '@lucide/angular';
 
+const SIDEBAR_COLLAPSED_KEY = 'resq.consumer.sidebarCollapsed';
+
 @Component({
   selector: 'app-pack-detail',
   standalone: true,
@@ -40,6 +42,9 @@ export class PackDetailComponent implements OnInit {
   private readonly orderService = inject(OrderService);
   private readonly router       = inject(Router);
   private readonly location     = inject(Location);
+
+  /** Mirrors ConsumerLayoutComponent's own signal so the fixed buy bar doesn't sit under the sidebar. */
+  readonly sidebarCollapsed = signal(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
 
   readonly pack     = signal<PackListItem | null>(null);
   readonly merchant = signal<MerchantDetail | null>(null);

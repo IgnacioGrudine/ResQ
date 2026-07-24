@@ -201,7 +201,8 @@
     </div>
 
     <!-- ── Sticky buy bar ── -->
-    <div class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 md:px-8 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-20">
+    <div
+      [class]="'fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 md:px-8 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] z-20 transition-[margin] duration-200 ' + (sidebarCollapsed() ? 'md:ml-[72px]' : 'md:ml-60')">
       <div class="max-w-2xl mx-auto flex flex-col gap-2">
         @if (buyError()) {
           <p class="text-xs text-red-500 text-center font-medium px-2">{{ buyError() }}</p>
