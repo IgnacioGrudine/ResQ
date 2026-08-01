@@ -81,13 +81,32 @@ services:
     image: nginx:alpine
     container_name: resq-nginx
     restart: unless-stopped
-    ports:
-      - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - frontend
       - backend
+    networks:
+      - resq-net
+
+  # Fronts nginx with TLS. Locally (DOMAIN unset) it just proxies plain HTTP on
+  # :80 — same as before. In production, set DOMAIN in .env and Caddy handles
+  # HTTPS + Let's Encrypt automatically. See ./Caddyfile.
+  caddy:
+    image: caddy:2-alpine
+    container_name: resq-caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-http://localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - nginx
     networks:
       - resq-net
 
@@ -109,6 +128,8 @@ services:
 
 volumes:
   pg_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   resq-net:

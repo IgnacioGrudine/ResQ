@@ -1,0 +1,12 @@
+# Fronts the existing nginx reverse proxy. The DOMAIN value itself (with its
+# "http://localhost" fallback for local dev) is resolved in docker-compose.yml,
+# not here — Caddy's own {$VAR:default} treats an empty env var as a real value
+# rather than falling back, which breaks this when DOMAIN="" in .env.
+#
+# Local dev: plain HTTP on localhost, no certificate requested — same as before.
+# Production: set DOMAIN=resq.com.ar (or whatever domain you bought) in .env.
+# Caddy then serves HTTPS on that domain and provisions/renews the Let's Encrypt
+# certificate automatically — no certbot, no manual renewal.
+{$DOMAIN} {
+	reverse_proxy nginx:80
+}
