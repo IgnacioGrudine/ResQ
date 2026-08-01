@@ -28,6 +28,7 @@ import {
   LucideCookie,
   LucidePizza,
   LucideFlame,
+  LucideShoppingCart,
   LucideUtensils,
   LucideSlidersHorizontal,
   LucideChevronRight
@@ -46,7 +47,8 @@ const CATEGORY_ICONS: Record<string, string> = {
   'Pastelería':  'cake-slice',
   'Postres':     'cookie',
   'Pizzería':    'pizza',
-  'Parrilla':    'flame'
+  'Parrilla':    'flame',
+  'Supermercado':'shopping-cart'
 };
 
 /** How many packs to reveal per "Cargar más" click, and initially. */
@@ -62,7 +64,7 @@ const URGENT_THRESHOLD_MINUTES = 120;
     FormsModule, DecimalPipe, NgTemplateOutlet, ResqSelectComponent, ResqOptionComponent, SafeImgDirective,
     LucideSearch, LucideLeaf, LucideMapPin, LucideClock, LucideX, LucideRefreshCw, LucideStar,
     LucideWheat, LucideFish, LucideCoffee, LucideUtensilsCrossed, LucideSalad,
-    LucideIceCreamCone, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideUtensils,
+    LucideIceCreamCone, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideShoppingCart, LucideUtensils,
     LucideSlidersHorizontal, LucideChevronRight
   ],
   templateUrl: './feed.component.html'
