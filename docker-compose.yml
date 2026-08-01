@@ -32,9 +32,10 @@ services:
     container_name: resq-backend
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB:-resq_db};Username=${POSTGRES_USER:-resq};Password=${POSTGRES_PASSWORD:-resq_dev}"
+      Jwt__SecretKey: ${JWT_SECRET_KEY}
       Minio__Endpoint: "minio:9000"
       Minio__AccessKey: ${MINIO_ACCESS_KEY:-resq_minio}
       Minio__SecretKey: ${MINIO_SECRET_KEY:-resq_minio_secret}
