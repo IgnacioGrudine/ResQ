@@ -192,6 +192,10 @@ builder.Services.AddScoped<IReportFileFactory, ReportFileFactory>();
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// UseHangfireDashboard (Development-only, below) sets this as a side effect, but the
+// static RecurringJob.AddOrUpdate call further down needs it regardless of environment.
+JobStorage.Current = app.Services.GetRequiredService<JobStorage>();
+
 // Apply pending migrations on startup so the Docker DB schema is always in sync.
 using (var scope = app.Services.CreateScope())
 {
