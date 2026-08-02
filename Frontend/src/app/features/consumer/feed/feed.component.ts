@@ -20,10 +20,10 @@ import {
   LucideStar,
   LucideWheat,
   LucideFish,
-  LucideCoffee,
+  LucideDrumstick,
   LucideUtensilsCrossed,
   LucideSalad,
-  LucideIceCreamCone,
+  LucideHam,
   LucideCakeSlice,
   LucideCookie,
   LucidePizza,
@@ -40,10 +40,10 @@ interface FilterCategory { id: number | null; name: string; }
 const CATEGORY_ICONS: Record<string, string> = {
   'Panadería':   'wheat',
   'Sushi':       'fish',
-  'Café':        'coffee',
+  'Rosticería':  'drumstick',
   'Restaurante': 'utensils-crossed',
   'Vegano':      'salad',
-  'Heladería':   'ice-cream-cone',
+  'Fiambrería':  'ham',
   'Pastelería':  'cake-slice',
   'Postres':     'cookie',
   'Pizzería':    'pizza',
@@ -63,8 +63,8 @@ const URGENT_THRESHOLD_MINUTES = 120;
   imports: [
     FormsModule, DecimalPipe, NgTemplateOutlet, ResqSelectComponent, ResqOptionComponent, SafeImgDirective,
     LucideSearch, LucideLeaf, LucideMapPin, LucideClock, LucideX, LucideRefreshCw, LucideStar,
-    LucideWheat, LucideFish, LucideCoffee, LucideUtensilsCrossed, LucideSalad,
-    LucideIceCreamCone, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideShoppingCart, LucideUtensils,
+    LucideWheat, LucideFish, LucideDrumstick, LucideUtensilsCrossed, LucideSalad,
+    LucideHam, LucideCakeSlice, LucideCookie, LucidePizza, LucideFlame, LucideShoppingCart, LucideUtensils,
     LucideSlidersHorizontal, LucideChevronRight
   ],
   templateUrl: './feed.component.html'

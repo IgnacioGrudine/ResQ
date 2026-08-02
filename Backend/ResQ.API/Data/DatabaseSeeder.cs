@@ -57,7 +57,7 @@ public static class DatabaseSeeder
     {
         string[] canonicalNames =
         [
-            "Panadería", "Sushi", "Café", "Restaurante", "Vegano", "Heladería",
+            "Panadería", "Sushi", "Rosticería", "Restaurante", "Vegano", "Fiambrería",
             "Pastelería", "Postres", "Pizzería", "Parrilla", "Supermercado"
         ];
 
@@ -219,17 +219,17 @@ public static class DatabaseSeeder
             db.SaveChanges();
         }
 
-        if (!existingBusinessNames.Contains("Café del Boulevard"))
+        if (!existingBusinessNames.Contains("Rosticería del Boulevard"))
         {
             var m_cafedelboulevardUser = new User
             {
-                Email        = "cafedelboulevard@resq.com",
+                Email        = "rosticeriadelboulevard@resq.com",
                 PasswordHash = hash,
                 IsActive     = true,
                 CreatedAt    = now,
                 MerchantProfile = new MerchantProfile
                 {
-                    BusinessName       = "Café del Boulevard",
+                    BusinessName       = "Rosticería del Boulevard",
                     Cuit               = "30-67890123-5",
                     Address            = "Bv. Chacabuco 450, Nueva Córdoba",
                     Latitude           = -31.4231m,
@@ -244,43 +244,43 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_cafedelboulevard = m_cafedelboulevardUser.MerchantProfile!;
-            m_cafedelboulevard.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Coffee_shop_1_-_Wellington%2C_New_Zealand.jpg/960px-Coffee_shop_1_-_Wellington%2C_New_Zealand.jpg";
+            m_cafedelboulevard.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Rotisserie_in_Dieppe_Market_2026-05-09.jpg/960px-Rotisserie_in_Dieppe_Market_2026-05-09.jpg";
 
-            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_cafedelboulevard.Id, CategoryId = categories["Café"] });
+            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_cafedelboulevard.Id, CategoryId = categories["Rosticería"] });
 
             var m_cafedelboulevard_p1 = new Product
             {
                 MerchantId      = m_cafedelboulevard.Id,
-                Name            = "Pack Desayuno Boulevard",
-                Description     = "Café de especialidad + croissant + jugo de naranja exprimido.",
+                Name            = "Pack Pollo al Spiedo",
+                Description     = "Medio pollo al spiedo dorado y jugoso, listo para retirar con guarnición del día.",
                 ProductType     = ProductType.SurprisePack,
-                OriginalPrice   = 1000m,
-                SalePrice       = 500m,
-                StockQuantity   = 8,
-                PickupTimeStart = new TimeOnly(8, 0),
-                PickupTimeEnd   = new TimeOnly(11, 0),
+                OriginalPrice   = 3000m,
+                SalePrice       = 1500m,
+                StockQuantity   = 6,
+                PickupTimeStart = new TimeOnly(18, 30),
+                PickupTimeEnd   = new TimeOnly(21, 30),
                 IsActive        = true,
                 CreatedAt       = now
             };
             var m_cafedelboulevard_p2 = new Product
             {
                 MerchantId      = m_cafedelboulevard.Id,
-                Name            = "Pack Merienda del Boulevard",
-                Description     = "Té o café + porción de torta casera del día.",
+                Name            = "Pack Empanadas Surtidas x12",
+                Description     = "Docena de empanadas surtidas: carne, jamón y queso, y verdura, recién horneadas.",
                 ProductType     = ProductType.SurprisePack,
-                OriginalPrice   = 950m,
-                SalePrice       = 470m,
-                StockQuantity   = 6,
-                PickupTimeStart = new TimeOnly(17, 0),
-                PickupTimeEnd   = new TimeOnly(19, 30),
+                OriginalPrice   = 2200m,
+                SalePrice       = 1100m,
+                StockQuantity   = 8,
+                PickupTimeStart = new TimeOnly(18, 0),
+                PickupTimeEnd   = new TimeOnly(21, 0),
                 IsActive        = true,
                 CreatedAt       = now
             };
             db.Products.AddRange(m_cafedelboulevard_p1, m_cafedelboulevard_p2);
             db.SaveChanges();
 
-            m_cafedelboulevard_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Breakfast_spread_with_coffee%2C_pastry%2C_and_juice_on_a_table_in_a_cozy_morning_setting.jpg/960px-Breakfast_spread_with_coffee%2C_pastry%2C_and_juice_on_a_table_in_a_cozy_morning_setting.jpg";
-            m_cafedelboulevard_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Piece_of_chocolate_cake_on_a_white_plate_decorated_with_chocolate_sauce.jpg/960px-Piece_of_chocolate_cake_on_a_white_plate_decorated_with_chocolate_sauce.jpg";
+            m_cafedelboulevard_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Demi_Glace.jpg/960px-Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Demi_Glace.jpg";
+            m_cafedelboulevard_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Golden_brown_fried_Argentine_empanadas_on_a_platter.jpg/960px-Golden_brown_fried_Argentine_empanadas_on_a_platter.jpg";
             db.SaveChanges();
         }
 
@@ -544,17 +544,17 @@ public static class DatabaseSeeder
             db.SaveChanges();
         }
 
-        if (!existingBusinessNames.Contains("Heladería Cremolatti"))
+        if (!existingBusinessNames.Contains("Fiambrería Cremona"))
         {
             var m_heladeriacremolattiUser = new User
             {
-                Email        = "heladeriacremolatti@resq.com",
+                Email        = "fiambreriacremona@resq.com",
                 PasswordHash = hash,
                 IsActive     = true,
                 CreatedAt    = now,
                 MerchantProfile = new MerchantProfile
                 {
-                    BusinessName       = "Heladería Cremolatti",
+                    BusinessName       = "Fiambrería Cremona",
                     Cuit               = "30-74567890-0",
                     Address            = "Av. Rafael Núñez 4100, Cerro de las Rosas",
                     Latitude           = -31.3856m,
@@ -569,57 +569,57 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_heladeriacremolatti = m_heladeriacremolattiUser.MerchantProfile!;
-            m_heladeriacremolatti.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Gelato_ice_cream.jpg/960px-Gelato_ice_cream.jpg";
+            m_heladeriacremolatti.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Veeno_platter.jpg/960px-Veeno_platter.jpg";
 
-            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_heladeriacremolatti.Id, CategoryId = categories["Heladería"] });
+            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_heladeriacremolatti.Id, CategoryId = categories["Fiambrería"] });
 
             var m_heladeriacremolatti_p1 = new Product
             {
                 MerchantId      = m_heladeriacremolatti.Id,
-                Name            = "Pack Sorpresa 1/2 Kg",
-                Description     = "Medio kilo de helado artesanal, sabores a elección del heladero.",
+                Name            = "Pack Tabla de Fiambres y Quesos",
+                Description     = "Selección de fiambres y quesos surtidos, ideal para compartir.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 3500m,
                 SalePrice       = 1750m,
                 StockQuantity   = 6,
-                PickupTimeStart = new TimeOnly(18, 0),
-                PickupTimeEnd   = new TimeOnly(22, 0),
+                PickupTimeStart = new TimeOnly(17, 0),
+                PickupTimeEnd   = new TimeOnly(20, 0),
                 IsActive        = true,
                 CreatedAt       = now
             };
             var m_heladeriacremolatti_p2 = new Product
             {
                 MerchantId      = m_heladeriacremolatti.Id,
-                Name            = "Pack Postre Helado",
-                Description     = "Copa de helado con topping sorpresa del día.",
+                Name            = "Pack Jamón Crudo x250g",
+                Description     = "250 g de jamón crudo estacionado, cortado fino al momento.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1200m,
                 SalePrice       = 600m,
                 StockQuantity   = 10,
-                PickupTimeStart = new TimeOnly(17, 0),
-                PickupTimeEnd   = new TimeOnly(21, 30),
+                PickupTimeStart = new TimeOnly(16, 30),
+                PickupTimeEnd   = new TimeOnly(19, 30),
                 IsActive        = true,
                 CreatedAt       = now
             };
             db.Products.AddRange(m_heladeriacremolatti_p1, m_heladeriacremolatti_p2);
             db.SaveChanges();
 
-            m_heladeriacremolatti_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Polaris_ice_cream_-_Dulce_de_leche%2C_vanilla_and_strawberry_-_%28Posadas%2C_Misiones%2C_Argentina%29.jpg/960px-Polaris_ice_cream_-_Dulce_de_leche%2C_vanilla_and_strawberry_-_%28Posadas%2C_Misiones%2C_Argentina%29.jpg";
-            m_heladeriacremolatti_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Dark_chocolate_chip_ice_cream_cone_-_August_2025_-_Sarah_Stierch.jpg/960px-Dark_chocolate_chip_ice_cream_cone_-_August_2025_-_Sarah_Stierch.jpg";
+            m_heladeriacremolatti_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Charcuterie_board_with_various_cheeses_meats_olives_and_vegetables_arranged.jpg/960px-Charcuterie_board_with_various_cheeses_meats_olives_and_vegetables_arranged.jpg";
+            m_heladeriacremolatti_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/A_plate_of_Jam%C3%B3n_serrano_in_Madrid%2C_Spain_Jam%C3%B3n_serrano_is_a_type_of_jam%C3%B3n_%28dry-cured_Spanish_ham%29%2C_which_is_generally_served_in_thin_slices.jpg/960px-A_plate_of_Jam%C3%B3n_serrano_in_Madrid%2C_Spain_Jam%C3%B3n_serrano_is_a_type_of_jam%C3%B3n_%28dry-cured_Spanish_ham%29%2C_which_is_generally_served_in_thin_slices.jpg";
             db.SaveChanges();
         }
 
-        if (!existingBusinessNames.Contains("Gelato del Sol"))
+        if (!existingBusinessNames.Contains("Fiambrería del Sol"))
         {
             var m_gelatodelsolUser = new User
             {
-                Email        = "gelatodelsol@resq.com",
+                Email        = "fiambreriadelsol@resq.com",
                 PasswordHash = hash,
                 IsActive     = true,
                 CreatedAt    = now,
                 MerchantProfile = new MerchantProfile
                 {
-                    BusinessName       = "Gelato del Sol",
+                    BusinessName       = "Fiambrería del Sol",
                     Cuit               = "30-75678901-1",
                     Address            = "Duarte Quirós 2100, Alberdi",
                     Latitude           = -31.4148m,
@@ -634,43 +634,43 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_gelatodelsol = m_gelatodelsolUser.MerchantProfile!;
-            m_gelatodelsol.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Gelato_artigianale_italiano%2C_Bertinelli.jpg/960px-Gelato_artigianale_italiano%2C_Bertinelli.jpg";
+            m_gelatodelsol.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Kaeserei_Chaux-d%27Abel_07_12.jpg/960px-Kaeserei_Chaux-d%27Abel_07_12.jpg";
 
-            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_gelatodelsol.Id, CategoryId = categories["Heladería"] });
+            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_gelatodelsol.Id, CategoryId = categories["Fiambrería"] });
 
             var m_gelatodelsol_p1 = new Product
             {
                 MerchantId      = m_gelatodelsol.Id,
-                Name            = "Pack Gelato Sorpresa",
-                Description     = "1/4 kg de gelato artesanal, sabores variados del día.",
+                Name            = "Pack Salame y Quesos Surtidos",
+                Description     = "Salame, provolone y queso cremoso surtidos, listos para picar.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1800m,
                 SalePrice       = 900m,
                 StockQuantity   = 8,
                 PickupTimeStart = new TimeOnly(17, 30),
-                PickupTimeEnd   = new TimeOnly(21, 30),
+                PickupTimeEnd   = new TimeOnly(20, 0),
                 IsActive        = true,
                 CreatedAt       = now
             };
             var m_gelatodelsol_p2 = new Product
             {
                 MerchantId      = m_gelatodelsol.Id,
-                Name            = "Pack Cucurucho Doble",
-                Description     = "Cucurucho con dos sabores a elección del heladero.",
+                Name            = "Pack Picada Surtida",
+                Description     = "Picada surtida con fiambres, quesos y aceitunas para compartir.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
                 StockQuantity   = 12,
-                PickupTimeStart = new TimeOnly(16, 0),
-                PickupTimeEnd   = new TimeOnly(20, 0),
+                PickupTimeStart = new TimeOnly(17, 0),
+                PickupTimeEnd   = new TimeOnly(19, 30),
                 IsActive        = true,
                 CreatedAt       = now
             };
             db.Products.AddRange(m_gelatodelsol_p1, m_gelatodelsol_p2);
             db.SaveChanges();
 
-            m_gelatodelsol_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Coppette_gelato.jpg/960px-Coppette_gelato.jpg";
-            m_gelatodelsol_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Ice_Cream_Dessert_%28Unsplash%29.jpg/960px-Ice_Cream_Dessert_%28Unsplash%29.jpg";
+            m_gelatodelsol_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/A_charcuterie_board_with_cheese_and_crackers.jpg/960px-A_charcuterie_board_with_cheese_and_crackers.jpg";
+            m_gelatodelsol_p2.ImageUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/Antipasto_Platter.jpg";
             db.SaveChanges();
         }
 
@@ -1337,12 +1337,12 @@ public static class DatabaseSeeder
         var hash = BCrypt.Net.BCrypt.HashPassword("ResQ1234!", 8);
 
         // ─── 1. Categories ────────────────────────────────────────────────────────
-        var catPanaderia   = new Category { Name = "Panadería",   CreatedAt = now };
-        var catSushi       = new Category { Name = "Sushi",       CreatedAt = now };
-        var catCafe        = new Category { Name = "Café",        CreatedAt = now };
-        var catRestaurante = new Category { Name = "Restaurante", CreatedAt = now };
-        var catVegano      = new Category { Name = "Vegano",      CreatedAt = now };
-        var catHeladeria   = new Category { Name = "Heladería",   CreatedAt = now };
+        var catPanaderia   = new Category { Name = "Panadería",    CreatedAt = now };
+        var catSushi       = new Category { Name = "Sushi",        CreatedAt = now };
+        var catCafe        = new Category { Name = "Rosticería",   CreatedAt = now };
+        var catRestaurante = new Category { Name = "Restaurante",  CreatedAt = now };
+        var catVegano      = new Category { Name = "Vegano",       CreatedAt = now };
+        var catHeladeria   = new Category { Name = "Fiambrería",   CreatedAt = now };
 
         db.Categories.AddRange(catPanaderia, catSushi, catCafe, catRestaurante, catVegano, catHeladeria);
         db.SaveChanges();
@@ -1406,13 +1406,13 @@ public static class DatabaseSeeder
 
         var cafeUser = new User
         {
-            Email        = "cafe@resq.com",
+            Email        = "rosticeriadonapola@resq.com",
             PasswordHash = hash,
             IsActive     = true,
             CreatedAt    = now,
             MerchantProfile = new MerchantProfile
             {
-                BusinessName       = "Café Postal",
+                BusinessName       = "Rosticería Doña Pola",
                 Cuit               = "30-34567890-2",
                 Address            = "27 de Abril 190, Córdoba Centro",
                 Latitude           = -31.4102m,
@@ -1438,7 +1438,7 @@ public static class DatabaseSeeder
         // ResolvePublicUrl leaves already-absolute URLs untouched (see its doc comment).
         panaderia.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Sourdough_miche_%26_boule.jpg/960px-Sourdough_miche_%26_boule.jpg";
         sushi.PhotoUrl     = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg/960px-HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg";
-        cafe.PhotoUrl      = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Coffee_shop_1_-_Wellington%2C_New_Zealand.jpg/960px-Coffee_shop_1_-_Wellington%2C_New_Zealand.jpg";
+        cafe.PhotoUrl      = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Stuffing%2C_Potatoes%2C_Demi_Glace.jpg/960px-Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Stuffing%2C_Potatoes%2C_Demi_Glace.jpg";
 
         // ─── 3. Merchant ↔ Category links ────────────────────────────────────────
         db.MerchantCategories.AddRange(
@@ -1512,14 +1512,14 @@ public static class DatabaseSeeder
         var packCafe = new Product
         {
             MerchantId      = cafe.Id,
-            Name            = "Pack Café & Medialunas",
-            Description     = "Café de especialidad + 4 medialunas de manteca. El desayuno o merienda perfecta.",
+            Name            = "Pack Tarta del Día",
+            Description     = "Tarta de jamón y queso recién horneada, porción generosa lista para retirar.",
             ProductType     = ProductType.SurprisePack,
             OriginalPrice   = 900m,
             SalePrice       = 450m,
             StockQuantity   = 10,
-            PickupTimeStart = new TimeOnly(16, 0),
-            PickupTimeEnd   = new TimeOnly(19, 0),
+            PickupTimeStart = new TimeOnly(18, 0),
+            PickupTimeEnd   = new TimeOnly(20, 30),
             IsActive        = true,
             CreatedAt       = now
         };
@@ -1527,14 +1527,14 @@ public static class DatabaseSeeder
         var packMerienda = new Product
         {
             MerchantId      = cafe.Id,
-            Name            = "Pack Merienda Completa",
-            Description     = "Taza de té o café + 2 tostadas con mermelada artesanal + porción de torta del día.",
+            Name            = "Pack Pizza al Molde",
+            Description     = "Porción de pizza al molde con muzzarella, jamón y aceitunas, ideal para la cena.",
             ProductType     = ProductType.ExplicitItem,
             OriginalPrice   = 1200m,
             SalePrice       = 600m,
             StockQuantity   = 7,
-            PickupTimeStart = new TimeOnly(15, 0),
-            PickupTimeEnd   = new TimeOnly(18, 0),
+            PickupTimeStart = new TimeOnly(19, 0),
+            PickupTimeEnd   = new TimeOnly(21, 30),
             IsActive        = true,
             CreatedAt       = now
         };
@@ -1546,8 +1546,8 @@ public static class DatabaseSeeder
         packMedialunas.ImageUrl    = "https://commons.wikimedia.org/wiki/Special:FilePath/Croissant.jpg";
         packMixtoSushi.ImageUrl    = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Homemade_sushi_rolls%2C_2009.jpg/960px-Homemade_sushi_rolls%2C_2009.jpg";
         packRolls.ImageUrl         = "https://commons.wikimedia.org/wiki/Special:FilePath/Sunny_Sushi_rainbow_roll.JPG";
-        packCafe.ImageUrl          = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Breakfast_spread_with_coffee%2C_pastry%2C_and_juice_on_a_table_in_a_cozy_morning_setting.jpg/960px-Breakfast_spread_with_coffee%2C_pastry%2C_and_juice_on_a_table_in_a_cozy_morning_setting.jpg";
-        packMerienda.ImageUrl      = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Jam_and_toast.jpg/960px-Jam_and_toast.jpg";
+        packCafe.ImageUrl          = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Ham_%26_Cheese_Quiche.jpg/960px-Ham_%26_Cheese_Quiche.jpg";
+        packMerienda.ImageUrl      = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Top-down_view_of_a_complete_Argentine_pizza_with_mozzarella%2C_ham%2C_onion%2C_and_olives_on_a_round_wooden_board.jpg/960px-Top-down_view_of_a_complete_Argentine_pizza_with_mozzarella%2C_ham%2C_onion%2C_and_olives_on_a_round_wooden_board.jpg";
 
         // ─── 5. Orders ───────────────────────────────────────────────────────────
         // Current orders (shown in Mis Órdenes)
@@ -1618,7 +1618,7 @@ public static class DatabaseSeeder
         // ─── 7. Reviews ──────────────────────────────────────────────────────────
         // Sushi Nakamura: 3 reviews → avg 4.7
         // La Panadería del Centro: 3 reviews → avg 4.3
-        // Café Postal: 2 reviews → avg 4.5
+        // Rosticería Doña Pola: 2 reviews → avg 4.5
         db.Reviews.AddRange(
             new Review { OrderId = order2.Id,  MerchantId = sushi.Id,     Rating = 5, Comment = "El sushi estaba increíble, muy fresco y abundante. 100% recomendado!",          CreatedAt = now.AddDays(-1)  },
             new Review { OrderId = orderH1.Id, MerchantId = sushi.Id,     Rating = 5, Comment = "Excelente presentación y frescura. Los rolls son espectaculares.",              CreatedAt = now.AddDays(-7)  },
@@ -1626,8 +1626,8 @@ public static class DatabaseSeeder
             new Review { OrderId = orderH3.Id, MerchantId = panaderia.Id, Rating = 5, Comment = "Pack sorpresa espectacular, muy variado y todo recién horneado. Ahorro enorme!", CreatedAt = now.AddDays(-10) },
             new Review { OrderId = orderH4.Id, MerchantId = panaderia.Id, Rating = 4, Comment = "Muy buenas medialunas, bastante frescas. El precio es excelente.",              CreatedAt = now.AddDays(-17) },
             new Review { OrderId = orderH5.Id, MerchantId = panaderia.Id, Rating = 4, Comment = "Buena relación precio/calidad. Las facturas del día estaban muy ricas.",        CreatedAt = now.AddDays(-24) },
-            new Review { OrderId = orderH6.Id, MerchantId = cafe.Id,      Rating = 5, Comment = "Café de primera y tostadas riquísimas. Los volvería a pedir sin dudas.",        CreatedAt = now.AddDays(-5)  },
-            new Review { OrderId = orderH7.Id, MerchantId = cafe.Id,      Rating = 4, Comment = "Muy rico y abundante para la merienda. El café es excelente.",                  CreatedAt = now.AddDays(-12) }
+            new Review { OrderId = orderH6.Id, MerchantId = cafe.Id,      Rating = 5, Comment = "La pizza al molde estaba buenísima, bien de queso. La volvería a pedir sin dudas.", CreatedAt = now.AddDays(-5)  },
+            new Review { OrderId = orderH7.Id, MerchantId = cafe.Id,      Rating = 4, Comment = "Tarta de jamón y queso muy rica y abundante. Todo fresco.",                       CreatedAt = now.AddDays(-12) }
         );
         db.SaveChanges();
     }
