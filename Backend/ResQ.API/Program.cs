@@ -207,6 +207,12 @@ using (var scope = app.Services.CreateScope())
     var adminEmail    = builder.Configuration["Admin:Email"]    ?? "admin@resq.com";
     var adminPassword = builder.Configuration["Admin:Password"] ?? "ResQ1234!";
     DatabaseSeeder.EnsureAdmin(db, adminEmail, adminPassword);
+
+    // Idempotently keep the category catalog current (runs even on already-seeded databases).
+    DatabaseSeeder.EnsureCategories(db);
+
+    // Idempotently ensure demo merchants/packs exist for every category (runs even on already-seeded databases).
+    DatabaseSeeder.EnsureDemoMerchants(db);
 }
 
 if (app.Environment.IsDevelopment())
