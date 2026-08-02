@@ -114,7 +114,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_panaderiasanmartin = m_panaderiasanmartinUser.MerchantProfile!;
-            m_panaderiasanmartin.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Bread_rolls_at_a_bakery.jpg/960px-Bread_rolls_at_a_bakery.jpg";
+            m_panaderiasanmartin.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Armancette_Bakery_Indoors.jpg/960px-Armancette_Bakery_Indoors.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_panaderiasanmartin.Id, CategoryId = categories["Panadería"] });
 
@@ -137,7 +137,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_panaderiasanmartin.Id,
                 Name            = "Pack Facturas Surtidas",
                 Description     = "Docena de facturas surtidas: vigilantes, cañoncitos y sacramentos.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
                 StockQuantity   = 10,
@@ -149,8 +149,8 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_panaderiasanmartin_p1, m_panaderiasanmartin_p2);
             db.SaveChanges();
 
-            m_panaderiasanmartin_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/EasterSaris12Slovakia10.JPG/960px-EasterSaris12Slovakia10.JPG";
-            m_panaderiasanmartin_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Facturas_en_plato.jpg/960px-Facturas_en_plato.jpg";
+            m_panaderiasanmartin_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Cinnamon_rolls_%28rollos_de_canela%29_y_facturas_surtidas_elaboradas_en_la_panader%C3%ADa_%E2%80%9CSabores_Nuestros%E2%80%9D%2C_en_Capiov%C3%AD%2C_Misiones%2C_Argentina.jpg/960px-Cinnamon_rolls_%28rollos_de_canela%29_y_facturas_surtidas_elaboradas_en_la_panader%C3%ADa_%E2%80%9CSabores_Nuestros%E2%80%9D%2C_en_Capiov%C3%AD%2C_Misiones%2C_Argentina.jpg";
+            m_panaderiasanmartin_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Facturas_pastelera.jpg/960px-Facturas_pastelera.jpg";
             db.SaveChanges();
         }
 
@@ -253,7 +253,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_cafedelboulevard.Id,
                 Name            = "Pack Pollo al Spiedo",
                 Description     = "Medio pollo al spiedo dorado y jugoso, listo para retirar con guarnición del día.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 3000m,
                 SalePrice       = 1500m,
                 StockQuantity   = 6,
@@ -267,7 +267,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_cafedelboulevard.Id,
                 Name            = "Pack Empanadas Surtidas x12",
                 Description     = "Docena de empanadas surtidas: carne, jamón y queso, y verdura, recién horneadas.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 2200m,
                 SalePrice       = 1100m,
                 StockQuantity   = 8,
@@ -462,7 +462,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_verdevidavegano.Id,
                 Name            = "Pack Tostadas Veganas",
                 Description     = "Tostadas de masa madre con paltas y vegetales frescos.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1100m,
                 SalePrice       = 550m,
                 StockQuantity   = 6,
@@ -527,7 +527,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_raizcocinavegana.Id,
                 Name            = "Pack Smoothie & Bowl",
                 Description     = "Smoothie de frutas + bowl de granola y frutas frescas.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1200m,
                 SalePrice       = 600m,
                 StockQuantity   = 8,
@@ -578,7 +578,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_heladeriacremolatti.Id,
                 Name            = "Pack Tabla de Fiambres y Quesos",
                 Description     = "Selección de fiambres y quesos surtidos, ideal para compartir.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 3500m,
                 SalePrice       = 1750m,
                 StockQuantity   = 6,
@@ -592,7 +592,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_heladeriacremolatti.Id,
                 Name            = "Pack Jamón Crudo x250g",
                 Description     = "250 g de jamón crudo estacionado, cortado fino al momento.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1200m,
                 SalePrice       = 600m,
                 StockQuantity   = 10,
@@ -643,7 +643,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_gelatodelsol.Id,
                 Name            = "Pack Salame y Quesos Surtidos",
                 Description     = "Salame, provolone y queso cremoso surtidos, listos para picar.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1800m,
                 SalePrice       = 900m,
                 StockQuantity   = 8,
@@ -657,7 +657,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_gelatodelsol.Id,
                 Name            = "Pack Picada Surtida",
                 Description     = "Picada surtida con fiambres, quesos y aceitunas para compartir.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
                 StockQuantity   = 12,
@@ -722,7 +722,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_pasteleriadulcetrigo.Id,
                 Name            = "Pack Docena Mixta",
                 Description     = "12 pastelitos surtidos: hojaldre, crema y dulce de leche.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1400m,
                 SalePrice       = 700m,
                 StockQuantity   = 8,
@@ -764,7 +764,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_lareposteriademarta = m_lareposteriademartaUser.MerchantProfile!;
-            m_lareposteriademarta.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Sweets%21.jpg/960px-Sweets%21.jpg";
+            m_lareposteriademarta.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/20231022_101836_Croissant_supr%C3%AAme.jpg/960px-20231022_101836_Croissant_supr%C3%AAme.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_lareposteriademarta.Id, CategoryId = categories["Pastelería"] });
 
@@ -787,7 +787,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_lareposteriademarta.Id,
                 Name            = "Pack Alfajores Surtidos",
                 Description     = "Media docena de alfajores artesanales surtidos.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1000m,
                 SalePrice       = 500m,
                 StockQuantity   = 10,
@@ -799,8 +799,8 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_lareposteriademarta_p1, m_lareposteriademarta_p2);
             db.SaveChanges();
 
-            m_lareposteriademarta_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/%D0%A7%D0%BE%D0%BA%D0%BE%D0%BB%D0%B0%D0%B4%D0%BD%D0%B0_%D0%BA%D0%BE%D1%86%D0%BA%D0%B0_%2C_%D0%BD%D0%B0_%D1%88%D0%B0%D1%80%D0%B5%D0%BD%D0%B0_%D0%BC%D0%B0%D1%81%D0%B0.jpg/960px-%D0%A7%D0%BE%D0%BA%D0%BE%D0%BB%D0%B0%D0%B4%D0%BD%D0%B0_%D0%BA%D0%BE%D1%86%D0%BA%D0%B0_%2C_%D0%BD%D0%B0_%D1%88%D0%B0%D1%80%D0%B5%D0%BD%D0%B0_%D0%BC%D0%B0%D1%81%D0%B0.jpg";
-            m_lareposteriademarta_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Alfajores_argentinos_-_2025.jpg/960px-Alfajores_argentinos_-_2025.jpg";
+            m_lareposteriademarta_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Pink_Cupcakes.jpg/960px-Pink_Cupcakes.jpg";
+            m_lareposteriademarta_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Alfajores_Brutales_-_2024_-_06.jpg/960px-Alfajores_Brutales_-_2024_-_06.jpg";
             db.SaveChanges();
         }
 
@@ -852,7 +852,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_postresbosquenegro.Id,
                 Name            = "Pack Copa de Chocolate",
                 Description     = "Copa de mousse de chocolate con frutos rojos.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1100m,
                 SalePrice       = 550m,
                 StockQuantity   = 8,
@@ -917,7 +917,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_dulcetentacion.Id,
                 Name            = "Pack Flan Casero",
                 Description     = "Flan casero con dulce de leche y crema.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
                 StockQuantity   = 10,
@@ -982,7 +982,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_pizzerialamezzaluna.Id,
                 Name            = "Pack Pizza Muzzarella",
                 Description     = "Pizza grande de muzzarella recién horneada.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1800m,
                 SalePrice       = 900m,
                 StockQuantity   = 8,
@@ -1047,7 +1047,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_pizzeriadonvito.Id,
                 Name            = "Pack Fugazzeta",
                 Description     = "Fugazzeta rellena con cebolla caramelizada.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1900m,
                 SalePrice       = 950m,
                 StockQuantity   = 6,
@@ -1089,7 +1089,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_parrillaelfogon = m_parrillaelfogonUser.MerchantProfile!;
-            m_parrillaelfogon.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Asado_tradicional_argentino%2C_le%C3%B1a%2C_brasas.jpg/960px-Asado_tradicional_argentino%2C_le%C3%B1a%2C_brasas.jpg";
+            m_parrillaelfogon.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Bife_de_chorizo_a_punto_01.jpg/960px-Bife_de_chorizo_a_punto_01.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_parrillaelfogon.Id, CategoryId = categories["Parrilla"] });
 
@@ -1112,7 +1112,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_parrillaelfogon.Id,
                 Name            = "Pack Choripán Doble",
                 Description     = "Dos choripanes con chimichurri casero.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1400m,
                 SalePrice       = 700m,
                 StockQuantity   = 8,
@@ -1124,8 +1124,8 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_parrillaelfogon_p1, m_parrillaelfogon_p2);
             db.SaveChanges();
 
-            m_parrillaelfogon_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Plato_de_parrillada_argentina_con_costilla_de_carne%2C_chorizo%2C_costilla_de_cerdo_y_guarniciones.jpg/960px-Plato_de_parrillada_argentina_con_costilla_de_carne%2C_chorizo%2C_costilla_de_cerdo_y_guarniciones.jpg";
-            m_parrillaelfogon_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Chorip%C3%A1n_%28argentine_sandwich_with_chorizo%29.jpg/960px-Chorip%C3%A1n_%28argentine_sandwich_with_chorizo%29.jpg";
+            m_parrillaelfogon_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Parrillada_argentina.jpg/960px-Parrillada_argentina.jpg";
+            m_parrillaelfogon_p2.ImageUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/Sausages_rolls_chimichurri_sauces.jpg";
             db.SaveChanges();
         }
 
@@ -1177,7 +1177,7 @@ public static class DatabaseSeeder
                 MerchantId      = m_asadorcriollo.Id,
                 Name            = "Pack Provoleta & Pan",
                 Description     = "Provoleta a la parrilla con pan casero.",
-                ProductType     = ProductType.SurprisePack,
+                ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1300m,
                 SalePrice       = 650m,
                 StockQuantity   = 7,
@@ -1436,7 +1436,7 @@ public static class DatabaseSeeder
         // through the real upload flow, so there's no actual file for ResolvePublicUrl to
         // resolve. A hardcoded "http://localhost/..." here breaks on any other host, since
         // ResolvePublicUrl leaves already-absolute URLs untouched (see its doc comment).
-        panaderia.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Sourdough_miche_%26_boule.jpg/960px-Sourdough_miche_%26_boule.jpg";
+        panaderia.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Array_of_bread.jpg/960px-Array_of_bread.jpg";
         sushi.PhotoUrl     = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg/960px-HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg";
         cafe.PhotoUrl      = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Stuffing%2C_Potatoes%2C_Demi_Glace.jpg/960px-Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Stuffing%2C_Potatoes%2C_Demi_Glace.jpg";
 
@@ -1514,7 +1514,7 @@ public static class DatabaseSeeder
             MerchantId      = cafe.Id,
             Name            = "Pack Tarta del Día",
             Description     = "Tarta de jamón y queso recién horneada, porción generosa lista para retirar.",
-            ProductType     = ProductType.SurprisePack,
+            ProductType     = ProductType.ExplicitItem,
             OriginalPrice   = 900m,
             SalePrice       = 450m,
             StockQuantity   = 10,
@@ -1542,8 +1542,8 @@ public static class DatabaseSeeder
         db.Products.AddRange(packSorpresaDulce, packMedialunas, packMixtoSushi, packRolls, packCafe, packMerienda);
         db.SaveChanges();
 
-        packSorpresaDulce.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/EasterSaris12Slovakia10.JPG/960px-EasterSaris12Slovakia10.JPG";
-        packMedialunas.ImageUrl    = "https://commons.wikimedia.org/wiki/Special:FilePath/Croissant.jpg";
+        packSorpresaDulce.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Bakery_-_Free_For_Commercial_Use_-_FFCU_%2826777902185%29.jpg/960px-Bakery_-_Free_For_Commercial_Use_-_FFCU_%2826777902185%29.jpg";
+        packMedialunas.ImageUrl    = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Medialunas_argentinas.jpg/960px-Medialunas_argentinas.jpg";
         packMixtoSushi.ImageUrl    = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Homemade_sushi_rolls%2C_2009.jpg/960px-Homemade_sushi_rolls%2C_2009.jpg";
         packRolls.ImageUrl         = "https://commons.wikimedia.org/wiki/Special:FilePath/Sunny_Sushi_rainbow_roll.JPG";
         packCafe.ImageUrl          = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Ham_%26_Cheese_Quiche.jpg/960px-Ham_%26_Cheese_Quiche.jpg";
