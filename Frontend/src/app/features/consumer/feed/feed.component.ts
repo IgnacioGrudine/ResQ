@@ -40,7 +40,7 @@ interface FilterCategory { id: number | null; name: string; }
 const CATEGORY_ICONS: Record<string, string> = {
   'Panadería':   'wheat',
   'Sushi':       'fish',
-  'Rosticería':  'drumstick',
+  'Rotisería':  'drumstick',
   'Restaurante': 'utensils-crossed',
   'Vegano':      'salad',
   'Fiambrería':  'ham',

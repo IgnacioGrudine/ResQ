@@ -57,7 +57,7 @@ public static class DatabaseSeeder
     {
         string[] canonicalNames =
         [
-            "Panadería", "Sushi", "Rosticería", "Restaurante", "Vegano", "Fiambrería",
+            "Panadería", "Sushi", "Rotisería", "Restaurante", "Vegano", "Fiambrería",
             "Pastelería", "Postres", "Pizzería", "Parrilla", "Supermercado"
         ];
 
@@ -323,7 +323,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
         }
 
-        if (!existingBusinessNames.Contains("Rosticería del Boulevard"))
+        if (!existingBusinessNames.Contains("Rotisería del Boulevard"))
         {
             var m_cafedelboulevardUser = new User
             {
@@ -333,7 +333,7 @@ public static class DatabaseSeeder
                 CreatedAt    = now,
                 MerchantProfile = new MerchantProfile
                 {
-                    BusinessName       = "Rosticería del Boulevard",
+                    BusinessName       = "Rotisería del Boulevard",
                     Cuit               = "30-67890123-5",
                     Address            = "Bv. Chacabuco 450, Nueva Córdoba",
                     Latitude           = -31.4231m,
@@ -350,7 +350,7 @@ public static class DatabaseSeeder
             var m_cafedelboulevard = m_cafedelboulevardUser.MerchantProfile!;
             m_cafedelboulevard.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Rotisserie_in_Dieppe_Market_2026-05-09.jpg/960px-Rotisserie_in_Dieppe_Market_2026-05-09.jpg";
 
-            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_cafedelboulevard.Id, CategoryId = categories["Rosticería"] });
+            db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_cafedelboulevard.Id, CategoryId = categories["Rotisería"] });
 
             var m_cafedelboulevard_p1 = new Product
             {
@@ -1896,7 +1896,7 @@ public static class DatabaseSeeder
         // ─── 1. Categories ────────────────────────────────────────────────────────
         var catPanaderia   = new Category { Name = "Panadería",    CreatedAt = now };
         var catSushi       = new Category { Name = "Sushi",        CreatedAt = now };
-        var catCafe        = new Category { Name = "Rosticería",   CreatedAt = now };
+        var catCafe        = new Category { Name = "Rotisería",   CreatedAt = now };
         var catRestaurante = new Category { Name = "Restaurante",  CreatedAt = now };
         var catVegano      = new Category { Name = "Vegano",       CreatedAt = now };
         var catHeladeria   = new Category { Name = "Fiambrería",   CreatedAt = now };
@@ -1969,7 +1969,7 @@ public static class DatabaseSeeder
             CreatedAt    = now,
             MerchantProfile = new MerchantProfile
             {
-                BusinessName       = "Rosticería Doña Pola",
+                BusinessName       = "Rotisería Doña Pola",
                 Cuit               = "30-34567890-2",
                 Address            = "27 de Abril 190, Córdoba Centro",
                 Latitude           = -31.4102m,
@@ -2175,7 +2175,7 @@ public static class DatabaseSeeder
         // ─── 7. Reviews ──────────────────────────────────────────────────────────
         // Sushi Nakamura: 3 reviews → avg 4.7
         // La Panadería del Centro: 3 reviews → avg 4.3
-        // Rosticería Doña Pola: 2 reviews → avg 4.5
+        // Rotisería Doña Pola: 2 reviews → avg 4.5
         db.Reviews.AddRange(
             new Review { OrderId = order2.Id,  MerchantId = sushi.Id,     Rating = 5, Comment = "El sushi estaba increíble, muy fresco y abundante. 100% recomendado!",          CreatedAt = now.AddDays(-1)  },
             new Review { OrderId = orderH1.Id, MerchantId = sushi.Id,     Rating = 5, Comment = "Excelente presentación y frescura. Los rolls son espectaculares.",              CreatedAt = now.AddDays(-7)  },
