@@ -89,6 +89,56 @@ public static class DatabaseSeeder
         var now = DateTime.UtcNow;
         var hash = BCrypt.Net.BCrypt.HashPassword("ResQ1234!", 8);
 
+        // ─── Demo consumer pool ──────────────────────────────────────────────────
+        // Shared by every merchant block below so each merchant's historical orders/reviews
+        // have varied, realistic authors instead of a single account reviewing everything.
+        var demoConsumerSeed = new (string Email, string First, string Last, string Phone)[]
+        {
+            ("sofia.martinez@resq.com",  "Sofía",     "Martínez",  "+54 351 555-7101"),
+            ("lucas.fernandez@resq.com", "Lucas",     "Fernández", "+54 351 555-7102"),
+            ("valentina.gomez@resq.com", "Valentina", "Gómez",     "+54 351 555-7103"),
+            ("tomas.rodriguez@resq.com", "Tomás",     "Rodríguez", "+54 351 555-7104"),
+            ("camila.lopez@resq.com",    "Camila",    "López",     "+54 351 555-7105"),
+            ("franco.diaz@resq.com",     "Franco",    "Díaz",      "+54 351 555-7106"),
+            ("martina.sosa@resq.com",    "Martina",   "Sosa",      "+54 351 555-7107"),
+            ("nicolas.herrera@resq.com", "Nicolás",   "Herrera",   "+54 351 555-7108"),
+        };
+
+        var existingConsumerEmails = db.ConsumerProfiles.Include(c => c.User)
+            .Select(c => c.User.Email).ToHashSet();
+
+        var newConsumerUsers = demoConsumerSeed
+            .Where(d => !existingConsumerEmails.Contains(d.Email))
+            .Select(d => new User
+            {
+                Email        = d.Email,
+                PasswordHash = hash,
+                IsActive     = true,
+                CreatedAt    = now,
+                ConsumerProfile = new ConsumerProfile
+                {
+                    FirstName   = d.First,
+                    LastName    = d.Last,
+                    PhoneNumber = d.Phone,
+                    CreatedAt   = now
+                },
+                UserRoles = [new UserRole { Role = Role.Consumer, CreatedAt = now }]
+            })
+            .ToList();
+
+        if (newConsumerUsers.Count > 0)
+        {
+            db.Users.AddRange(newConsumerUsers);
+            db.SaveChanges();
+        }
+
+        // Available to every merchant block below as demoConsumers[0..7] — reload so the
+        // list is complete and stably ordered regardless of which ones were just created.
+        var demoConsumers = db.ConsumerProfiles.Include(c => c.User)
+            .Where(c => demoConsumerSeed.Select(d => d.Email).Contains(c.User.Email))
+            .OrderBy(c => c.User.Email)
+            .ToList();
+
         if (!existingBusinessNames.Contains("Panadería San Martín"))
         {
             var m_panaderiasanmartinUser = new User
@@ -122,7 +172,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_panaderiasanmartin.Id,
                 Name            = "Pack Sorpresa Panadero",
-                Description     = "Selección de panes del día: baguettes, pan de campo y pan lactal recién horneado.",
+                Description     = "Selección sorpresa de panes recién horneados: la mezcla exacta depende de lo que quede en el mostrador al cierre.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1300m,
                 SalePrice       = 650m,
@@ -136,7 +186,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_panaderiasanmartin.Id,
                 Name            = "Pack Facturas Surtidas",
-                Description     = "Docena de facturas surtidas: vigilantes, cañoncitos y sacramentos.",
+                Description     = "Docena de facturas surtidas y recién horneadas: vigilantes, cañoncitos y sacramentos.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
@@ -149,8 +199,35 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_panaderiasanmartin_p1, m_panaderiasanmartin_p2);
             db.SaveChanges();
 
-            m_panaderiasanmartin_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Cinnamon_rolls_%28rollos_de_canela%29_y_facturas_surtidas_elaboradas_en_la_panader%C3%ADa_%E2%80%9CSabores_Nuestros%E2%80%9D%2C_en_Capiov%C3%AD%2C_Misiones%2C_Argentina.jpg/960px-Cinnamon_rolls_%28rollos_de_canela%29_y_facturas_surtidas_elaboradas_en_la_panader%C3%ADa_%E2%80%9CSabores_Nuestros%E2%80%9D%2C_en_Capiov%C3%AD%2C_Misiones%2C_Argentina.jpg";
+            m_panaderiasanmartin_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/New_bake_croissants_in_clipper_lounge.jpg/960px-New_bake_croissants_in_clipper_lounge.jpg";
             m_panaderiasanmartin_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Facturas_pastelera.jpg/960px-Facturas_pastelera.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderPsm1 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_panaderiasanmartin.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PSM-01", CreatedAt = now.AddDays(-8) };
+            var orderPsm2 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_panaderiasanmartin.Id, TotalAmount = 650m, PlatformFee = 65m, MerchantEarnings = 585m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PSM-02", CreatedAt = now.AddDays(-15) };
+            var orderPsm3 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_panaderiasanmartin.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PSM-03", CreatedAt = now.AddDays(-22) };
+            var orderPsm4 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_panaderiasanmartin.Id, TotalAmount = 650m, PlatformFee = 65m, MerchantEarnings = 585m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PSM-04", CreatedAt = now.AddDays(-5) };
+            var orderPsm5 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_panaderiasanmartin.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PSM-05", CreatedAt = now.AddDays(-30) };
+            db.Orders.AddRange(orderPsm1, orderPsm2, orderPsm3, orderPsm4, orderPsm5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderPsm1.Id, ProductId = m_panaderiasanmartin_p2.Id, Quantity = 1, UnitPrice = 450m },
+                new OrderDetail { OrderId = orderPsm2.Id, ProductId = m_panaderiasanmartin_p1.Id, Quantity = 1, UnitPrice = 650m },
+                new OrderDetail { OrderId = orderPsm3.Id, ProductId = m_panaderiasanmartin_p2.Id, Quantity = 1, UnitPrice = 450m },
+                new OrderDetail { OrderId = orderPsm4.Id, ProductId = m_panaderiasanmartin_p1.Id, Quantity = 1, UnitPrice = 650m },
+                new OrderDetail { OrderId = orderPsm5.Id, ProductId = m_panaderiasanmartin_p2.Id, Quantity = 1, UnitPrice = 450m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderPsm1.Id, MerchantId = m_panaderiasanmartin.Id, Rating = 5, Comment = "Las facturas están recién horneadas, buenísimas y tibias todavía.", CreatedAt = orderPsm1.CreatedAt },
+                new Review { OrderId = orderPsm2.Id, MerchantId = m_panaderiasanmartin.Id, Rating = 4, Comment = "Buena relación precio-calidad el pack sorpresa panadero, vino con un pan de campo riquísimo.", CreatedAt = orderPsm2.CreatedAt },
+                new Review { OrderId = orderPsm3.Id, MerchantId = m_panaderiasanmartin.Id, Rating = 3, Comment = "Fui un poco tarde y ya casi no quedaban facturas variadas, pero lo que había estaba bueno.", CreatedAt = orderPsm3.CreatedAt },
+                new Review { OrderId = orderPsm4.Id, MerchantId = m_panaderiasanmartin.Id, Rating = 5, Comment = null, CreatedAt = orderPsm4.CreatedAt },
+                new Review { OrderId = orderPsm5.Id, MerchantId = m_panaderiasanmartin.Id, Rating = 4, Comment = "Siempre pido acá, nunca decepciona.", CreatedAt = orderPsm5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -179,7 +256,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_sushiyamato = m_sushiyamatoUser.MerchantProfile!;
-            m_sushiyamato.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg/960px-HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg";
+            m_sushiyamato.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Sushi_Masa_by_Ki-setsu_Interior_Omakase_Counter.jpg/960px-Sushi_Masa_by_Ki-setsu_Interior_Omakase_Counter.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_sushiyamato.Id, CategoryId = categories["Sushi"] });
 
@@ -187,7 +264,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_sushiyamato.Id,
                 Name            = "Pack Yamato Mixto",
-                Description     = "24 piezas variadas: niguiris, rolls y sashimi del día.",
+                Description     = "Selección sorpresa de 24 piezas de sushi variado, armada por la cocina entre nigiri, rolls y sashimi del día.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 3200m,
                 SalePrice       = 1600m,
@@ -201,7 +278,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_sushiyamato.Id,
                 Name            = "Pack Temaki Sorpresa",
-                Description     = "6 temakis surtidos preparados con pescados frescos del día.",
+                Description     = "Selección sorpresa de temakis surtidos, armados con el pescado más fresco del día.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2400m,
                 SalePrice       = 1200m,
@@ -216,6 +293,33 @@ public static class DatabaseSeeder
 
             m_sushiyamato_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Sushi_platter.jpg/960px-Sushi_platter.jpg";
             m_sushiyamato_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Temaki-zushi.jpg/960px-Temaki-zushi.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderSy1 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_sushiyamato.Id, TotalAmount = 1600m, PlatformFee = 160m, MerchantEarnings = 1440m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SY-01", CreatedAt = now.AddDays(-6) };
+            var orderSy2 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_sushiyamato.Id, TotalAmount = 1200m, PlatformFee = 120m, MerchantEarnings = 1080m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SY-02", CreatedAt = now.AddDays(-12) };
+            var orderSy3 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_sushiyamato.Id, TotalAmount = 1200m, PlatformFee = 120m, MerchantEarnings = 1080m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SY-03", CreatedAt = now.AddDays(-20) };
+            var orderSy4 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_sushiyamato.Id, TotalAmount = 1200m, PlatformFee = 120m, MerchantEarnings = 1080m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SY-04", CreatedAt = now.AddDays(-28) };
+            var orderSy5 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_sushiyamato.Id, TotalAmount = 1600m, PlatformFee = 160m, MerchantEarnings = 1440m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SY-05", CreatedAt = now.AddDays(-40) };
+            db.Orders.AddRange(orderSy1, orderSy2, orderSy3, orderSy4, orderSy5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderSy1.Id, ProductId = m_sushiyamato_p1.Id, Quantity = 1, UnitPrice = 1600m },
+                new OrderDetail { OrderId = orderSy2.Id, ProductId = m_sushiyamato_p2.Id, Quantity = 1, UnitPrice = 1200m },
+                new OrderDetail { OrderId = orderSy3.Id, ProductId = m_sushiyamato_p2.Id, Quantity = 1, UnitPrice = 1200m },
+                new OrderDetail { OrderId = orderSy4.Id, ProductId = m_sushiyamato_p2.Id, Quantity = 1, UnitPrice = 1200m },
+                new OrderDetail { OrderId = orderSy5.Id, ProductId = m_sushiyamato_p1.Id, Quantity = 1, UnitPrice = 1600m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderSy1.Id, MerchantId = m_sushiyamato.Id, Rating = 5, Comment = "El pack mixto vino con nigiris y sashimi increíbles, se nota que es pescado fresco.", CreatedAt = orderSy1.CreatedAt },
+                new Review { OrderId = orderSy2.Id, MerchantId = m_sushiyamato.Id, Rating = 5, Comment = null, CreatedAt = orderSy2.CreatedAt },
+                new Review { OrderId = orderSy3.Id, MerchantId = m_sushiyamato.Id, Rating = 4, Comment = "Los temakis estaban ricos, aunque me hubiese gustado un poco más de cantidad.", CreatedAt = orderSy3.CreatedAt },
+                new Review { OrderId = orderSy4.Id, MerchantId = m_sushiyamato.Id, Rating = 3, Comment = "Llegué sobre la hora y ya no quedaba el pack mixto, tuve que llevarme el de temaki.", CreatedAt = orderSy4.CreatedAt },
+                new Review { OrderId = orderSy5.Id, MerchantId = m_sushiyamato.Id, Rating = 5, Comment = "Excelente relación precio-calidad, mejor que muchos sushi delivery.", CreatedAt = orderSy5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -282,6 +386,33 @@ public static class DatabaseSeeder
             m_cafedelboulevard_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Demi_Glace.jpg/960px-Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Demi_Glace.jpg";
             m_cafedelboulevard_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Golden_brown_fried_Argentine_empanadas_on_a_platter.jpg/960px-Golden_brown_fried_Argentine_empanadas_on_a_platter.jpg";
             db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderRb1 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_cafedelboulevard.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RB-01", CreatedAt = now.AddDays(-7) };
+            var orderRb2 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_cafedelboulevard.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RB-02", CreatedAt = now.AddDays(-14) };
+            var orderRb3 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_cafedelboulevard.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RB-03", CreatedAt = now.AddDays(-25) };
+            var orderRb4 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_cafedelboulevard.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RB-04", CreatedAt = now.AddDays(-18) };
+            var orderRb5 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_cafedelboulevard.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RB-05", CreatedAt = now.AddDays(-35) };
+            db.Orders.AddRange(orderRb1, orderRb2, orderRb3, orderRb4, orderRb5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderRb1.Id, ProductId = m_cafedelboulevard_p1.Id, Quantity = 1, UnitPrice = 1500m },
+                new OrderDetail { OrderId = orderRb2.Id, ProductId = m_cafedelboulevard_p2.Id, Quantity = 1, UnitPrice = 1100m },
+                new OrderDetail { OrderId = orderRb3.Id, ProductId = m_cafedelboulevard_p2.Id, Quantity = 1, UnitPrice = 1100m },
+                new OrderDetail { OrderId = orderRb4.Id, ProductId = m_cafedelboulevard_p1.Id, Quantity = 1, UnitPrice = 1500m },
+                new OrderDetail { OrderId = orderRb5.Id, ProductId = m_cafedelboulevard_p2.Id, Quantity = 1, UnitPrice = 1100m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderRb1.Id, MerchantId = m_cafedelboulevard.Id, Rating = 5, Comment = "El pollo al spiedo llegó dorado y jugoso, tal como prometían.", CreatedAt = orderRb1.CreatedAt },
+                new Review { OrderId = orderRb2.Id, MerchantId = m_cafedelboulevard.Id, Rating = 4, Comment = null, CreatedAt = orderRb2.CreatedAt },
+                new Review { OrderId = orderRb3.Id, MerchantId = m_cafedelboulevard.Id, Rating = 3, Comment = "Las empanadas estaban buenas pero el pack venía con menos cantidad de la que esperaba.", CreatedAt = orderRb3.CreatedAt },
+                new Review { OrderId = orderRb4.Id, MerchantId = m_cafedelboulevard.Id, Rating = 5, Comment = "Muy rico, todo fresco.", CreatedAt = orderRb4.CreatedAt },
+                new Review { OrderId = orderRb5.Id, MerchantId = m_cafedelboulevard.Id, Rating = 4, Comment = "Buena porción y buen precio, volvería a pedir.", CreatedAt = orderRb5.CreatedAt }
+            );
+            db.SaveChanges();
         }
 
         if (!existingBusinessNames.Contains("Bistró Nueva Córdoba"))
@@ -317,7 +448,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_bistronuevacordoba.Id,
                 Name            = "Pack Sorpresa del Chef",
-                Description     = "Plato principal sorpresa según lo que quede del servicio del día.",
+                Description     = "Plato principal sorpresa del chef, según lo que quede del servicio de la noche.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2500m,
                 SalePrice       = 1250m,
@@ -331,7 +462,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_bistronuevacordoba.Id,
                 Name            = "Pack Almuerzo Ejecutivo",
-                Description     = "Entrada + plato principal del menú ejecutivo del día.",
+                Description     = "Menú ejecutivo sorpresa: entrada y plato principal armados por la cocina con lo mejor del día.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1800m,
                 SalePrice       = 900m,
@@ -346,6 +477,33 @@ public static class DatabaseSeeder
 
             m_bistronuevacordoba_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Burger_and_fries_on_a_wooden_plate.jpg/960px-Burger_and_fries_on_a_wooden_plate.jpg";
             m_bistronuevacordoba_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Delicious_gourmet_dish_served_at_a_restaurant_highlighting_tender_meat_undefined.jpg/960px-Delicious_gourmet_dish_served_at_a_restaurant_highlighting_tender_meat_undefined.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderBnc1 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_bistronuevacordoba.Id, TotalAmount = 1250m, PlatformFee = 125m, MerchantEarnings = 1125m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-BNC-01", CreatedAt = now.AddDays(-9) };
+            var orderBnc2 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_bistronuevacordoba.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-BNC-02", CreatedAt = now.AddDays(-16) };
+            var orderBnc3 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_bistronuevacordoba.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-BNC-03", CreatedAt = now.AddDays(-27) };
+            var orderBnc4 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_bistronuevacordoba.Id, TotalAmount = 1250m, PlatformFee = 125m, MerchantEarnings = 1125m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-BNC-04", CreatedAt = now.AddDays(-20) };
+            var orderBnc5 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_bistronuevacordoba.Id, TotalAmount = 1250m, PlatformFee = 125m, MerchantEarnings = 1125m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-BNC-05", CreatedAt = now.AddDays(-40) };
+            db.Orders.AddRange(orderBnc1, orderBnc2, orderBnc3, orderBnc4, orderBnc5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderBnc1.Id, ProductId = m_bistronuevacordoba_p1.Id, Quantity = 1, UnitPrice = 1250m },
+                new OrderDetail { OrderId = orderBnc2.Id, ProductId = m_bistronuevacordoba_p2.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderBnc3.Id, ProductId = m_bistronuevacordoba_p2.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderBnc4.Id, ProductId = m_bistronuevacordoba_p1.Id, Quantity = 1, UnitPrice = 1250m },
+                new OrderDetail { OrderId = orderBnc5.Id, ProductId = m_bistronuevacordoba_p1.Id, Quantity = 1, UnitPrice = 1250m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderBnc1.Id, MerchantId = m_bistronuevacordoba.Id, Rating = 5, Comment = "El plato sorpresa del chef fue una carne exquisita con guarnición de vegetales, mejor de lo que esperaba.", CreatedAt = orderBnc1.CreatedAt },
+                new Review { OrderId = orderBnc2.Id, MerchantId = m_bistronuevacordoba.Id, Rating = 4, Comment = null, CreatedAt = orderBnc2.CreatedAt },
+                new Review { OrderId = orderBnc3.Id, MerchantId = m_bistronuevacordoba.Id, Rating = 2, Comment = "El almuerzo ejecutivo tardó bastante en estar listo para retirar y la porción era chica.", CreatedAt = orderBnc3.CreatedAt },
+                new Review { OrderId = orderBnc4.Id, MerchantId = m_bistronuevacordoba.Id, Rating = 5, Comment = "Comida de nivel a mitad de precio, la app funciona perfecto para esto.", CreatedAt = orderBnc4.CreatedAt },
+                new Review { OrderId = orderBnc5.Id, MerchantId = m_bistronuevacordoba.Id, Rating = 4, Comment = "Rico, aunque hubiese preferido saber un poco más de qué tipo de plato venía.", CreatedAt = orderBnc5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -382,7 +540,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_lamesarestaurante.Id,
                 Name            = "Pack Cena Sorpresa",
-                Description     = "Selección de platos del día a punto de finalizar el servicio.",
+                Description     = "Selección sorpresa de platos del día, a punto de terminar el servicio de la cena.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2200m,
                 SalePrice       = 1100m,
@@ -396,7 +554,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_lamesarestaurante.Id,
                 Name            = "Pack Menú del Día",
-                Description     = "Entrada, plato principal y postre del menú del día.",
+                Description     = "Menú del día sorpresa: entrada, plato principal y postre, elegidos por la cocina.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2000m,
                 SalePrice       = 1000m,
@@ -411,6 +569,33 @@ public static class DatabaseSeeder
 
             m_lamesarestaurante_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Dish_of_meatloaf_served_on_a_white_plate_with_sauce_and_herbs_in_a_restaurant_setting.jpg/960px-Dish_of_meatloaf_served_on_a_white_plate_with_sauce_and_herbs_in_a_restaurant_setting.jpg";
             m_lamesarestaurante_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Grilled_chicken_served_with_creamy_mashed_potatoes_and_fresh_vegetables_undefined.jpg/960px-Grilled_chicken_served_with_creamy_mashed_potatoes_and_fresh_vegetables_undefined.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderLmr1 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_lamesarestaurante.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LMR-01", CreatedAt = now.AddDays(-10) };
+            var orderLmr2 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_lamesarestaurante.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LMR-02", CreatedAt = now.AddDays(-17) };
+            var orderLmr3 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_lamesarestaurante.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LMR-03", CreatedAt = now.AddDays(-32) };
+            var orderLmr4 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_lamesarestaurante.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LMR-04", CreatedAt = now.AddDays(-23) };
+            var orderLmr5 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_lamesarestaurante.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LMR-05", CreatedAt = now.AddDays(-44) };
+            db.Orders.AddRange(orderLmr1, orderLmr2, orderLmr3, orderLmr4, orderLmr5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderLmr1.Id, ProductId = m_lamesarestaurante_p2.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderLmr2.Id, ProductId = m_lamesarestaurante_p1.Id, Quantity = 1, UnitPrice = 1100m },
+                new OrderDetail { OrderId = orderLmr3.Id, ProductId = m_lamesarestaurante_p1.Id, Quantity = 1, UnitPrice = 1100m },
+                new OrderDetail { OrderId = orderLmr4.Id, ProductId = m_lamesarestaurante_p2.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderLmr5.Id, ProductId = m_lamesarestaurante_p1.Id, Quantity = 1, UnitPrice = 1100m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderLmr1.Id, MerchantId = m_lamesarestaurante.Id, Rating = 5, Comment = "El menú del día vino completo: entrada, plato principal y un postre buenísimo.", CreatedAt = orderLmr1.CreatedAt },
+                new Review { OrderId = orderLmr2.Id, MerchantId = m_lamesarestaurante.Id, Rating = 5, Comment = null, CreatedAt = orderLmr2.CreatedAt },
+                new Review { OrderId = orderLmr3.Id, MerchantId = m_lamesarestaurante.Id, Rating = 3, Comment = "Buena comida pero el local estaba lleno y tardamos en que nos atiendan para retirar.", CreatedAt = orderLmr3.CreatedAt },
+                new Review { OrderId = orderLmr4.Id, MerchantId = m_lamesarestaurante.Id, Rating = 4, Comment = "Muy rico, todo fresco.", CreatedAt = orderLmr4.CreatedAt },
+                new Review { OrderId = orderLmr5.Id, MerchantId = m_lamesarestaurante.Id, Rating = 4, Comment = "Buena opción para la cena, se nota que cuidan la presentación.", CreatedAt = orderLmr5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -439,7 +624,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_verdevidavegano = m_verdevidaveganoUser.MerchantProfile!;
-            m_verdevidavegano.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Juice_center.jpg/960px-Juice_center.jpg";
+            m_verdevidavegano.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/DFC_0873_Two_colorful_tropical_smoothies_-_one_strawberry-red_one_mango-yellow_-_each_topped_with_a_fun_stirrer_and_straw_ready_to_sip.jpg/960px-DFC_0873_Two_colorful_tropical_smoothies_-_one_strawberry-red_one_mango-yellow_-_each_topped_with_a_fun_stirrer_and_straw_ready_to_sip.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_verdevidavegano.Id, CategoryId = categories["Vegano"] });
 
@@ -447,7 +632,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_verdevidavegano.Id,
                 Name            = "Pack Bowl Sorpresa",
-                Description     = "Bowl de vegetales de estación, legumbres y salsas caseras.",
+                Description     = "Selección sorpresa de bowls veganos armados con lo mejor que quedó del día: la combinación de vegetales de estación, legumbres y salsas caseras cambia cada vez que abrís el pack.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1400m,
                 SalePrice       = 700m,
@@ -476,6 +661,32 @@ public static class DatabaseSeeder
 
             m_verdevidavegano_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Healthy_Lentil_Salad_%28Unsplash%29.jpg/960px-Healthy_Lentil_Salad_%28Unsplash%29.jpg";
             m_verdevidavegano_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Avocado_toast_with_sesame_seeds.jpg/960px-Avocado_toast_with_sesame_seeds.jpg";
+            db.SaveChanges();
+
+            var orderVvv1 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_verdevidavegano.Id, TotalAmount = 550m, PlatformFee = 55m, MerchantEarnings = 495m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-VVV-01", CreatedAt = now.AddDays(-6) };
+            var orderVvv2 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_verdevidavegano.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-VVV-02", CreatedAt = now.AddDays(-12) };
+            var orderVvv3 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_verdevidavegano.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-VVV-03", CreatedAt = now.AddDays(-20) };
+            var orderVvv4 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_verdevidavegano.Id, TotalAmount = 550m, PlatformFee = 55m, MerchantEarnings = 495m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-VVV-04", CreatedAt = now.AddDays(-30) };
+            var orderVvv5 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_verdevidavegano.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-VVV-05", CreatedAt = now.AddDays(-40) };
+            db.Orders.AddRange(orderVvv1, orderVvv2, orderVvv3, orderVvv4, orderVvv5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderVvv1.Id, ProductId = m_verdevidavegano_p2.Id, Quantity = 1, UnitPrice = 550m },
+                new OrderDetail { OrderId = orderVvv2.Id, ProductId = m_verdevidavegano_p1.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderVvv3.Id, ProductId = m_verdevidavegano_p1.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderVvv4.Id, ProductId = m_verdevidavegano_p2.Id, Quantity = 1, UnitPrice = 550m },
+                new OrderDetail { OrderId = orderVvv5.Id, ProductId = m_verdevidavegano_p1.Id, Quantity = 1, UnitPrice = 700m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderVvv1.Id, MerchantId = m_verdevidavegano.Id, Rating = 5, Comment = "Las tostadas veganas estaban espectaculares, todo fresquísimo.", CreatedAt = orderVvv1.CreatedAt },
+                new Review { OrderId = orderVvv2.Id, MerchantId = m_verdevidavegano.Id, Rating = 4, Comment = "Buena relación precio-calidad, el bowl vino con muchas legumbres.", CreatedAt = orderVvv2.CreatedAt },
+                new Review { OrderId = orderVvv3.Id, MerchantId = m_verdevidavegano.Id, Rating = 3, Comment = "Llegué cerca del cierre y ya no quedaban muchas opciones, igual estaba rico.", CreatedAt = orderVvv3.CreatedAt },
+                new Review { OrderId = orderVvv4.Id, MerchantId = m_verdevidavegano.Id, Rating = 5, Comment = null, CreatedAt = orderVvv4.CreatedAt },
+                new Review { OrderId = orderVvv5.Id, MerchantId = m_verdevidavegano.Id, Rating = 5, Comment = "Muy rico, todo fresco.", CreatedAt = orderVvv5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -540,7 +751,33 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             m_raizcocinavegana_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Vegan_Buddha_Bowl.jpg/960px-Vegan_Buddha_Bowl.jpg";
-            m_raizcocinavegana_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Acai_bowl%2C_fresh_fruit_%2842965870152%29.jpg/960px-Acai_bowl%2C_fresh_fruit_%2842965870152%29.jpg";
+            m_raizcocinavegana_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Galaxy_Smoothie_Bowl_%28Unsplash%29.jpg/960px-Galaxy_Smoothie_Bowl_%28Unsplash%29.jpg";
+            db.SaveChanges();
+
+            var orderRcv1 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_raizcocinavegana.Id, TotalAmount = 800m, PlatformFee = 80m, MerchantEarnings = 720m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RCV-01", CreatedAt = now.AddDays(-8) };
+            var orderRcv2 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_raizcocinavegana.Id, TotalAmount = 600m, PlatformFee = 60m, MerchantEarnings = 540m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RCV-02", CreatedAt = now.AddDays(-15) };
+            var orderRcv3 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_raizcocinavegana.Id, TotalAmount = 800m, PlatformFee = 80m, MerchantEarnings = 720m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RCV-03", CreatedAt = now.AddDays(-25) };
+            var orderRcv4 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_raizcocinavegana.Id, TotalAmount = 800m, PlatformFee = 80m, MerchantEarnings = 720m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RCV-04", CreatedAt = now.AddDays(-35) };
+            var orderRcv5 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_raizcocinavegana.Id, TotalAmount = 600m, PlatformFee = 60m, MerchantEarnings = 540m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-RCV-05", CreatedAt = now.AddDays(-5) };
+            db.Orders.AddRange(orderRcv1, orderRcv2, orderRcv3, orderRcv4, orderRcv5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderRcv1.Id, ProductId = m_raizcocinavegana_p1.Id, Quantity = 1, UnitPrice = 800m },
+                new OrderDetail { OrderId = orderRcv2.Id, ProductId = m_raizcocinavegana_p2.Id, Quantity = 1, UnitPrice = 600m },
+                new OrderDetail { OrderId = orderRcv3.Id, ProductId = m_raizcocinavegana_p1.Id, Quantity = 1, UnitPrice = 800m },
+                new OrderDetail { OrderId = orderRcv4.Id, ProductId = m_raizcocinavegana_p1.Id, Quantity = 1, UnitPrice = 800m },
+                new OrderDetail { OrderId = orderRcv5.Id, ProductId = m_raizcocinavegana_p2.Id, Quantity = 1, UnitPrice = 600m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderRcv1.Id, MerchantId = m_raizcocinavegana.Id, Rating = 5, Comment = "El pack sorpresa Raíz siempre trae platos distintos, nunca me aburro.", CreatedAt = orderRcv1.CreatedAt },
+                new Review { OrderId = orderRcv2.Id, MerchantId = m_raizcocinavegana.Id, Rating = 4, Comment = "El smoothie & bowl estuvo bueno, un poco chico para el precio.", CreatedAt = orderRcv2.CreatedAt },
+                new Review { OrderId = orderRcv3.Id, MerchantId = m_raizcocinavegana.Id, Rating = 3, Comment = "Tuve que esperar bastante para que me entregaran el pedido, pero la comida bien.", CreatedAt = orderRcv3.CreatedAt },
+                new Review { OrderId = orderRcv4.Id, MerchantId = m_raizcocinavegana.Id, Rating = 5, Comment = null, CreatedAt = orderRcv4.CreatedAt },
+                new Review { OrderId = orderRcv5.Id, MerchantId = m_raizcocinavegana.Id, Rating = 4, Comment = "Rico y saludable, buena opción para el almuerzo.", CreatedAt = orderRcv5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -577,7 +814,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_heladeriacremolatti.Id,
                 Name            = "Pack Tabla de Fiambres y Quesos",
-                Description     = "Selección de fiambres y quesos surtidos, ideal para compartir.",
+                Description     = "Tabla con jamón cocido, salame, mortadela y una selección de quesos duros y semiduros, lista para servir.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 3500m,
                 SalePrice       = 1750m,
@@ -607,6 +844,32 @@ public static class DatabaseSeeder
             m_heladeriacremolatti_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Charcuterie_board_with_various_cheeses_meats_olives_and_vegetables_arranged.jpg/960px-Charcuterie_board_with_various_cheeses_meats_olives_and_vegetables_arranged.jpg";
             m_heladeriacremolatti_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/A_plate_of_Jam%C3%B3n_serrano_in_Madrid%2C_Spain_Jam%C3%B3n_serrano_is_a_type_of_jam%C3%B3n_%28dry-cured_Spanish_ham%29%2C_which_is_generally_served_in_thin_slices.jpg/960px-A_plate_of_Jam%C3%B3n_serrano_in_Madrid%2C_Spain_Jam%C3%B3n_serrano_is_a_type_of_jam%C3%B3n_%28dry-cured_Spanish_ham%29%2C_which_is_generally_served_in_thin_slices.jpg";
             db.SaveChanges();
+
+            var orderFc1 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_heladeriacremolatti.Id, TotalAmount = 1750m, PlatformFee = 175m, MerchantEarnings = 1575m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FC-01", CreatedAt = now.AddDays(-7) };
+            var orderFc2 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_heladeriacremolatti.Id, TotalAmount = 600m, PlatformFee = 60m, MerchantEarnings = 540m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FC-02", CreatedAt = now.AddDays(-14) };
+            var orderFc3 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_heladeriacremolatti.Id, TotalAmount = 1750m, PlatformFee = 175m, MerchantEarnings = 1575m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FC-03", CreatedAt = now.AddDays(-22) };
+            var orderFc4 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_heladeriacremolatti.Id, TotalAmount = 600m, PlatformFee = 60m, MerchantEarnings = 540m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FC-04", CreatedAt = now.AddDays(-31) };
+            var orderFc5 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_heladeriacremolatti.Id, TotalAmount = 1750m, PlatformFee = 175m, MerchantEarnings = 1575m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FC-05", CreatedAt = now.AddDays(-42) };
+            db.Orders.AddRange(orderFc1, orderFc2, orderFc3, orderFc4, orderFc5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderFc1.Id, ProductId = m_heladeriacremolatti_p1.Id, Quantity = 1, UnitPrice = 1750m },
+                new OrderDetail { OrderId = orderFc2.Id, ProductId = m_heladeriacremolatti_p2.Id, Quantity = 1, UnitPrice = 600m },
+                new OrderDetail { OrderId = orderFc3.Id, ProductId = m_heladeriacremolatti_p1.Id, Quantity = 1, UnitPrice = 1750m },
+                new OrderDetail { OrderId = orderFc4.Id, ProductId = m_heladeriacremolatti_p2.Id, Quantity = 1, UnitPrice = 600m },
+                new OrderDetail { OrderId = orderFc5.Id, ProductId = m_heladeriacremolatti_p1.Id, Quantity = 1, UnitPrice = 1750m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderFc1.Id, MerchantId = m_heladeriacremolatti.Id, Rating = 5, Comment = "La tabla de fiambres y quesos vino generosa, ideal para compartir en casa.", CreatedAt = orderFc1.CreatedAt },
+                new Review { OrderId = orderFc2.Id, MerchantId = m_heladeriacremolatti.Id, Rating = 5, Comment = null, CreatedAt = orderFc2.CreatedAt },
+                new Review { OrderId = orderFc3.Id, MerchantId = m_heladeriacremolatti.Id, Rating = 3, Comment = "El pack venía más chico de lo que esperaba por el precio, aunque la calidad estaba bien.", CreatedAt = orderFc3.CreatedAt },
+                new Review { OrderId = orderFc4.Id, MerchantId = m_heladeriacremolatti.Id, Rating = 4, Comment = "Buen jamón crudo, cortado fino como prometían.", CreatedAt = orderFc4.CreatedAt },
+                new Review { OrderId = orderFc5.Id, MerchantId = m_heladeriacremolatti.Id, Rating = 5, Comment = "Excelente relación calidad-precio, volvería a comprar.", CreatedAt = orderFc5.CreatedAt }
+            );
+            db.SaveChanges();
         }
 
         if (!existingBusinessNames.Contains("Fiambrería del Sol"))
@@ -634,7 +897,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_gelatodelsol = m_gelatodelsolUser.MerchantProfile!;
-            m_gelatodelsol.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Kaeserei_Chaux-d%27Abel_07_12.jpg/960px-Kaeserei_Chaux-d%27Abel_07_12.jpg";
+            m_gelatodelsol.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Summer_Cheese_Platter_%28Unsplash%29.jpg/960px-Summer_Cheese_Platter_%28Unsplash%29.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_gelatodelsol.Id, CategoryId = categories["Fiambrería"] });
 
@@ -656,7 +919,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_gelatodelsol.Id,
                 Name            = "Pack Picada Surtida",
-                Description     = "Picada surtida con fiambres, quesos y aceitunas para compartir.",
+                Description     = "Picada con salame, jamón cocido, queso cremoso y aceitunas verdes, lista para compartir en el momento.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
@@ -669,8 +932,34 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_gelatodelsol_p1, m_gelatodelsol_p2);
             db.SaveChanges();
 
-            m_gelatodelsol_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/A_charcuterie_board_with_cheese_and_crackers.jpg/960px-A_charcuterie_board_with_cheese_and_crackers.jpg";
-            m_gelatodelsol_p2.ImageUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/Antipasto_Platter.jpg";
+            m_gelatodelsol_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Charcuterie_box.jpg/960px-Charcuterie_box.jpg";
+            m_gelatodelsol_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Tagliere_toscano.jpg/960px-Tagliere_toscano.jpg";
+            db.SaveChanges();
+
+            var orderFds1 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_gelatodelsol.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FDS-01", CreatedAt = now.AddDays(-9) };
+            var orderFds2 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_gelatodelsol.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FDS-02", CreatedAt = now.AddDays(-16) };
+            var orderFds3 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_gelatodelsol.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FDS-03", CreatedAt = now.AddDays(-23) };
+            var orderFds4 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_gelatodelsol.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FDS-04", CreatedAt = now.AddDays(-33) };
+            var orderFds5 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_gelatodelsol.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-FDS-05", CreatedAt = now.AddDays(-4) };
+            db.Orders.AddRange(orderFds1, orderFds2, orderFds3, orderFds4, orderFds5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderFds1.Id, ProductId = m_gelatodelsol_p2.Id, Quantity = 1, UnitPrice = 450m },
+                new OrderDetail { OrderId = orderFds2.Id, ProductId = m_gelatodelsol_p1.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderFds3.Id, ProductId = m_gelatodelsol_p2.Id, Quantity = 1, UnitPrice = 450m },
+                new OrderDetail { OrderId = orderFds4.Id, ProductId = m_gelatodelsol_p1.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderFds5.Id, ProductId = m_gelatodelsol_p2.Id, Quantity = 1, UnitPrice = 450m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderFds1.Id, MerchantId = m_gelatodelsol.Id, Rating = 4, Comment = "Picada rica para picar entre dos, buena variedad de fiambres.", CreatedAt = orderFds1.CreatedAt },
+                new Review { OrderId = orderFds2.Id, MerchantId = m_gelatodelsol.Id, Rating = 5, Comment = "El salame y los quesos vinieron frescos, todo muy bien cortado.", CreatedAt = orderFds2.CreatedAt },
+                new Review { OrderId = orderFds3.Id, MerchantId = m_gelatodelsol.Id, Rating = 2, Comment = "Pedí temprano y cuando fui a retirar ya no quedaban aceitunas, un poco desprolijo.", CreatedAt = orderFds3.CreatedAt },
+                new Review { OrderId = orderFds4.Id, MerchantId = m_gelatodelsol.Id, Rating = 5, Comment = null, CreatedAt = orderFds4.CreatedAt },
+                new Review { OrderId = orderFds5.Id, MerchantId = m_gelatodelsol.Id, Rating = 4, Comment = "Todo rico, buena porción para el precio.", CreatedAt = orderFds5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -734,8 +1023,34 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_pasteleriadulcetrigo_p1, m_pasteleriadulcetrigo_p2);
             db.SaveChanges();
 
-            m_pasteleriadulcetrigo_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Bolo_Fiada.jpg/960px-Bolo_Fiada.jpg";
-            m_pasteleriadulcetrigo_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/9/92/Pastelitos_criollos_argentinos.jpg";
+            m_pasteleriadulcetrigo_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/French_Pastries_%28Unsplash%29.jpg/960px-French_Pastries_%28Unsplash%29.jpg";
+            m_pasteleriadulcetrigo_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Palmeras_de_hojaldre_1.jpg/960px-Palmeras_de_hojaldre_1.jpg";
+            db.SaveChanges();
+
+            var orderPdt1 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_pasteleriadulcetrigo.Id, TotalAmount = 850m, PlatformFee = 85m, MerchantEarnings = 765m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDT-01", CreatedAt = now.AddDays(-6) };
+            var orderPdt2 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_pasteleriadulcetrigo.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDT-02", CreatedAt = now.AddDays(-13) };
+            var orderPdt3 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_pasteleriadulcetrigo.Id, TotalAmount = 850m, PlatformFee = 85m, MerchantEarnings = 765m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDT-03", CreatedAt = now.AddDays(-21) };
+            var orderPdt4 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_pasteleriadulcetrigo.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDT-04", CreatedAt = now.AddDays(-29) };
+            var orderPdt5 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_pasteleriadulcetrigo.Id, TotalAmount = 850m, PlatformFee = 85m, MerchantEarnings = 765m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDT-05", CreatedAt = now.AddDays(-38) };
+            db.Orders.AddRange(orderPdt1, orderPdt2, orderPdt3, orderPdt4, orderPdt5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderPdt1.Id, ProductId = m_pasteleriadulcetrigo_p1.Id, Quantity = 1, UnitPrice = 850m },
+                new OrderDetail { OrderId = orderPdt2.Id, ProductId = m_pasteleriadulcetrigo_p2.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderPdt3.Id, ProductId = m_pasteleriadulcetrigo_p1.Id, Quantity = 1, UnitPrice = 850m },
+                new OrderDetail { OrderId = orderPdt4.Id, ProductId = m_pasteleriadulcetrigo_p2.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderPdt5.Id, ProductId = m_pasteleriadulcetrigo_p1.Id, Quantity = 1, UnitPrice = 850m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderPdt1.Id, MerchantId = m_pasteleriadulcetrigo.Id, Rating = 5, Comment = "El pack sorpresa repostería trajo de todo: tortas, pastelitos, riquísimo.", CreatedAt = orderPdt1.CreatedAt },
+                new Review { OrderId = orderPdt2.Id, MerchantId = m_pasteleriadulcetrigo.Id, Rating = 4, Comment = "La docena mixta estuvo buena, algunos pastelitos un poco secos.", CreatedAt = orderPdt2.CreatedAt },
+                new Review { OrderId = orderPdt3.Id, MerchantId = m_pasteleriadulcetrigo.Id, Rating = 3, Comment = "Tuve que esperar un rato porque todavía estaban armando los packs, pero valió la pena.", CreatedAt = orderPdt3.CreatedAt },
+                new Review { OrderId = orderPdt4.Id, MerchantId = m_pasteleriadulcetrigo.Id, Rating = 5, Comment = null, CreatedAt = orderPdt4.CreatedAt },
+                new Review { OrderId = orderPdt5.Id, MerchantId = m_pasteleriadulcetrigo.Id, Rating = 5, Comment = "Muy rico, todo fresco.", CreatedAt = orderPdt5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -772,7 +1087,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_lareposteriademarta.Id,
                 Name            = "Pack Sorpresa de Marta",
-                Description     = "Porciones de tortas caseras a punto de finalizar el día.",
+                Description     = "Selección sorpresa de porciones de torta y masas dulces caseras del día, recién horneadas y listas para llevar.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1600m,
                 SalePrice       = 800m,
@@ -786,7 +1101,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_lareposteriademarta.Id,
                 Name            = "Pack Alfajores Surtidos",
-                Description     = "Media docena de alfajores artesanales surtidos.",
+                Description     = "Media docena de alfajores artesanales rellenos de dulce de leche: mitad bañados en chocolate, mitad con glaseado blanco.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1000m,
                 SalePrice       = 500m,
@@ -801,6 +1116,33 @@ public static class DatabaseSeeder
 
             m_lareposteriademarta_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Pink_Cupcakes.jpg/960px-Pink_Cupcakes.jpg";
             m_lareposteriademarta_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Alfajores_Brutales_-_2024_-_06.jpg/960px-Alfajores_Brutales_-_2024_-_06.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderLrm1 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_lareposteriademarta.Id, TotalAmount = 500m, PlatformFee = 50m, MerchantEarnings = 450m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LRM-01", CreatedAt = now.AddDays(-6) };
+            var orderLrm2 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_lareposteriademarta.Id, TotalAmount = 800m, PlatformFee = 80m, MerchantEarnings = 720m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LRM-02", CreatedAt = now.AddDays(-13) };
+            var orderLrm3 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_lareposteriademarta.Id, TotalAmount = 500m, PlatformFee = 50m, MerchantEarnings = 450m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LRM-03", CreatedAt = now.AddDays(-20) };
+            var orderLrm4 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_lareposteriademarta.Id, TotalAmount = 800m, PlatformFee = 80m, MerchantEarnings = 720m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LRM-04", CreatedAt = now.AddDays(-28) };
+            var orderLrm5 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_lareposteriademarta.Id, TotalAmount = 500m, PlatformFee = 50m, MerchantEarnings = 450m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-LRM-05", CreatedAt = now.AddDays(-40) };
+            db.Orders.AddRange(orderLrm1, orderLrm2, orderLrm3, orderLrm4, orderLrm5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderLrm1.Id, ProductId = m_lareposteriademarta_p2.Id, Quantity = 1, UnitPrice = 500m },
+                new OrderDetail { OrderId = orderLrm2.Id, ProductId = m_lareposteriademarta_p1.Id, Quantity = 1, UnitPrice = 800m },
+                new OrderDetail { OrderId = orderLrm3.Id, ProductId = m_lareposteriademarta_p2.Id, Quantity = 1, UnitPrice = 500m },
+                new OrderDetail { OrderId = orderLrm4.Id, ProductId = m_lareposteriademarta_p1.Id, Quantity = 1, UnitPrice = 800m },
+                new OrderDetail { OrderId = orderLrm5.Id, ProductId = m_lareposteriademarta_p2.Id, Quantity = 1, UnitPrice = 500m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderLrm1.Id, MerchantId = m_lareposteriademarta.Id, Rating = 5, Comment = "Los alfajores bañados en chocolate son un golazo, quedan recién hechos.", CreatedAt = orderLrm1.CreatedAt },
+                new Review { OrderId = orderLrm2.Id, MerchantId = m_lareposteriademarta.Id, Rating = 4, Comment = "Buena variedad de tortas por la mitad de precio, eso sí, llegué casi al cierre y quedaba poco.", CreatedAt = orderLrm2.CreatedAt },
+                new Review { OrderId = orderLrm3.Id, MerchantId = m_lareposteriademarta.Id, Rating = 3, Comment = "Rico, pero el pack trajo menos alfajores de los que esperaba para el precio.", CreatedAt = orderLrm3.CreatedAt },
+                new Review { OrderId = orderLrm4.Id, MerchantId = m_lareposteriademarta.Id, Rating = 5, Comment = null, CreatedAt = orderLrm4.CreatedAt },
+                new Review { OrderId = orderLrm5.Id, MerchantId = m_lareposteriademarta.Id, Rating = 4, Comment = "Muy rico, todo fresco.", CreatedAt = orderLrm5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -837,7 +1179,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_postresbosquenegro.Id,
                 Name            = "Pack Sorpresa Dulce",
-                Description     = "Selección de postres de vitrina a punto de finalizar el día.",
+                Description     = "Selección sorpresa de postres de vitrina del día — texturas y sabores variados a mitad de precio.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1500m,
                 SalePrice       = 750m,
@@ -851,7 +1193,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_postresbosquenegro.Id,
                 Name            = "Pack Copa de Chocolate",
-                Description     = "Copa de mousse de chocolate con frutos rojos.",
+                Description     = "Copa individual de mousse de chocolate semiamargo con coulis de frutos rojos.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1100m,
                 SalePrice       = 550m,
@@ -866,6 +1208,33 @@ public static class DatabaseSeeder
 
             m_postresbosquenegro_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Chocolate_dessert%2C_Hetschbach.jpg/960px-Chocolate_dessert%2C_Hetschbach.jpg";
             m_postresbosquenegro_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Chocolate_mousse_-_stonesoup.jpg/960px-Chocolate_mousse_-_stonesoup.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderPbn1 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_postresbosquenegro.Id, TotalAmount = 750m, PlatformFee = 75m, MerchantEarnings = 675m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PBN-01", CreatedAt = now.AddDays(-5) };
+            var orderPbn2 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_postresbosquenegro.Id, TotalAmount = 550m, PlatformFee = 55m, MerchantEarnings = 495m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PBN-02", CreatedAt = now.AddDays(-11) };
+            var orderPbn3 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_postresbosquenegro.Id, TotalAmount = 750m, PlatformFee = 75m, MerchantEarnings = 675m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PBN-03", CreatedAt = now.AddDays(-19) };
+            var orderPbn4 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_postresbosquenegro.Id, TotalAmount = 550m, PlatformFee = 55m, MerchantEarnings = 495m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PBN-04", CreatedAt = now.AddDays(-27) };
+            var orderPbn5 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_postresbosquenegro.Id, TotalAmount = 750m, PlatformFee = 75m, MerchantEarnings = 675m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PBN-05", CreatedAt = now.AddDays(-35) };
+            db.Orders.AddRange(orderPbn1, orderPbn2, orderPbn3, orderPbn4, orderPbn5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderPbn1.Id, ProductId = m_postresbosquenegro_p1.Id, Quantity = 1, UnitPrice = 750m },
+                new OrderDetail { OrderId = orderPbn2.Id, ProductId = m_postresbosquenegro_p2.Id, Quantity = 1, UnitPrice = 550m },
+                new OrderDetail { OrderId = orderPbn3.Id, ProductId = m_postresbosquenegro_p1.Id, Quantity = 1, UnitPrice = 750m },
+                new OrderDetail { OrderId = orderPbn4.Id, ProductId = m_postresbosquenegro_p2.Id, Quantity = 1, UnitPrice = 550m },
+                new OrderDetail { OrderId = orderPbn5.Id, ProductId = m_postresbosquenegro_p1.Id, Quantity = 1, UnitPrice = 750m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderPbn1.Id, MerchantId = m_postresbosquenegro.Id, Rating = 5, Comment = "Excelente variedad de postres, todo fresco y bien presentado.", CreatedAt = orderPbn1.CreatedAt },
+                new Review { OrderId = orderPbn2.Id, MerchantId = m_postresbosquenegro.Id, Rating = 4, Comment = "La copa de mousse riquísima, aunque un poco chica para el precio.", CreatedAt = orderPbn2.CreatedAt },
+                new Review { OrderId = orderPbn3.Id, MerchantId = m_postresbosquenegro.Id, Rating = 5, Comment = null, CreatedAt = orderPbn3.CreatedAt },
+                new Review { OrderId = orderPbn4.Id, MerchantId = m_postresbosquenegro.Id, Rating = 4, Comment = "Buenísimo el mousse de chocolate, ya pedí una segunda vez.", CreatedAt = orderPbn4.CreatedAt },
+                new Review { OrderId = orderPbn5.Id, MerchantId = m_postresbosquenegro.Id, Rating = 2, Comment = "Llegué en el horario indicado y ya no quedaban postres, tuve que esperar sin mucha explicación.", CreatedAt = orderPbn5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -902,7 +1271,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_dulcetentacion.Id,
                 Name            = "Pack Sorpresa Tentación",
-                Description     = "Postres variados de vitrina seleccionados por la casa.",
+                Description     = "Selección sorpresa de postres de vitrina elegidos por la casa: tortas, tartas y bocaditos dulces del día.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 1400m,
                 SalePrice       = 700m,
@@ -916,7 +1285,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_dulcetentacion.Id,
                 Name            = "Pack Flan Casero",
-                Description     = "Flan casero con dulce de leche y crema.",
+                Description     = "Flan casero de vainilla bañado en abundante caramelo, con un toque de dulce de leche.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 900m,
                 SalePrice       = 450m,
@@ -930,7 +1299,34 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             m_dulcetentacion_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Chocolate_pralines_and_other_sweets.jpg/960px-Chocolate_pralines_and_other_sweets.jpg";
-            m_dulcetentacion_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Homemade_Flan.jpg/960px-Homemade_Flan.jpg";
+            m_dulcetentacion_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Cr%C3%A8me_caramel_at_NB_Steak_JK.jpg/960px-Cr%C3%A8me_caramel_at_NB_Steak_JK.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderDt1 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_dulcetentacion.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-DT-01", CreatedAt = now.AddDays(-7) };
+            var orderDt2 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_dulcetentacion.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-DT-02", CreatedAt = now.AddDays(-14) };
+            var orderDt3 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_dulcetentacion.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-DT-03", CreatedAt = now.AddDays(-23) };
+            var orderDt4 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_dulcetentacion.Id, TotalAmount = 450m, PlatformFee = 45m, MerchantEarnings = 405m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-DT-04", CreatedAt = now.AddDays(-31) };
+            var orderDt5 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_dulcetentacion.Id, TotalAmount = 700m, PlatformFee = 70m, MerchantEarnings = 630m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-DT-05", CreatedAt = now.AddDays(-44) };
+            db.Orders.AddRange(orderDt1, orderDt2, orderDt3, orderDt4, orderDt5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderDt1.Id, ProductId = m_dulcetentacion_p2.Id, Quantity = 1, UnitPrice = 450m },
+                new OrderDetail { OrderId = orderDt2.Id, ProductId = m_dulcetentacion_p1.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderDt3.Id, ProductId = m_dulcetentacion_p1.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderDt4.Id, ProductId = m_dulcetentacion_p2.Id, Quantity = 1, UnitPrice = 450m },
+                new OrderDetail { OrderId = orderDt5.Id, ProductId = m_dulcetentacion_p1.Id, Quantity = 1, UnitPrice = 700m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderDt1.Id, MerchantId = m_dulcetentacion.Id, Rating = 5, Comment = "El flan casero con caramelo es una locura, muy bien de punto.", CreatedAt = orderDt1.CreatedAt },
+                new Review { OrderId = orderDt2.Id, MerchantId = m_dulcetentacion.Id, Rating = 4, Comment = "Buena selección de postres de vitrina, variada y bien armada.", CreatedAt = orderDt2.CreatedAt },
+                new Review { OrderId = orderDt3.Id, MerchantId = m_dulcetentacion.Id, Rating = 3, Comment = "Estuvo bien, pero el pack sorpresa vino con menos variedad que la vez pasada.", CreatedAt = orderDt3.CreatedAt },
+                new Review { OrderId = orderDt4.Id, MerchantId = m_dulcetentacion.Id, Rating = 5, Comment = null, CreatedAt = orderDt4.CreatedAt },
+                new Review { OrderId = orderDt5.Id, MerchantId = m_dulcetentacion.Id, Rating = 4, Comment = "Todo fresco y a buen precio.", CreatedAt = orderDt5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -967,7 +1363,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_pizzerialamezzaluna.Id,
                 Name            = "Pack Sorpresa Mezzaluna",
-                Description     = "Media pizza grande de sabores sorpresa del día.",
+                Description     = "Media pizza grande de la casa, con los sabores sorpresa que quedaron del día.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2200m,
                 SalePrice       = 1100m,
@@ -981,7 +1377,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_pizzerialamezzaluna.Id,
                 Name            = "Pack Pizza Muzzarella",
-                Description     = "Pizza grande de muzzarella recién horneada.",
+                Description     = "Pizza grande de muzzarella recién horneada con hojas de albahaca fresca.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1800m,
                 SalePrice       = 900m,
@@ -995,7 +1391,34 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             m_pizzerialamezzaluna_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg/960px-Eq_it-na_pizza-margherita_sep2005_sml.jpg";
-            m_pizzerialamezzaluna_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Whole_Foods_Kitchen_Margherita_Pizza_2_%2815411931231%29.jpg/960px-Whole_Foods_Kitchen_Margherita_Pizza_2_%2815411931231%29.jpg";
+            m_pizzerialamezzaluna_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Margherita_Cl%C3%A1ssica_Italiana.jpg/960px-Margherita_Cl%C3%A1ssica_Italiana.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderPlm1 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_pizzerialamezzaluna.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PLM-01", CreatedAt = now.AddDays(-6) };
+            var orderPlm2 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_pizzerialamezzaluna.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PLM-02", CreatedAt = now.AddDays(-15) };
+            var orderPlm3 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_pizzerialamezzaluna.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PLM-03", CreatedAt = now.AddDays(-21) };
+            var orderPlm4 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_pizzerialamezzaluna.Id, TotalAmount = 1100m, PlatformFee = 110m, MerchantEarnings = 990m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PLM-04", CreatedAt = now.AddDays(-29) };
+            var orderPlm5 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_pizzerialamezzaluna.Id, TotalAmount = 900m, PlatformFee = 90m, MerchantEarnings = 810m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PLM-05", CreatedAt = now.AddDays(-38) };
+            db.Orders.AddRange(orderPlm1, orderPlm2, orderPlm3, orderPlm4, orderPlm5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderPlm1.Id, ProductId = m_pizzerialamezzaluna_p2.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderPlm2.Id, ProductId = m_pizzerialamezzaluna_p1.Id, Quantity = 1, UnitPrice = 1100m },
+                new OrderDetail { OrderId = orderPlm3.Id, ProductId = m_pizzerialamezzaluna_p2.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderPlm4.Id, ProductId = m_pizzerialamezzaluna_p1.Id, Quantity = 1, UnitPrice = 1100m },
+                new OrderDetail { OrderId = orderPlm5.Id, ProductId = m_pizzerialamezzaluna_p2.Id, Quantity = 1, UnitPrice = 900m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderPlm1.Id, MerchantId = m_pizzerialamezzaluna.Id, Rating = 5, Comment = "La muzzarella con albahaca fresca, recién salida del horno. Diez puntos.", CreatedAt = orderPlm1.CreatedAt },
+                new Review { OrderId = orderPlm2.Id, MerchantId = m_pizzerialamezzaluna.Id, Rating = 4, Comment = "Buena la media pizza sorpresa, esta vez tocó una combinación de fugazzeta que no esperaba.", CreatedAt = orderPlm2.CreatedAt },
+                new Review { OrderId = orderPlm3.Id, MerchantId = m_pizzerialamezzaluna.Id, Rating = 5, Comment = null, CreatedAt = orderPlm3.CreatedAt },
+                new Review { OrderId = orderPlm4.Id, MerchantId = m_pizzerialamezzaluna.Id, Rating = 3, Comment = "Rica, pero tardaron bastante en entregar el pedido dentro del horario de retiro.", CreatedAt = orderPlm4.CreatedAt },
+                new Review { OrderId = orderPlm5.Id, MerchantId = m_pizzerialamezzaluna.Id, Rating = 4, Comment = "Muy buena relación precio-calidad.", CreatedAt = orderPlm5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -1024,7 +1447,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_pizzeriadonvito = m_pizzeriadonvitoUser.MerchantProfile!;
-            m_pizzeriadonvito.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Pizza_in_oven.jpg/960px-Pizza_in_oven.jpg";
+            m_pizzeriadonvito.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cotogna_pizza_oven.jpg/960px-Cotogna_pizza_oven.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_pizzeriadonvito.Id, CategoryId = categories["Pizzería"] });
 
@@ -1032,7 +1455,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_pizzeriadonvito.Id,
                 Name            = "Pack Sorpresa Don Vito",
-                Description     = "Pizza grande de sabores variados según lo disponible del día.",
+                Description     = "Pizza grande con los sabores del día — variedad sorpresa según lo que quedó en el mostrador.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2000m,
                 SalePrice       = 1000m,
@@ -1046,7 +1469,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_pizzeriadonvito.Id,
                 Name            = "Pack Fugazzeta",
-                Description     = "Fugazzeta rellena con cebolla caramelizada.",
+                Description     = "Fugazzeta rellena de muzzarella y cubierta con abundante cebolla caramelizada.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1900m,
                 SalePrice       = 950m,
@@ -1060,7 +1483,34 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             m_pizzeriadonvito_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Cheese_crust_pizza.jpg/960px-Cheese_crust_pizza.jpg";
-            m_pizzeriadonvito_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Whole_Argentine_pizza_al_molde_with_ham%2C_onion_and_olives.jpg/960px-Whole_Argentine_pizza_al_molde_with_ham%2C_onion_and_olives.jpg";
+            m_pizzeriadonvito_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Fugazzetta_en_pizzeria_Guerrin%2C_Buenos_Aires_%28detalle%29.jpg/960px-Fugazzetta_en_pizzeria_Guerrin%2C_Buenos_Aires_%28detalle%29.jpg";
+            db.SaveChanges();
+
+            // ─── Reviews ──────────────────────────────────────────────────────────
+            var orderPdv1 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_pizzeriadonvito.Id, TotalAmount = 950m, PlatformFee = 95m, MerchantEarnings = 855m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDV-01", CreatedAt = now.AddDays(-8) };
+            var orderPdv2 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_pizzeriadonvito.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDV-02", CreatedAt = now.AddDays(-16) };
+            var orderPdv3 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_pizzeriadonvito.Id, TotalAmount = 950m, PlatformFee = 95m, MerchantEarnings = 855m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDV-03", CreatedAt = now.AddDays(-24) };
+            var orderPdv4 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_pizzeriadonvito.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDV-04", CreatedAt = now.AddDays(-33) };
+            var orderPdv5 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_pizzeriadonvito.Id, TotalAmount = 950m, PlatformFee = 95m, MerchantEarnings = 855m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PDV-05", CreatedAt = now.AddDays(-45) };
+            db.Orders.AddRange(orderPdv1, orderPdv2, orderPdv3, orderPdv4, orderPdv5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderPdv1.Id, ProductId = m_pizzeriadonvito_p2.Id, Quantity = 1, UnitPrice = 950m },
+                new OrderDetail { OrderId = orderPdv2.Id, ProductId = m_pizzeriadonvito_p1.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderPdv3.Id, ProductId = m_pizzeriadonvito_p2.Id, Quantity = 1, UnitPrice = 950m },
+                new OrderDetail { OrderId = orderPdv4.Id, ProductId = m_pizzeriadonvito_p1.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderPdv5.Id, ProductId = m_pizzeriadonvito_p2.Id, Quantity = 1, UnitPrice = 950m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderPdv1.Id, MerchantId = m_pizzeriadonvito.Id, Rating = 5, Comment = "La fugazzeta con la cebolla bien caramelizada, una masa espectacular.", CreatedAt = orderPdv1.CreatedAt },
+                new Review { OrderId = orderPdv2.Id, MerchantId = m_pizzeriadonvito.Id, Rating = 4, Comment = "Buena pizza sorpresa, esta vez tocó una napolitana bien cargada.", CreatedAt = orderPdv2.CreatedAt },
+                new Review { OrderId = orderPdv3.Id, MerchantId = m_pizzeriadonvito.Id, Rating = 5, Comment = null, CreatedAt = orderPdv3.CreatedAt },
+                new Review { OrderId = orderPdv4.Id, MerchantId = m_pizzeriadonvito.Id, Rating = 3, Comment = "Buena pizza, aunque el pack sorpresa vino más chico de lo que parecía en las fotos.", CreatedAt = orderPdv4.CreatedAt },
+                new Review { OrderId = orderPdv5.Id, MerchantId = m_pizzeriadonvito.Id, Rating = 4, Comment = "Siempre efectiva, la pido seguido.", CreatedAt = orderPdv5.CreatedAt }
+            );
             db.SaveChanges();
         }
 
@@ -1097,7 +1547,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_parrillaelfogon.Id,
                 Name            = "Pack Sorpresa Parrillero",
-                Description     = "Selección de cortes y achuras a punto de finalizar el servicio.",
+                Description     = "Selección sorpresa de cortes y achuras de nuestra parrilla, lista para el cierre del día.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 3000m,
                 SalePrice       = 1500m,
@@ -1111,7 +1561,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_parrillaelfogon.Id,
                 Name            = "Pack Choripán Doble",
-                Description     = "Dos choripanes con chimichurri casero.",
+                Description     = "Dos choripanes jugosos con chimichurri casero, recién salidos de la parrilla.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1400m,
                 SalePrice       = 700m,
@@ -1124,8 +1574,34 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_parrillaelfogon_p1, m_parrillaelfogon_p2);
             db.SaveChanges();
 
-            m_parrillaelfogon_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Parrillada_argentina.jpg/960px-Parrillada_argentina.jpg";
+            m_parrillaelfogon_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Bife_de_chorizo_a_punto_02.jpg/960px-Bife_de_chorizo_a_punto_02.jpg";
             m_parrillaelfogon_p2.ImageUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/Sausages_rolls_chimichurri_sauces.jpg";
+            db.SaveChanges();
+
+            var orderPef1 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_parrillaelfogon.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PEF-01", CreatedAt = now.AddDays(-6)  };
+            var orderPef2 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_parrillaelfogon.Id, TotalAmount = 700m,  PlatformFee = 70m,  MerchantEarnings = 630m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PEF-02", CreatedAt = now.AddDays(-12) };
+            var orderPef3 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_parrillaelfogon.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PEF-03", CreatedAt = now.AddDays(-20) };
+            var orderPef4 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_parrillaelfogon.Id, TotalAmount = 700m,  PlatformFee = 70m,  MerchantEarnings = 630m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PEF-04", CreatedAt = now.AddDays(-28) };
+            var orderPef5 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_parrillaelfogon.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-PEF-05", CreatedAt = now.AddDays(-35) };
+            db.Orders.AddRange(orderPef1, orderPef2, orderPef3, orderPef4, orderPef5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderPef1.Id, ProductId = m_parrillaelfogon_p1.Id, Quantity = 1, UnitPrice = 1500m },
+                new OrderDetail { OrderId = orderPef2.Id, ProductId = m_parrillaelfogon_p2.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderPef3.Id, ProductId = m_parrillaelfogon_p1.Id, Quantity = 1, UnitPrice = 1500m },
+                new OrderDetail { OrderId = orderPef4.Id, ProductId = m_parrillaelfogon_p2.Id, Quantity = 1, UnitPrice = 700m },
+                new OrderDetail { OrderId = orderPef5.Id, ProductId = m_parrillaelfogon_p1.Id, Quantity = 1, UnitPrice = 1500m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderPef1.Id, MerchantId = m_parrillaelfogon.Id, Rating = 5, Comment = "Impecable el pack sorpresa, vino con bife de chorizo y unas achuras riquísimas. Vale cada peso.", CreatedAt = now.AddDays(-6)  },
+                new Review { OrderId = orderPef2.Id, MerchantId = m_parrillaelfogon.Id, Rating = 4, Comment = "Muy rico el choripán, buen chimichurri casero.", CreatedAt = now.AddDays(-12) },
+                new Review { OrderId = orderPef3.Id, MerchantId = m_parrillaelfogon.Id, Rating = 3, Comment = "Llegué un poco tarde y ya no quedaban achuras, solo carne. Igual estaba buena.", CreatedAt = now.AddDays(-20) },
+                new Review { OrderId = orderPef4.Id, MerchantId = m_parrillaelfogon.Id, Rating = 5, Comment = null, CreatedAt = now.AddDays(-28) },
+                new Review { OrderId = orderPef5.Id, MerchantId = m_parrillaelfogon.Id, Rating = 5, Comment = "Excelente relación precio-calidad, la carne estaba en su punto.", CreatedAt = now.AddDays(-35) }
+            );
             db.SaveChanges();
         }
 
@@ -1154,7 +1630,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_asadorcriollo = m_asadorcriolloUser.MerchantProfile!;
-            m_asadorcriollo.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/TERRIBLE_PARRILLADA_ARGENTINA_-_Flickr_-_dr_pablogonzalez.jpg/960px-TERRIBLE_PARRILLADA_ARGENTINA_-_Flickr_-_dr_pablogonzalez.jpg";
+            m_asadorcriollo.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Tira_de_asado.JPG/960px-Tira_de_asado.JPG";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_asadorcriollo.Id, CategoryId = categories["Parrilla"] });
 
@@ -1162,7 +1638,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_asadorcriollo.Id,
                 Name            = "Pack Sorpresa Criollo",
-                Description     = "Cortes de asado sorpresa del día con guarniciones.",
+                Description     = "Selección sorpresa de cortes de asado y achuras del día, acompañados con guarniciones caseras.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2800m,
                 SalePrice       = 1400m,
@@ -1176,7 +1652,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_asadorcriollo.Id,
                 Name            = "Pack Provoleta & Pan",
-                Description     = "Provoleta a la parrilla con pan casero.",
+                Description     = "Provoleta derretida a la parrilla, servida con pan casero recién horneado.",
                 ProductType     = ProductType.ExplicitItem,
                 OriginalPrice   = 1300m,
                 SalePrice       = 650m,
@@ -1190,7 +1666,33 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             m_asadorcriollo_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Grilled_meat_rolls_served_on_a_black_plate.jpg/960px-Grilled_meat_rolls_served_on_a_black_plate.jpg";
-            m_asadorcriollo_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Provoleta_argentina.jpg/960px-Provoleta_argentina.jpg";
+            m_asadorcriollo_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Grilled_Halloumi.jpg/960px-Grilled_Halloumi.jpg";
+            db.SaveChanges();
+
+            var orderAc1 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_asadorcriollo.Id, TotalAmount = 1400m, PlatformFee = 140m, MerchantEarnings = 1260m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-AC-01", CreatedAt = now.AddDays(-7)  };
+            var orderAc2 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_asadorcriollo.Id, TotalAmount = 650m,  PlatformFee = 65m,  MerchantEarnings = 585m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-AC-02", CreatedAt = now.AddDays(-15) };
+            var orderAc3 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_asadorcriollo.Id, TotalAmount = 1400m, PlatformFee = 140m, MerchantEarnings = 1260m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-AC-03", CreatedAt = now.AddDays(-22) };
+            var orderAc4 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_asadorcriollo.Id, TotalAmount = 650m,  PlatformFee = 65m,  MerchantEarnings = 585m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-AC-04", CreatedAt = now.AddDays(-30) };
+            var orderAc5 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_asadorcriollo.Id, TotalAmount = 1400m, PlatformFee = 140m, MerchantEarnings = 1260m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-AC-05", CreatedAt = now.AddDays(-40) };
+            db.Orders.AddRange(orderAc1, orderAc2, orderAc3, orderAc4, orderAc5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderAc1.Id, ProductId = m_asadorcriollo_p1.Id, Quantity = 1, UnitPrice = 1400m },
+                new OrderDetail { OrderId = orderAc2.Id, ProductId = m_asadorcriollo_p2.Id, Quantity = 1, UnitPrice = 650m },
+                new OrderDetail { OrderId = orderAc3.Id, ProductId = m_asadorcriollo_p1.Id, Quantity = 1, UnitPrice = 1400m },
+                new OrderDetail { OrderId = orderAc4.Id, ProductId = m_asadorcriollo_p2.Id, Quantity = 1, UnitPrice = 650m },
+                new OrderDetail { OrderId = orderAc5.Id, ProductId = m_asadorcriollo_p1.Id, Quantity = 1, UnitPrice = 1400m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderAc1.Id, MerchantId = m_asadorcriollo.Id, Rating = 5, Comment = "Un golazo el pack sorpresa, mucha cantidad de carne y muy sabrosa.", CreatedAt = now.AddDays(-7)  },
+                new Review { OrderId = orderAc2.Id, MerchantId = m_asadorcriollo.Id, Rating = 4, Comment = "La provoleta estaba muy buena, el pan casero un plus.", CreatedAt = now.AddDays(-15) },
+                new Review { OrderId = orderAc3.Id, MerchantId = m_asadorcriollo.Id, Rating = 2, Comment = "El pack vino más chico de lo que esperaba para el precio original.", CreatedAt = now.AddDays(-22) },
+                new Review { OrderId = orderAc4.Id, MerchantId = m_asadorcriollo.Id, Rating = 5, Comment = null, CreatedAt = now.AddDays(-30) },
+                new Review { OrderId = orderAc5.Id, MerchantId = m_asadorcriollo.Id, Rating = 4, Comment = "Todo fresco y bien cocido, repetiría sin dudas.", CreatedAt = now.AddDays(-40) }
+            );
             db.SaveChanges();
         }
 
@@ -1219,7 +1721,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_superlaesquina = m_superlaesquinaUser.MerchantProfile!;
-            m_superlaesquina.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Fruit_section_of_a_grocery_store.jpg/960px-Fruit_section_of_a_grocery_store.jpg";
+            m_superlaesquina.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/The_interior_of_a_Fresh_Market_store.jpg/960px-The_interior_of_a_Fresh_Market_store.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_superlaesquina.Id, CategoryId = categories["Supermercado"] });
 
@@ -1227,7 +1729,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_superlaesquina.Id,
                 Name            = "Pack Verdulería Sorpresa",
-                Description     = "Selección sorpresa de frutas y verduras del día, en perfecto estado pero cerca de la fecha de reposición.",
+                Description     = "Selección sorpresa de frutas y verduras frescas, en perfecto estado y a un precio increíble antes de salir de góndola.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2500m,
                 SalePrice       = 1000m,
@@ -1241,7 +1743,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_superlaesquina.Id,
                 Name            = "Pack Almacén del Día",
-                Description     = "Fideos, salsas y productos de almacén próximos a vencer, aún dentro de la fecha de consumo.",
+                Description     = "Selección sorpresa de productos de almacén en perfecto estado, ideal para renovar la despensa a un precio increíble.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 3000m,
                 SalePrice       = 1500m,
@@ -1255,7 +1757,36 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             m_superlaesquina_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Crate_of_fruit_and_vegetables.jpg/960px-Crate_of_fruit_and_vegetables.jpg";
-            m_superlaesquina_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Supermarket_shelves.jpg/960px-Supermarket_shelves.jpg";
+            m_superlaesquina_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Glass_jars_filled_with_various_grains_and_pasta_on_a_wooden_shelf.jpg/960px-Glass_jars_filled_with_various_grains_and_pasta_on_a_wooden_shelf.jpg";
+            db.SaveChanges();
+
+            var orderSle1 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_superlaesquina.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SLE-01", CreatedAt = now.AddDays(-5)  };
+            var orderSle2 = new Order { ConsumerId = demoConsumers[5].Id, MerchantId = m_superlaesquina.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SLE-02", CreatedAt = now.AddDays(-14) };
+            var orderSle3 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_superlaesquina.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SLE-03", CreatedAt = now.AddDays(-25) };
+            var orderSle4 = new Order { ConsumerId = demoConsumers[2].Id, MerchantId = m_superlaesquina.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SLE-04", CreatedAt = now.AddDays(-33) };
+            var orderSle5 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_superlaesquina.Id, TotalAmount = 1000m, PlatformFee = 100m, MerchantEarnings = 900m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SLE-05", CreatedAt = now.AddDays(-42) };
+            var orderSle6 = new Order { ConsumerId = demoConsumers[0].Id, MerchantId = m_superlaesquina.Id, TotalAmount = 1500m, PlatformFee = 150m, MerchantEarnings = 1350m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-SLE-06", CreatedAt = now.AddDays(-9)  };
+            db.Orders.AddRange(orderSle1, orderSle2, orderSle3, orderSle4, orderSle5, orderSle6);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderSle1.Id, ProductId = m_superlaesquina_p1.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderSle2.Id, ProductId = m_superlaesquina_p2.Id, Quantity = 1, UnitPrice = 1500m },
+                new OrderDetail { OrderId = orderSle3.Id, ProductId = m_superlaesquina_p1.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderSle4.Id, ProductId = m_superlaesquina_p2.Id, Quantity = 1, UnitPrice = 1500m },
+                new OrderDetail { OrderId = orderSle5.Id, ProductId = m_superlaesquina_p1.Id, Quantity = 1, UnitPrice = 1000m },
+                new OrderDetail { OrderId = orderSle6.Id, ProductId = m_superlaesquina_p2.Id, Quantity = 1, UnitPrice = 1500m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderSle1.Id, MerchantId = m_superlaesquina.Id, Rating = 5, Comment = "Excelente el pack de verdulería, todo fresco y variado.", CreatedAt = now.AddDays(-5)  },
+                new Review { OrderId = orderSle2.Id, MerchantId = m_superlaesquina.Id, Rating = 4, Comment = "Buenos productos de almacén, algunos ya los tenía pero sirven igual.", CreatedAt = now.AddDays(-14) },
+                new Review { OrderId = orderSle3.Id, MerchantId = m_superlaesquina.Id, Rating = 3, Comment = "Había poca variedad de verduras ese día, pero estaban en buen estado.", CreatedAt = now.AddDays(-25) },
+                new Review { OrderId = orderSle4.Id, MerchantId = m_superlaesquina.Id, Rating = 5, Comment = null, CreatedAt = now.AddDays(-33) },
+                new Review { OrderId = orderSle5.Id, MerchantId = m_superlaesquina.Id, Rating = 4, Comment = "Muy rico, todo fresco.", CreatedAt = now.AddDays(-42) },
+                new Review { OrderId = orderSle6.Id, MerchantId = m_superlaesquina.Id, Rating = 5, Comment = "Me sorprendió la cantidad de productos por ese precio, súper recomendable.", CreatedAt = now.AddDays(-9) }
+            );
             db.SaveChanges();
         }
 
@@ -1284,7 +1815,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_mercadofrescosur = m_mercadofrescosurUser.MerchantProfile!;
-            m_mercadofrescosur.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Hilera_de_supermercado.jpg/960px-Hilera_de_supermercado.jpg";
+            m_mercadofrescosur.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/DFC_2101_Vivid_purple_round_eggplants_piled_with_fresh_green_beans_and_cucumbers_at_a_market_stall.jpg/960px-DFC_2101_Vivid_purple_round_eggplants_piled_with_fresh_green_beans_and_cucumbers_at_a_market_stall.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_mercadofrescosur.Id, CategoryId = categories["Supermercado"] });
 
@@ -1292,7 +1823,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_mercadofrescosur.Id,
                 Name            = "Pack Frutas y Verduras Frescas",
-                Description     = "Excedente de la verdulería: frutas y verduras frescas seleccionadas, ideales para consumir en los próximos días.",
+                Description     = "Excedente sorpresa de la verdulería: frutas y verduras frescas de estación, ideales para consumir en los próximos días.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2200m,
                 SalePrice       = 900m,
@@ -1306,7 +1837,7 @@ public static class DatabaseSeeder
             {
                 MerchantId      = m_mercadofrescosur.Id,
                 Name            = "Pack Lácteos del Día",
-                Description     = "Leche, yogures y quesos próximos a la fecha de vencimiento sugerida, en cadena de frío hasta el retiro.",
+                Description     = "Selección sorpresa de productos lácteos frescos, mantenidos en cadena de frío hasta el momento del retiro.",
                 ProductType     = ProductType.SurprisePack,
                 OriginalPrice   = 2800m,
                 SalePrice       = 1300m,
@@ -1319,8 +1850,34 @@ public static class DatabaseSeeder
             db.Products.AddRange(m_mercadofrescosur_p1, m_mercadofrescosur_p2);
             db.SaveChanges();
 
-            m_mercadofrescosur_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Fruits_and_vegetables_at_market.jpg/960px-Fruits_and_vegetables_at_market.jpg";
-            m_mercadofrescosur_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Milk_Aisle.jpg/960px-Milk_Aisle.jpg";
+            m_mercadofrescosur_p1.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Fresh_red_peppers_in_a_wooden_crate.jpg/960px-Fresh_red_peppers_in_a_wooden_crate.jpg";
+            m_mercadofrescosur_p2.ImageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/DairyProductsGermany.jpg/960px-DairyProductsGermany.jpg";
+            db.SaveChanges();
+
+            var orderMfs1 = new Order { ConsumerId = demoConsumers[3].Id, MerchantId = m_mercadofrescosur.Id, TotalAmount = 900m,  PlatformFee = 90m,  MerchantEarnings = 810m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-MFS-01", CreatedAt = now.AddDays(-8)  };
+            var orderMfs2 = new Order { ConsumerId = demoConsumers[4].Id, MerchantId = m_mercadofrescosur.Id, TotalAmount = 1300m, PlatformFee = 130m, MerchantEarnings = 1170m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-MFS-02", CreatedAt = now.AddDays(-18) };
+            var orderMfs3 = new Order { ConsumerId = demoConsumers[6].Id, MerchantId = m_mercadofrescosur.Id, TotalAmount = 900m,  PlatformFee = 90m,  MerchantEarnings = 810m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-MFS-03", CreatedAt = now.AddDays(-27) };
+            var orderMfs4 = new Order { ConsumerId = demoConsumers[1].Id, MerchantId = m_mercadofrescosur.Id, TotalAmount = 1300m, PlatformFee = 130m, MerchantEarnings = 1170m, ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-MFS-04", CreatedAt = now.AddDays(-36) };
+            var orderMfs5 = new Order { ConsumerId = demoConsumers[7].Id, MerchantId = m_mercadofrescosur.Id, TotalAmount = 900m,  PlatformFee = 90m,  MerchantEarnings = 810m,  ExternalReference = Guid.NewGuid().ToString(), OrderStatus = OrderStatus.PickedUp, PickupCode = "RSQ-MFS-05", CreatedAt = now.AddDays(-44) };
+            db.Orders.AddRange(orderMfs1, orderMfs2, orderMfs3, orderMfs4, orderMfs5);
+            db.SaveChanges();
+
+            db.OrderDetails.AddRange(
+                new OrderDetail { OrderId = orderMfs1.Id, ProductId = m_mercadofrescosur_p1.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderMfs2.Id, ProductId = m_mercadofrescosur_p2.Id, Quantity = 1, UnitPrice = 1300m },
+                new OrderDetail { OrderId = orderMfs3.Id, ProductId = m_mercadofrescosur_p1.Id, Quantity = 1, UnitPrice = 900m },
+                new OrderDetail { OrderId = orderMfs4.Id, ProductId = m_mercadofrescosur_p2.Id, Quantity = 1, UnitPrice = 1300m },
+                new OrderDetail { OrderId = orderMfs5.Id, ProductId = m_mercadofrescosur_p1.Id, Quantity = 1, UnitPrice = 900m }
+            );
+            db.SaveChanges();
+
+            db.Reviews.AddRange(
+                new Review { OrderId = orderMfs1.Id, MerchantId = m_mercadofrescosur.Id, Rating = 5, Comment = "Las verduras llegaron re frescas, ni se notaba que eran excedente.", CreatedAt = now.AddDays(-8)  },
+                new Review { OrderId = orderMfs2.Id, MerchantId = m_mercadofrescosur.Id, Rating = 4, Comment = "Los lácteos estaban perfectos, bien de frío.", CreatedAt = now.AddDays(-18) },
+                new Review { OrderId = orderMfs3.Id, MerchantId = m_mercadofrescosur.Id, Rating = 3, Comment = "Justo se había agotado el pack cuando llegué y me dieron uno más chico.", CreatedAt = now.AddDays(-27) },
+                new Review { OrderId = orderMfs4.Id, MerchantId = m_mercadofrescosur.Id, Rating = 5, Comment = null, CreatedAt = now.AddDays(-36) },
+                new Review { OrderId = orderMfs5.Id, MerchantId = m_mercadofrescosur.Id, Rating = 4, Comment = "Buena variedad de frutas y verduras, todo en buen estado.", CreatedAt = now.AddDays(-44) }
+            );
             db.SaveChanges();
         }
 
