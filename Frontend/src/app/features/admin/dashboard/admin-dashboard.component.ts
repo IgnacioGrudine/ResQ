@@ -47,6 +47,14 @@ export class AdminDashboardComponent implements OnInit {
     }));
   });
 
+  /**
+   * Only every Nth bar gets a visible date label, capped at roughly 10 labels total —
+   * with 30+ daily bars every label would collide/overlap, and the chart no longer
+   * scrolls horizontally (bars now share the container width), so there's no way to
+   * scroll to read a hidden one.
+   */
+  readonly labelStep = computed(() => Math.max(1, Math.ceil(this.chartBars().length / 10)));
+
   /** Category rows with width-normalized bars against the top category. */
   readonly categoryBars = computed(() => {
     const cats = this.data()?.categoryDistribution ?? [];
