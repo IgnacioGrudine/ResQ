@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { DecimalPipe } from '@angular/common';
-import { switchMap } from 'rxjs';
+import { switchMap, map } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { OrderService } from '../../../core/services/order.service';
 import { environment } from '../../../../environments/environment';
@@ -89,12 +89,23 @@ export class PackDetailComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    // React to paramMap (not just the initial snapshot) — Angular reuses this same component
+    // instance when navigating from one pack detail to another (e.g. via "Otros packs de..."),
+    // since it's the same route config with only the :id changing. Reading the snapshot once
+    // in ngOnInit would leave the page stuck on the first pack until a manual reload.
+    this.route.paramMap.pipe(
+      map(params => Number(params.get('id'))),
+      switchMap(id => {
+        this.loading.set(true);
+        this.error.set(null);
+        this.quantity.set(1);
 
-    this.catalog.getPackById(id).pipe(
-      switchMap(pack => {
-        this.pack.set(pack);
-        return this.catalog.getMerchantDetail(pack.merchantId);
+        return this.catalog.getPackById(id).pipe(
+          switchMap(pack => {
+            this.pack.set(pack);
+            return this.catalog.getMerchantDetail(pack.merchantId);
+          })
+        );
       })
     ).subscribe({
       next:  m  => { this.merchant.set(m); this.loading.set(false); },
