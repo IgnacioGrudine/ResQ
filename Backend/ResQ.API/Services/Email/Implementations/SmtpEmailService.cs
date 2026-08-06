@@ -129,7 +129,7 @@ public class SmtpEmailService(
           <div class="wrapper">
             <div class="header">
               <p class="header-logo">🌿 ResQ</p>
-              <p class="header-tagline">Rescate de alimentos · Córdoba</p>
+              <p class="header-tagline">Rescate de alimentos</p>
             </div>
             <div class="body">
               <h1 class="greeting">Hola, {{userName}}</h1>
@@ -152,7 +152,7 @@ public class SmtpEmailService(
               </p>
             </div>
             <div class="footer">
-              <p><strong>ResQ</strong> — Rescate de alimentos · Córdoba, Argentina</p>
+              <p><strong>ResQ</strong> — Rescate de alimentos</p>
               <p>Este correo fue enviado porque se solicitó restablecer la contraseña de esta cuenta.</p>
             </div>
           </div>
@@ -182,7 +182,7 @@ public class SmtpEmailService(
           <div class="wrapper">
             <div class="header">
               <p class="header-logo">🌿 ResQ</p>
-              <p class="header-tagline">Rescate de alimentos · Córdoba</p>
+              <p class="header-tagline">Rescate de alimentos</p>
             </div>
             <div class="body">
               <h1 class="greeting">Tu cuenta usa Google</h1>
@@ -199,7 +199,7 @@ public class SmtpEmailService(
               </p>
             </div>
             <div class="footer">
-              <p><strong>ResQ</strong> — Rescate de alimentos · Córdoba, Argentina</p>
+              <p><strong>ResQ</strong> — Rescate de alimentos</p>
             </div>
           </div>
         </body>
@@ -234,7 +234,7 @@ public class SmtpEmailService(
           <div class="wrapper">
             <div class="header">
               <p class="header-logo">🌿 ResQ</p>
-              <p class="header-tagline">Rescate de alimentos · Córdoba</p>
+              <p class="header-tagline">Rescate de alimentos</p>
             </div>
             <div class="body">
               <h1 class="greeting">¡Gracias por tu compra, {{consumerName}}!</h1>
@@ -259,7 +259,7 @@ public class SmtpEmailService(
               </p>
             </div>
             <div class="footer">
-              <p><strong>ResQ</strong> — Rescate de alimentos · Córdoba, Argentina</p>
+              <p><strong>ResQ</strong> — Rescate de alimentos</p>
               <p>Este correo fue enviado porque realizaste una compra en nuestra plataforma.</p>
             </div>
           </div>
