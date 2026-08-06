@@ -70,7 +70,7 @@
           <div class="w-full border-t border-gray-200"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-          <span class="bg-white px-3 text-gray-400">o continuá con</span>
+          <span class="bg-white px-3 text-gray-400">o ingresá como consumidor con</span>
         </div>
       </div>
 
@@ -86,6 +86,10 @@
       <div class="flex justify-center">
         <div #googleBtn></div>
       </div>
+
+      <!-- Google is consumer-only — merchants have no Google auth, so this is here to
+           remove any ambiguity about what the button above actually signs you into. -->
+      <p class="text-center text-xs text-gray-400 mt-2">Los comercios ingresan con email y contraseña.</p>
 
       <p class="text-center text-sm text-gray-400 mt-6">
         ¿No tenés cuenta?
