@@ -624,7 +624,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_verdevidavegano = m_verdevidaveganoUser.MerchantProfile!;
-            m_verdevidavegano.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/DFC_0873_Two_colorful_tropical_smoothies_-_one_strawberry-red_one_mango-yellow_-_each_topped_with_a_fun_stirrer_and_straw_ready_to_sip.jpg/960px-DFC_0873_Two_colorful_tropical_smoothies_-_one_strawberry-red_one_mango-yellow_-_each_topped_with_a_fun_stirrer_and_straw_ready_to_sip.jpg";
+            m_verdevidavegano.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Inside_the_La_Raposa_Transfeminist_Bookshop_and_Vegan_Restaurant%2C_Barcelona_13.jpg/960px-Inside_the_La_Raposa_Transfeminist_Bookshop_and_Vegan_Restaurant%2C_Barcelona_13.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_verdevidavegano.Id, CategoryId = categories["Vegano"] });
 
@@ -715,7 +715,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_raizcocinavegana = m_raizcocinaveganaUser.MerchantProfile!;
-            m_raizcocinavegana.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/DZ3_0604_A_colorful_self-serve_salad_bar_with_fresh_greens_chopped_vegetables_and_toppings_neatly_arranged_in_stainless_steel_trays.jpg/960px-DZ3_0604_A_colorful_self-serve_salad_bar_with_fresh_greens_chopped_vegetables_and_toppings_neatly_arranged_in_stainless_steel_trays.jpg";
+            m_raizcocinavegana.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Inside_the_La_Raposa_Transfeminist_Bookshop_and_Vegan_Restaurant%2C_Barcelona_03.jpg/960px-Inside_the_La_Raposa_Transfeminist_Bookshop_and_Vegan_Restaurant%2C_Barcelona_03.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_raizcocinavegana.Id, CategoryId = categories["Vegano"] });
 
@@ -806,7 +806,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_heladeriacremolatti = m_heladeriacremolattiUser.MerchantProfile!;
-            m_heladeriacremolatti.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Veeno_platter.jpg/960px-Veeno_platter.jpg";
+            m_heladeriacremolatti.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Deli_counter%2C_Delicatessen_Polonus%2C_East_Hill%2C_St_Austell%2C_Cornwall_-_November_2022.jpg/960px-Deli_counter%2C_Delicatessen_Polonus%2C_East_Hill%2C_St_Austell%2C_Cornwall_-_November_2022.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_heladeriacremolatti.Id, CategoryId = categories["Fiambrería"] });
 
@@ -897,7 +897,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_gelatodelsol = m_gelatodelsolUser.MerchantProfile!;
-            m_gelatodelsol.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Summer_Cheese_Platter_%28Unsplash%29.jpg/960px-Summer_Cheese_Platter_%28Unsplash%29.jpg";
+            m_gelatodelsol.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Versailles_Old_Shop_2011.jpg/960px-Versailles_Old_Shop_2011.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_gelatodelsol.Id, CategoryId = categories["Fiambrería"] });
 
@@ -988,7 +988,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_pasteleriadulcetrigo = m_pasteleriadulcetrigoUser.MerchantProfile!;
-            m_pasteleriadulcetrigo.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Pastry_assortment.jpg/960px-Pastry_assortment.jpg";
+            m_pasteleriadulcetrigo.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Cake_display_cases_with_cakes_and_pastries_in_Brastads_Bageri_2.jpg/960px-Cake_display_cases_with_cakes_and_pastries_in_Brastads_Bageri_2.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_pasteleriadulcetrigo.Id, CategoryId = categories["Pastelería"] });
 
@@ -1079,7 +1079,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_lareposteriademarta = m_lareposteriademartaUser.MerchantProfile!;
-            m_lareposteriademarta.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/20231022_101836_Croissant_supr%C3%AAme.jpg/960px-20231022_101836_Croissant_supr%C3%AAme.jpg";
+            m_lareposteriademarta.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Cake_display_cases_with_cakes_and_pastries_in_Brastads_Bageri_3.jpg/960px-Cake_display_cases_with_cakes_and_pastries_in_Brastads_Bageri_3.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_lareposteriademarta.Id, CategoryId = categories["Pastelería"] });
 
@@ -1263,7 +1263,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_dulcetentacion = m_dulcetentacionUser.MerchantProfile!;
-            m_dulcetentacion.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/DFC_4073_Assorted_fruit_tarts_piled_high_-_fresh_strawberries_blueberries_grapes_and_kiwi_on_creamy_pastry_shells.jpg/960px-DFC_4073_Assorted_fruit_tarts_piled_high_-_fresh_strawberries_blueberries_grapes_and_kiwi_on_creamy_pastry_shells.jpg";
+            m_dulcetentacion.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Interior_de_la_pasteler%C3%ADa_Oporto.jpg/960px-Interior_de_la_pasteler%C3%ADa_Oporto.jpg";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_dulcetentacion.Id, CategoryId = categories["Postres"] });
 
@@ -1539,7 +1539,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_parrillaelfogon = m_parrillaelfogonUser.MerchantProfile!;
-            m_parrillaelfogon.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Bife_de_chorizo_a_punto_01.jpg/960px-Bife_de_chorizo_a_punto_01.jpg";
+            m_parrillaelfogon.PhotoUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/Interior%20dining%20room%20of%20a%20LongHorn%20Steakhouse%20restaurant%20in%20Blairsville%2C%20Georgia%2003.jpg?width=960";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_parrillaelfogon.Id, CategoryId = categories["Parrilla"] });
 
@@ -1630,7 +1630,7 @@ public static class DatabaseSeeder
             db.SaveChanges();
 
             var m_asadorcriollo = m_asadorcriolloUser.MerchantProfile!;
-            m_asadorcriollo.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Tira_de_asado.JPG/960px-Tira_de_asado.JPG";
+            m_asadorcriollo.PhotoUrl = "https://commons.wikimedia.org/wiki/Special:FilePath/Restaurante%20Clemente.jpg?width=960";
 
             db.MerchantCategories.Add(new MerchantCategory { MerchantId = m_asadorcriollo.Id, CategoryId = categories["Parrilla"] });
 
@@ -1993,9 +1993,9 @@ public static class DatabaseSeeder
         // through the real upload flow, so there's no actual file for ResolvePublicUrl to
         // resolve. A hardcoded "http://localhost/..." here breaks on any other host, since
         // ResolvePublicUrl leaves already-absolute URLs untouched (see its doc comment).
-        panaderia.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Array_of_bread.jpg/960px-Array_of_bread.jpg";
+        panaderia.PhotoUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Boulangerie_Bardoulet_%28Contrevoz%29_-_int%C3%A9rieur_de_la_boutique.jpg/960px-Boulangerie_Bardoulet_%28Contrevoz%29_-_int%C3%A9rieur_de_la_boutique.jpg";
         sushi.PhotoUrl     = "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg/960px-HK_Central_MTR_Station_shop_%E6%9D%BF%E9%95%B7%E5%A3%BD%E5%8F%B8_Itacho_Sushi_restaurant_interior_visitors_Jan-2012.jpg";
-        cafe.PhotoUrl      = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Stuffing%2C_Potatoes%2C_Demi_Glace.jpg/960px-Roasted_Chicken_Dinner_Plate%2C_Broccoli%2C_Stuffing%2C_Potatoes%2C_Demi_Glace.jpg";
+        cafe.PhotoUrl      = "https://commons.wikimedia.org/wiki/Special:FilePath/Pollo%20asado%203.jpg?width=960";
 
         // ─── 3. Merchant ↔ Category links ────────────────────────────────────────
         db.MerchantCategories.AddRange(
