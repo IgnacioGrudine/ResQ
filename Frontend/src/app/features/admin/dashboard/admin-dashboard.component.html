@@ -116,7 +116,7 @@
             <div class="flex items-end gap-0.5">
               @for (bar of chartBars(); track bar.label; let i = $index) {
                 <div class="flex-1 min-w-0 flex flex-col items-center group relative">
-                  <div class="w-full h-28 flex flex-col justify-end">
+                  <div class="w-full h-36 flex flex-col justify-end">
                     <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
                       ${{ bar.value | number:'1.0-0' }} · {{ bar.orders }} ord.
                     </div>
