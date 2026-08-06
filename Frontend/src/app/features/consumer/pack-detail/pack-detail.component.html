@@ -187,7 +187,7 @@
                 </div>
               }
             </div>
-            @if (m.recentReviews.length > 5) {
+            @if (m.reviewCount > 0) {
               <button (click)="openMerchant(m.id)"
                 class="w-full mt-3 py-2.5 rounded-xl text-sm font-semibold text-evergreen bg-evergreen/8 hover:bg-evergreen/12 transition-colors">
                 Ver todas las reseñas ({{ m.reviewCount }})
