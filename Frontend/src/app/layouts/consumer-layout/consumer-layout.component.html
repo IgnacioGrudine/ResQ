@@ -9,8 +9,8 @@
     <button (click)="toggleSidebar()"
       [title]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
       class="hidden md:flex absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-12 items-center justify-center
-             rounded-r-full bg-hunter text-lime/80 shadow-md ring-1 ring-black/10
-             hover:bg-evergreen hover:text-lime transition-colors z-30">
+             rounded-r-full bg-evergreen text-lime/80 shadow-md ring-1 ring-black/10
+             hover:bg-hunter hover:text-lime transition-colors z-30">
       @if (sidebarCollapsed()) {
         <svg lucideChevronRight class="w-4 h-4"></svg>
       } @else {
