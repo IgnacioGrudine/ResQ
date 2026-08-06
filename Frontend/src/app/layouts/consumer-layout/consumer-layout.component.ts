@@ -4,7 +4,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX,
-  LucideMap, LucideChevronsLeft, LucideChevronsRight
+  LucideMap, LucideChevronLeft, LucideChevronRight
 } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 import { ConsumerService } from '../../core/services/consumer.service';
@@ -17,7 +17,7 @@ const SIDEBAR_COLLAPSED_KEY = 'resq.consumer.sidebarCollapsed';
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule,
             LucideLeaf, LucideHome, LucideShoppingBag, LucideUser, LucideLogOut, LucideStar, LucideX,
-            LucideMap, LucideChevronsLeft, LucideChevronsRight],
+            LucideMap, LucideChevronLeft, LucideChevronRight],
   templateUrl: './consumer-layout.component.html'
 })
 export class ConsumerLayoutComponent implements OnInit {
