@@ -41,7 +41,9 @@ export class AdminDashboardComponent implements OnInit {
       label:     s.label,
       value:     s.gmv,
       orders:    s.orders,
-      heightPct: s.gmv === 0 ? 0 : Math.max(Math.round((s.gmv / max) * 100), 6)
+      // Zero-GMV days still get a thin sliver (2%) so they read as "no activity that day"
+      // rather than a missing bar that looks like a rendering gap in the chart.
+      heightPct: s.gmv === 0 ? 2 : Math.max(Math.round((s.gmv / max) * 100), 6)
     }));
   });
 
