@@ -22,12 +22,14 @@ export class RegisterConsumerComponent {
   readonly loading = signal(false);
   readonly apiError = signal('');
 
+  // No phoneNumber field here — consumers have no use for a phone number anywhere in the
+  // product (unlike merchants, who need one for pickup coordination), so it's kept off both
+  // this form and the profile edit form. See ProfileComponent for the matching removal.
   readonly form = this.fb.group({
     firstName: ['', [Validators.required, Validators.maxLength(100)]],
     lastName:  ['', [Validators.required, Validators.maxLength(100)]],
     email:     ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
-    password:  ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]],
-    phoneNumber: ['', [Validators.pattern(/^\+?[\d\s\-()+]{7,20}$/)]]
+    password:  ['', [Validators.required, Validators.minLength(8), Validators.maxLength(100)]]
   });
 
   fieldError(field: string): string {
@@ -37,7 +39,6 @@ export class RegisterConsumerComponent {
     if (ctrl.hasError('email'))      return 'El email no tiene un formato válido.';
     if (ctrl.hasError('minlength'))  return 'La contraseña debe tener al menos 8 caracteres.';
     if (ctrl.hasError('maxlength'))  return 'El valor ingresado es demasiado largo.';
-    if (ctrl.hasError('pattern'))    return 'El teléfono no tiene un formato válido.';
     return '';
   }
 
@@ -52,11 +53,10 @@ export class RegisterConsumerComponent {
 
     const v = this.form.getRawValue();
     this.authService.registerConsumer({
-      email:       v.email!,
-      password:    v.password!,
-      firstName:   v.firstName!,
-      lastName:    v.lastName!,
-      phoneNumber: v.phoneNumber || undefined
+      email:     v.email!,
+      password:  v.password!,
+      firstName: v.firstName!,
+      lastName:  v.lastName!
     }).subscribe({
       next: () => {
         this.loading.set(false);
