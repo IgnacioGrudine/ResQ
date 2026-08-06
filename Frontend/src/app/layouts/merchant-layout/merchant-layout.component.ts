@@ -15,11 +15,10 @@ import {
   LucideShoppingBag,
   LucideXCircle,
   LucideChevronDown,
+  LucideChevronLeft,
   LucideChevronRight,
   LucideEllipsis,
-  LucideX,
-  LucideChevronsLeft,
-  LucideChevronsRight
+  LucideX
 } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 import { MerchantService } from '../../core/services/merchant.service';
@@ -35,8 +34,8 @@ const SIDEBAR_COLLAPSED_KEY = 'resq.merchant.sidebarCollapsed';
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive, DatePipe, NgClass, SafeImgDirective,
     LucideLeaf, LucideLayoutDashboard, LucidePackage, LucideClipboardList, LucideStar, LucideStore, LucideTrendingUp, LucideLogOut,
-    LucideBell, LucideCheckCheck, LucideShoppingBag, LucideXCircle, LucideChevronDown, LucideChevronRight, LucideEllipsis, LucideX,
-    LucideChevronsLeft, LucideChevronsRight
+    LucideBell, LucideCheckCheck, LucideShoppingBag, LucideXCircle, LucideChevronDown, LucideChevronLeft, LucideChevronRight,
+    LucideEllipsis, LucideX
   ],
   templateUrl: './merchant-layout.component.html'
 })

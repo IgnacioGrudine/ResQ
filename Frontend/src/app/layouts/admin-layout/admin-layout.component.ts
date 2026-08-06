@@ -8,8 +8,8 @@ import {
   LucideFileText,
   LucideTags,
   LucideLogOut,
-  LucideChevronsLeft,
-  LucideChevronsRight
+  LucideChevronLeft,
+  LucideChevronRight
 } from '@lucide/angular';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -21,7 +21,7 @@ const SIDEBAR_COLLAPSED_KEY = 'resq.admin.sidebarCollapsed';
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
     LucideLeaf, LucideLayoutDashboard, LucideStore, LucideUsers, LucideFileText, LucideTags, LucideLogOut,
-    LucideChevronsLeft, LucideChevronsRight
+    LucideChevronLeft, LucideChevronRight
   ],
   templateUrl: './admin-layout.component.html'
 })

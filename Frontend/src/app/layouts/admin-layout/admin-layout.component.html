@@ -2,7 +2,22 @@
 
   <!-- ─── Sidebar (desktop) ─── -->
   <aside
-    [class]="'hidden md:flex md:flex-col md:fixed md:inset-y-0 bg-evergreen z-20 px-4 py-8 gap-8 transition-[width] duration-200 ' + (sidebarCollapsed() ? 'md:w-[72px]' : 'md:w-60')">
+    [class]="'hidden md:flex md:flex-col md:fixed md:inset-y-0 bg-evergreen z-20 px-4 py-8 gap-8 transition-[width] duration-200 relative ' + (sidebarCollapsed() ? 'md:w-[72px]' : 'md:w-60')">
+
+    <!-- Floating edge tab — the primary way to collapse/expand, always reachable regardless
+         of scroll position inside the nav. -->
+    <button (click)="toggleSidebar()"
+      [title]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
+      class="hidden md:flex absolute top-1/2 -right-3 -translate-y-1/2 w-6 h-12 items-center justify-center
+             rounded-r-full bg-evergreen text-lime/80 shadow-md ring-1 ring-black/10
+             hover:bg-hunter hover:text-lime transition-colors z-30">
+      @if (sidebarCollapsed()) {
+        <svg lucideChevronRight class="w-4 h-4"></svg>
+      } @else {
+        <svg lucideChevronLeft class="w-4 h-4"></svg>
+      }
+    </button>
+
     <div class="flex items-center px-2" [class.justify-center]="sidebarCollapsed()">
       <a routerLink="/admin" class="flex items-center gap-2 min-w-0" [class.gap-0]="sidebarCollapsed()">
         <svg lucideLeaf class="w-7 h-7 text-lime shrink-0"></svg>
@@ -57,18 +72,6 @@
     </nav>
 
     <div class="flex flex-col gap-1">
-      <button (click)="toggleSidebar()"
-        [title]="sidebarCollapsed() ? 'Expandir menú' : 'Colapsar menú'"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:bg-white/10 hover:text-white transition-colors font-medium w-full"
-        [class.justify-center]="sidebarCollapsed()">
-        @if (sidebarCollapsed()) {
-          <svg lucideChevronsRight class="w-5 h-5 shrink-0"></svg>
-        } @else {
-          <svg lucideChevronsLeft class="w-5 h-5 shrink-0"></svg>
-          <span>Colapsar</span>
-        }
-      </button>
-
       <button (click)="logout()"
         [title]="sidebarCollapsed() ? 'Cerrar sesión' : ''"
         class="flex items-center gap-3 px-4 py-3 rounded-xl text-white/50 hover:bg-white/10 hover:text-red-300 transition-colors font-medium w-full"
