@@ -98,13 +98,4 @@ public class AdminMerchantDetailResponse
 
     /// <summary>The 10 most recent orders received by this merchant.</summary>
     public List<MerchantOrderSummaryResponse> RecentOrders { get; set; } = [];
-
-    /// <summary>The Mercado Pago token-refresh log entries for this merchant, newest first.</summary>
-    public List<MpRefreshLogResponse> MpRefreshLogs { get; set; } = [];
 }
-
-/// <summary>One Mercado Pago token-refresh audit log entry for the admin merchant detail view.</summary>
-/// <param name="Success">Whether the refresh succeeded.</param>
-/// <param name="ErrorMessage">Failure detail when unsuccessful; otherwise null.</param>
-/// <param name="CreatedAt">When the refresh attempt ran.</param>
-public record MpRefreshLogResponse(bool Success, string? ErrorMessage, DateTime CreatedAt);

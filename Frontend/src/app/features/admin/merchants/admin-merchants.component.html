@@ -227,24 +227,6 @@
             }
           </div>
 
-          <!-- MP logs -->
-          <div>
-            <p class="text-xs uppercase tracking-wide text-gray-400 font-semibold mb-2">Logs renovación token MP</p>
-            @if (m.mpRefreshLogs.length) {
-              <div class="border border-gray-100 rounded-xl divide-y divide-gray-50 text-sm max-h-40 overflow-y-auto">
-                @for (log of m.mpRefreshLogs; track log.createdAt) {
-                  <div class="flex items-center justify-between px-4 py-2">
-                    <span [class]="log.success ? 'text-green-600' : 'text-red-500'">
-                      {{ log.success ? '✓ Renovado' : '✗ ' + (log.errorMessage ?? 'Error') }}
-                    </span>
-                    <span class="text-xs text-gray-400">{{ formatDate(log.createdAt) }}</span>
-                  </div>
-                }
-              </div>
-            } @else {
-              <p class="text-gray-400 text-sm italic">Sin registros de renovación todavía.</p>
-            }
-          </div>
         </div>
       }
     </div>

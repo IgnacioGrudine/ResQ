@@ -309,7 +309,7 @@ public class AdminServiceTests
     }
 
     [Fact]
-    public async Task GetMerchantDetailAsync_WhenFound_ReturnsFullDetailWithOrdersAndLogs()
+    public async Task GetMerchantDetailAsync_WhenFound_ReturnsFullDetailWithOrders()
     {
         // Arrange
         var consumer = new ConsumerProfile { Id = 5, FirstName = "Ana", LastName = "López" };
@@ -319,10 +319,7 @@ public class AdminServiceTests
         var newerOrder = BuildOrder(2, merchant.Id, merchant, OrderStatus.PickedUp, 2000m, 200m, 1800m, DateTime.UtcNow.AddDays(-1), consumer);
         merchant.Orders = [olderOrder, newerOrder];
 
-        var log = new MpTokenRefreshLog { Success = true, CreatedAt = DateTime.UtcNow };
-
         _admin.Setup(a => a.GetMerchantDetailAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(merchant);
-        _admin.Setup(a => a.GetMpLogsByMerchantAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync([log]);
 
         var sut = CreateSut();
 
@@ -338,8 +335,6 @@ public class AdminServiceTests
         Assert.Equal(2, dto.RecentOrders.Count);
         Assert.Equal(newerOrder.Id, dto.RecentOrders[0].Id);
         Assert.Equal("Ana López", dto.RecentOrders[0].ConsumerName);
-        Assert.Single(dto.MpRefreshLogs);
-        Assert.True(dto.MpRefreshLogs[0].Success);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

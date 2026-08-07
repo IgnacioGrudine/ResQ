@@ -92,12 +92,6 @@ export interface AdminMerchantListItem {
   createdAt: string;
 }
 
-export interface MpRefreshLog {
-  success: boolean;
-  errorMessage: string | null;
-  createdAt: string;
-}
-
 export interface AdminMerchantOrder {
   id: number;
   consumerName: string;
@@ -126,7 +120,6 @@ export interface AdminMerchantDetail {
   activePacks: number;
   createdAt: string;
   recentOrders: AdminMerchantOrder[];
-  mpRefreshLogs: MpRefreshLog[];
 }
 
 // ── User management ─────────────────────────────────────────────────────────────

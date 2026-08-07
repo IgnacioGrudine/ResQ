@@ -141,7 +141,6 @@ public class AdminService(
         if (m is null)
             return Result.Fail(new NotFoundError("Comercio no encontrado."));
 
-        var logs    = (await admin.GetMpLogsByMerchantAsync(merchantId, ct)).ToList();
         var revenue = m.Orders.Where(IsRevenue).ToList();
 
         return Result.Ok(new AdminMerchantDetailResponse
@@ -166,8 +165,7 @@ public class AdminService(
                                     .OrderByDescending(o => o.CreatedAt)
                                     .Take(10)
                                     .Select(MapMerchantOrder)
-                                    .ToList(),
-            MpRefreshLogs      = logs.Select(l => new MpRefreshLogResponse(l.Success, l.ErrorMessage, l.CreatedAt)).ToList()
+                                    .ToList()
         });
     }
 
