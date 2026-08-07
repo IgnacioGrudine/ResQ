@@ -534,7 +534,12 @@ public class AdminService(
         }).ToList()
     };
 
-    private static string FormatCurrency(decimal value) => "$" + value.ToString("N0", Es);
+    // "N0" alone silently truncates real cents to whole pesos (e.g. a $0.10 platform fee on
+    // a small order displays as "$0", which reads as "no commission at all" rather than
+    // "a fraction of a peso"). Whole amounts still print without decimals; only a value with
+    // an actual fractional part gets them.
+    private static string FormatCurrency(decimal value) =>
+        "$" + value.ToString(value == Math.Truncate(value) ? "N0" : "N2", Es);
 
     private static string TranslateStatus(OrderStatus status) => status switch
     {

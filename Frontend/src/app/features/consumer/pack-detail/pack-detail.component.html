@@ -63,10 +63,10 @@
             </div>
 
             <div class="flex items-baseline gap-2 flex-wrap">
-              <span class="text-3xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-0' }}</span>
-              <span class="text-base text-gray-300 line-through">${{ p.originalPrice | number:'1.0-0' }}</span>
+              <span class="text-3xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-2' }}</span>
+              <span class="text-base text-gray-300 line-through">${{ p.originalPrice | number:'1.0-2' }}</span>
               <span class="text-xs font-semibold text-hunter bg-lime/60 px-2 py-0.5 rounded-full">
-                Ahorrás ${{ (p.originalPrice - p.salePrice) | number:'1.0-0' }}
+                Ahorrás ${{ (p.originalPrice - p.salePrice) | number:'1.0-2' }}
               </span>
             </div>
 
@@ -157,7 +157,7 @@
                     </div>
                     <div class="p-2.5">
                       <p class="text-xs font-semibold text-gray-800 line-clamp-1">{{ prod.name }}</p>
-                      <p class="text-evergreen font-bold text-sm mt-1">${{ prod.salePrice | number:'1.0-0' }}</p>
+                      <p class="text-evergreen font-bold text-sm mt-1">${{ prod.salePrice | number:'1.0-2' }}</p>
                     </div>
                   </div>
                 }

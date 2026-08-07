@@ -26,7 +26,10 @@ internal static class ReportCellFormatter
 
         return type switch
         {
-            ReportColumnType.Currency => "$" + Convert.ToDecimal(value, Culture).ToString("N0", Culture),
+            // "N0" alone silently truncates real cents to whole pesos (e.g. a $0.10 platform
+            // fee row would print as "$0"). Whole amounts still print without decimals; only
+            // a value with an actual fractional part gets them.
+            ReportColumnType.Currency => FormatCurrency(Convert.ToDecimal(value, Culture)),
             ReportColumnType.Number   => value is decimal d
                                             ? d.ToString("N1", Culture)
                                             : Convert.ToDecimal(value, Culture).ToString("N0", Culture),
@@ -34,4 +37,7 @@ internal static class ReportCellFormatter
             _                         => value.ToString() ?? string.Empty
         };
     }
+
+    private static string FormatCurrency(decimal value) =>
+        "$" + value.ToString(value == Math.Truncate(value) ? "N0" : "N2", Culture);
 }

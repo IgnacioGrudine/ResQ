@@ -139,7 +139,11 @@ public class ExcelReportExporter : IReportExporter
         {
             case ReportColumnType.Currency:
                 cell.Value = Convert.ToDecimal(raw, ReportCellFormatter.Culture);
-                cell.Style.NumberFormat.Format = "\"$\"#,##0";
+                // "#.##" (vs. a bare "#,##0") only renders decimal digits when they're
+                // actually significant, so a $0.10 platform fee shows as "$0.1" instead of
+                // silently truncating to "$0", while whole amounts still print with no
+                // decimal point at all.
+                cell.Style.NumberFormat.Format = "\"$\"#,##0.##";
                 break;
             case ReportColumnType.Number:
                 cell.Value = Convert.ToDecimal(raw, ReportCellFormatter.Culture);

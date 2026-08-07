@@ -59,7 +59,7 @@
             @for (item of order.items; track item.productName) {
               <div class="flex items-center justify-between gap-3 text-sm">
                 <span class="text-gray-600 min-w-0 truncate">{{ item.quantity }}x {{ item.productName }}</span>
-                <span class="text-gray-500 shrink-0">${{ item.unitPrice | number:'1.0-0' }}</span>
+                <span class="text-gray-500 shrink-0">${{ item.unitPrice | number:'1.0-2' }}</span>
               </div>
             }
           </div>
@@ -67,7 +67,7 @@
           <!-- Total -->
           <div class="flex items-center justify-between px-5 py-3 border-t border-gray-50">
             <span class="text-sm font-semibold text-gray-500">Total</span>
-            <span class="text-base font-bold text-evergreen">${{ order.totalAmount | number:'1.0-0' }}</span>
+            <span class="text-base font-bold text-evergreen">${{ order.totalAmount | number:'1.0-2' }}</span>
           </div>
 
           <!-- Pickup code (only for Paid orders) -->

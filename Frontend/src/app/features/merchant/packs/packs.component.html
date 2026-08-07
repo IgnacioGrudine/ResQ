@@ -87,8 +87,8 @@
               }
 
               <div class="flex items-baseline flex-wrap gap-x-2 gap-y-1 mt-3">
-                <span class="text-xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-0' }}</span>
-                <span class="text-sm text-gray-300 line-through">${{ p.originalPrice | number:'1.0-0' }}</span>
+                <span class="text-xl font-bold text-evergreen">${{ p.salePrice | number:'1.0-2' }}</span>
+                <span class="text-sm text-gray-300 line-through">${{ p.originalPrice | number:'1.0-2' }}</span>
                 <span class="text-xs font-semibold text-hunter bg-lime/50 px-2 py-0.5 rounded-full">-{{ discountPercent(p) }}%</span>
               </div>
 

@@ -45,12 +45,12 @@
           @for (item of o.items; track item.productName) {
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">{{ item.productName }} × {{ item.quantity }}</span>
-              <span class="font-medium text-gray-800">${{ item.unitPrice * item.quantity | number:'1.0-0' }}</span>
+              <span class="font-medium text-gray-800">${{ item.unitPrice * item.quantity | number:'1.0-2' }}</span>
             </div>
           }
           <div class="border-t border-gray-100 pt-2 flex justify-between text-sm font-bold">
             <span>Total</span>
-            <span class="text-evergreen">${{ o.totalAmount | number:'1.0-0' }}</span>
+            <span class="text-evergreen">${{ o.totalAmount | number:'1.0-2' }}</span>
           </div>
         </div>
       }

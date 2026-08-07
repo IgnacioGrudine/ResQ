@@ -438,8 +438,8 @@ public class MerchantService(
             Kpis =
             [
                 new ReportKpi("Órdenes completadas", inRange.Count(o => o.OrderStatus == OrderStatus.PickedUp).ToString("N0", Es)),
-                new ReportKpi("Ventas brutas (GMV)", "$" + revenue.Sum(o => o.TotalAmount).ToString("N0", Es)),
-                new ReportKpi("Ganancias netas",     "$" + revenue.Sum(o => o.MerchantEarnings).ToString("N0", Es))
+                new ReportKpi("Ventas brutas (GMV)", FormatCurrency(revenue.Sum(o => o.TotalAmount))),
+                new ReportKpi("Ganancias netas",     FormatCurrency(revenue.Sum(o => o.MerchantEarnings)))
             ],
             Columns =
             [
@@ -469,6 +469,13 @@ public class MerchantService(
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
+
+    // "N0" alone silently truncates real cents to whole pesos (e.g. a $0.10 platform fee on
+    // a small order displays as "$0", which reads as "no commission at all" rather than
+    // "a fraction of a peso"). Whole amounts still print without decimals; only a value with
+    // an actual fractional part gets them.
+    private static string FormatCurrency(decimal value) =>
+        "$" + value.ToString(value == Math.Truncate(value) ? "N0" : "N2", Es);
 
     /// <summary>
     /// Resolves an optional date range into a concrete inclusive UTC window. Defaults to the

@@ -52,7 +52,7 @@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-evergreen text-white rounded-2xl p-4 sm:p-5">
           <p class="text-[11px] text-lime/80 uppercase tracking-wide font-semibold">Ganancias del período</p>
-          <p class="text-2xl sm:text-3xl font-bold mt-2 leading-none break-words">${{ d.earnings | number:'1.0-0' }}</p>
+          <p class="text-2xl sm:text-3xl font-bold mt-2 leading-none break-words">${{ d.earnings | number:'1.0-2' }}</p>
           @if (d.earningsGrowthPct === null) {
             <p class="text-xs mt-1.5 flex items-center gap-1 text-lime/70">
               <svg lucideSprout class="w-3.5 h-3.5 shrink-0"></svg>
@@ -74,8 +74,8 @@
         </div>
         <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
           <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ticket promedio</p>
-          <p class="text-2xl sm:text-3xl font-bold mt-2 leading-none text-evergreen break-words">${{ d.averageOrderValue | number:'1.0-0' }}</p>
-          <p class="text-xs text-gray-400 mt-1.5">GMV ${{ d.gmv | number:'1.0-0' }}</p>
+          <p class="text-2xl sm:text-3xl font-bold mt-2 leading-none text-evergreen break-words">${{ d.averageOrderValue | number:'1.0-2' }}</p>
+          <p class="text-xs text-gray-400 mt-1.5">GMV ${{ d.gmv | number:'1.0-2' }}</p>
         </div>
         <div class="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100">
           <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Rating</p>
@@ -97,7 +97,7 @@
                   @for (bar of chartBars(); track bar.label) {
                     <div class="flex-1 min-w-[14px] flex flex-col items-center justify-end h-full group relative">
                       <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
-                        ${{ bar.income | number:'1.0-0' }} · {{ bar.orders }} ord.
+                        ${{ bar.income | number:'1.0-2' }} · {{ bar.orders }} ord.
                       </div>
                       <div class="w-full rounded-t-md transition-all duration-300"
                         [style.height.%]="bar.heightPct"
@@ -155,7 +155,7 @@
                   <tr class="hover:bg-gray-50/60">
                     <td class="px-5 py-3 font-medium text-gray-800">{{ p.name }}</td>
                     <td class="text-right px-3 text-gray-600">{{ p.unitsSold }}</td>
-                    <td class="text-right px-5 font-semibold text-evergreen whitespace-nowrap">${{ p.revenue | number:'1.0-0' }}</td>
+                    <td class="text-right px-5 font-semibold text-evergreen whitespace-nowrap">${{ p.revenue | number:'1.0-2' }}</td>
                   </tr>
                 }
               </tbody>

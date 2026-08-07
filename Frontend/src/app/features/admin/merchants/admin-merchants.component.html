@@ -63,7 +63,7 @@
                 <p class="text-[10px] text-gray-400">Órdenes</p>
               </div>
               <div class="bg-gray-50 rounded-lg py-2">
-                <p class="text-sm font-semibold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</p>
+                <p class="text-sm font-semibold text-evergreen">${{ m.totalRevenue | number:'1.0-2' }}</p>
                 <p class="text-[10px] text-gray-400">Comisión</p>
               </div>
               <div class="bg-gray-50 rounded-lg py-2">
@@ -114,7 +114,7 @@
                   </td>
                   <td class="text-center px-3 text-xs text-gray-500">{{ statusLabel(m.mpConnectionStatus) }}</td>
                   <td class="text-right px-3 text-gray-600">{{ m.totalOrders }}</td>
-                  <td class="text-right px-3 font-semibold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</td>
+                  <td class="text-right px-3 font-semibold text-evergreen">${{ m.totalRevenue | number:'1.0-2' }}</td>
                   <td class="text-right px-3 text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</td>
                   <td class="text-center px-3">
                     @if (m.isActive) {
@@ -186,8 +186,8 @@
         <div class="p-6 flex flex-col gap-5">
           <!-- KPIs -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalGmv | number:'1.0-0' }}</p><p class="text-[10px] text-gray-400 mt-0.5">GMV total</p></div>
-            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalRevenue | number:'1.0-0' }}</p><p class="text-[10px] text-gray-400 mt-0.5">Comisión</p></div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalGmv | number:'1.0-2' }}</p><p class="text-[10px] text-gray-400 mt-0.5">GMV total</p></div>
+            <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">${{ m.totalRevenue | number:'1.0-2' }}</p><p class="text-[10px] text-gray-400 mt-0.5">Comisión</p></div>
             <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</p><p class="text-[10px] text-gray-400 mt-0.5">{{ m.reviewCount }} reseñas</p></div>
             <div class="bg-gray-50 rounded-xl p-3 text-center"><p class="text-lg font-bold text-evergreen">{{ m.activePacks }}</p><p class="text-[10px] text-gray-400 mt-0.5">Packs activos</p></div>
           </div>
@@ -218,7 +218,7 @@
                       <span class="text-gray-700">{{ o.consumerName }}</span>
                       <span class="text-xs text-gray-400 ml-2">{{ formatDate(o.createdAt) }} · {{ o.orderStatus }}</span>
                     </div>
-                    <span class="font-medium text-gray-700">${{ o.totalAmount | number:'1.0-0' }}</span>
+                    <span class="font-medium text-gray-700">${{ o.totalAmount | number:'1.0-2' }}</span>
                   </div>
                 }
               </div>

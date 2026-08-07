@@ -50,22 +50,22 @@
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="bg-evergreen text-white rounded-2xl p-5">
           <p class="text-[11px] text-lime/80 uppercase tracking-wide font-semibold">GMV · ventas brutas</p>
-          <p class="text-3xl font-bold mt-2 leading-none">${{ d.gmv | number:'1.0-0' }}</p>
+          <p class="text-3xl font-bold mt-2 leading-none">${{ d.gmv | number:'1.0-2' }}</p>
           <p class="text-xs text-white/50 mt-1.5">{{ d.totalOrders }} órdenes</p>
         </div>
         <div class="bg-white rounded-2xl p-5 border border-gray-100">
           <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ingresos plataforma</p>
-          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.platformRevenue | number:'1.0-0' }}</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.platformRevenue | number:'1.0-2' }}</p>
           <p class="text-xs text-fern mt-1.5">comisión marketplace</p>
         </div>
         <div class="bg-white rounded-2xl p-5 border border-gray-100">
           <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ganancias comercios</p>
-          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.merchantEarnings | number:'1.0-0' }}</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.merchantEarnings | number:'1.0-2' }}</p>
           <p class="text-xs text-gray-400 mt-1.5">neto a comercios</p>
         </div>
         <div class="bg-white rounded-2xl p-5 border border-gray-100">
           <p class="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Ticket promedio</p>
-          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.averageOrderValue | number:'1.0-0' }}</p>
+          <p class="text-3xl font-bold mt-2 leading-none text-evergreen">${{ d.averageOrderValue | number:'1.0-2' }}</p>
           <p class="text-xs text-gray-400 mt-1.5">por orden</p>
         </div>
       </div>
@@ -126,7 +126,7 @@
                 <div class="flex-1 min-w-0 flex flex-col items-center group relative">
                   <div class="w-full h-44 flex flex-col justify-end">
                     <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
-                      ${{ bar.value | number:'1.0-0' }} · {{ bar.orders }} ord.
+                      ${{ bar.value | number:'1.0-2' }} · {{ bar.orders }} ord.
                     </div>
                     <div class="w-full rounded-t-md transition-all duration-300"
                       [style.height.%]="bar.heightPct"
@@ -172,8 +172,8 @@
                       <span class="text-gray-300 mr-1.5">{{ i + 1 }}.</span>{{ m.businessName }}
                     </td>
                     <td class="text-right px-3 text-gray-600">{{ m.orders }}</td>
-                    <td class="text-right px-3 text-gray-600">${{ m.gmv | number:'1.0-0' }}</td>
-                    <td class="text-right px-3 font-semibold text-evergreen">${{ m.platformRevenue | number:'1.0-0' }}</td>
+                    <td class="text-right px-3 text-gray-600">${{ m.gmv | number:'1.0-2' }}</td>
+                    <td class="text-right px-3 font-semibold text-evergreen">${{ m.platformRevenue | number:'1.0-2' }}</td>
                     <td class="text-right px-5 text-amber-500">{{ m.averageRating | number:'1.1-1' }}★</td>
                   </tr>
                 }
@@ -197,7 +197,7 @@
                 <div>
                   <div class="flex justify-between text-xs mb-1">
                     <span class="font-medium text-gray-600">{{ cat.category }}</span>
-                    <span class="text-gray-400">${{ cat.gmv | number:'1.0-0' }} · {{ cat.orders }}</span>
+                    <span class="text-gray-400">${{ cat.gmv | number:'1.0-2' }} · {{ cat.orders }}</span>
                   </div>
                   <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div class="h-full bg-fern rounded-full" [style.width.%]="cat.widthPct"></div>

@@ -104,13 +104,26 @@ public class ReportCellFormatterTests
     }
 
     [Fact]
-    public void Format_Currency_RoundsToWholeNumber()
+    public void Format_Currency_WhenWholeNumber_OmitsDecimals()
     {
+        // Act
+        var result = Format(1500m, ReportColumnType.Currency);
+
+        // Assert
+        Assert.Equal("$" + 1500m.ToString("N0", Culture), result);
+    }
+
+    [Fact]
+    public void Format_Currency_WhenFractional_ShowsTwoDecimals()
+    {
+        // A $0.10 platform fee rounding away to "$0" reads as "no commission at all" rather
+        // than "a fraction of a peso" -- real cents must stay visible.
+
         // Act
         var result = Format(1500.75m, ReportColumnType.Currency);
 
         // Assert
-        Assert.Equal("$" + 1500.75m.ToString("N0", Culture), result);
+        Assert.Equal("$" + 1500.75m.ToString("N2", Culture), result);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

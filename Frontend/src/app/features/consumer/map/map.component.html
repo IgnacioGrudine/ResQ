@@ -78,7 +78,7 @@
         <!-- Footer: price + packs + CTA -->
         <div class="flex items-center justify-between gap-3 px-4 pb-4">
           <div>
-            <p class="text-evergreen font-bold">desde ${{ m.minSalePrice | number:'1.0-0' }}</p>
+            <p class="text-evergreen font-bold">desde ${{ m.minSalePrice | number:'1.0-2' }}</p>
             <p class="text-gray-400 text-xs">{{ m.activeProductCount }} {{ m.activeProductCount === 1 ? 'pack disponible' : 'packs disponibles' }}</p>
           </div>
           <button (click)="openMerchant(m.id)"
