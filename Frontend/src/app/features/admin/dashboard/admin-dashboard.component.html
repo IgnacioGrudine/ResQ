@@ -98,8 +98,11 @@
         </div>
       </div>
 
-      <!-- ── Activity chart + category breakdown ── -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- ── Activity chart + category breakdown ──
+           items-start: each card sizes to its own content instead of the grid default
+           (stretch) forcing both to match the taller one's height — with a growing
+           category list that used to leave a large empty block under the shorter chart. -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
         <!-- Activity bars -->
         <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-5">
@@ -113,10 +116,10 @@
           </div>
 
           @if (chartBars().length) {
-            <div class="flex items-end gap-0.5">
+            <div class="flex items-end gap-1 border-b border-gray-100">
               @for (bar of chartBars(); track bar.label; let i = $index) {
                 <div class="flex-1 min-w-0 flex flex-col items-center group relative">
-                  <div class="w-full h-36 flex flex-col justify-end">
+                  <div class="w-full h-44 flex flex-col justify-end">
                     <div class="absolute -top-1 opacity-0 group-hover:opacity-100 transition-opacity bg-evergreen text-white text-[10px] rounded px-1.5 py-0.5 whitespace-nowrap z-10">
                       ${{ bar.value | number:'1.0-0' }} · {{ bar.orders }} ord.
                     </div>
@@ -124,8 +127,14 @@
                       [style.height.%]="bar.heightPct"
                       [class]="bar.value === 0 ? 'bg-gray-100' : 'bg-fern hover:bg-evergreen'"></div>
                   </div>
+                </div>
+              }
+            </div>
+            <div class="flex gap-1 mt-1.5">
+              @for (bar of chartBars(); track bar.label; let i = $index) {
+                <div class="flex-1 min-w-0 flex justify-center">
                   @if (i % labelStep() === 0) {
-                    <span class="text-[9px] text-gray-400 mt-1 whitespace-nowrap">{{ bar.label }}</span>
+                    <span class="text-[9px] text-gray-400 whitespace-nowrap">{{ bar.label }}</span>
                   }
                 </div>
               }
