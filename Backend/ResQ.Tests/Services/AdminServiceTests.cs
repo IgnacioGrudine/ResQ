@@ -580,7 +580,7 @@ public class AdminServiceTests
         _admin.Setup(a => a.GetOrdersInRangeAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
               .ReturnsAsync([o1, o2]);
         _reportFactory.Setup(f => f.Create(
-                It.Is<ReportModel>(m => m.Title == "Reporte financiero global" && m.Kpis.Count == 6 && m.Rows.Count == 2),
+                It.Is<ReportModel>(m => m.Title == "Reporte financiero global" && m.Kpis.Count == 7 && m.Rows.Count == 2),
                 ReportFormat.Pdf,
                 It.Is<string>(s => s.StartsWith("resq-reporte-global_"))))
             .Returns(expectedFile);

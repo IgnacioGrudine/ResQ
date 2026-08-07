@@ -269,7 +269,13 @@ public class AdminService(
                 new ReportKpi("GMV (ventas brutas)",   FormatCurrency(revenue.Sum(o => o.TotalAmount))),
                 new ReportKpi("Ingresos de plataforma", FormatCurrency(revenue.Sum(o => o.PlatformFee))),
                 new ReportKpi("Ganancias de comercios", FormatCurrency(revenue.Sum(o => o.MerchantEarnings))),
-                new ReportKpi("Órdenes (no canceladas)", revenue.Count.ToString("N0", Es)),
+                // "Órdenes totales" is shown first so the other three visibly reconcile
+                // against it (no canceladas + canceladas = total). Without it, "no
+                // canceladas" silently includes orders that are Paid but not yet picked
+                // up — a category this report otherwise never surfaces — so readers doing
+                // the math by eye (completadas + canceladas) landed on the wrong total.
+                new ReportKpi("Órdenes totales",          rangeOrders.Count.ToString("N0", Es)),
+                new ReportKpi("Órdenes (no canceladas)",  revenue.Count.ToString("N0", Es)),
                 new ReportKpi("Órdenes completadas",      rangeOrders.Count(o => o.OrderStatus == OrderStatus.PickedUp).ToString("N0", Es)),
                 new ReportKpi("Órdenes canceladas",       rangeOrders.Count(o => o.OrderStatus == OrderStatus.Cancelled).ToString("N0", Es))
             ],
