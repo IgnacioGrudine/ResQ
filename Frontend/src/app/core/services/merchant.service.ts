@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import {
   MerchantDashboard,
   MerchantProduct,
@@ -29,10 +29,14 @@ export class MerchantService {
     return this.http.get<MerchantAnalytics>(`${this.base}/analytics`, { params });
   }
 
-  downloadSalesReport(from: string, to: string, format: ReportFormat): void {
+  // Returns Observable<void> instead of firing-and-forgetting internally, so the caller can
+  // show a loading/disabled state on the export button and surface an error if the request
+  // fails — previously a failed request produced no download and no feedback at all, so the
+  // button just looked broken with no way to tell what happened.
+  downloadSalesReport(from: string, to: string, format: ReportFormat): Observable<void> {
     const params = new HttpParams().set('from', from).set('to', to).set('format', format);
-    this.http.get(`${this.base}/reports/sales`, { params, responseType: 'blob', observe: 'response' })
-      .subscribe(res => {
+    return this.http.get(`${this.base}/reports/sales`, { params, responseType: 'blob', observe: 'response' }).pipe(
+      map(res => {
         const disposition = res.headers.get('Content-Disposition') ?? '';
         const match = /filename="?([^"]+)"?/.exec(disposition);
         const fallback = `resq-ventas.${format === 'Excel' ? 'xlsx' : 'pdf'}`;
@@ -44,7 +48,8 @@ export class MerchantService {
         anchor.click();
         anchor.remove();
         URL.revokeObjectURL(objectUrl);
-      });
+      })
+    );
   }
 
   // ── Packs ──

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import {
   AdminDashboard,
   AdminMerchantDetail,
@@ -59,35 +59,42 @@ export class AdminService {
   }
 
   // ── Reports (file downloads) ──
-  downloadGlobalReport(from: string, to: string, format: ReportFormat): void {
-    this.downloadReport(`${this.base}/reports/global`, { from, to, format });
+  // Each returns Observable<void> rather than firing-and-forgetting internally, so the
+  // caller can show a loading/disabled state on its own export button and — critically —
+  // surface an error if the request fails. Previously a failed request (auth hiccup, no
+  // data in range, server error) produced no download and no feedback whatsoever: the
+  // button just looked like it did nothing.
+  downloadGlobalReport(from: string, to: string, format: ReportFormat): Observable<void> {
+    return this.downloadReport(`${this.base}/reports/global`, { from, to, format });
   }
 
-  downloadRankingReport(from: string, to: string, format: ReportFormat): void {
-    this.downloadReport(`${this.base}/reports/merchants-ranking`, { from, to, format });
+  downloadRankingReport(from: string, to: string, format: ReportFormat): Observable<void> {
+    return this.downloadReport(`${this.base}/reports/merchants-ranking`, { from, to, format });
   }
 
-  downloadMerchantReport(merchantId: number, from: string, to: string, format: ReportFormat): void {
-    this.downloadReport(`${this.base}/reports/merchants/${merchantId}`, { from, to, format });
+  downloadMerchantReport(merchantId: number, from: string, to: string, format: ReportFormat): Observable<void> {
+    return this.downloadReport(`${this.base}/reports/merchants/${merchantId}`, { from, to, format });
   }
 
   /**
    * Requests a report as a binary blob (so the JWT interceptor attaches the bearer token)
    * and triggers a browser download with the filename returned in Content-Disposition.
    */
-  private downloadReport(url: string, query: { from: string; to: string; format: ReportFormat }): void {
+  private downloadReport(url: string, query: { from: string; to: string; format: ReportFormat }): Observable<void> {
     let params = new HttpParams()
       .set('from', query.from)
       .set('to', query.to)
       .set('format', query.format);
 
-    this.http.get(url, { params, responseType: 'blob', observe: 'response' }).subscribe(res => {
-      const blob = res.body!;
-      const disposition = res.headers.get('Content-Disposition') ?? '';
-      const match = /filename="?([^"]+)"?/.exec(disposition);
-      const fallback = `resq-reporte.${query.format === 'Excel' ? 'xlsx' : 'pdf'}`;
-      triggerDownload(blob, match?.[1] ?? fallback);
-    });
+    return this.http.get(url, { params, responseType: 'blob', observe: 'response' }).pipe(
+      map(res => {
+        const blob = res.body!;
+        const disposition = res.headers.get('Content-Disposition') ?? '';
+        const match = /filename="?([^"]+)"?/.exec(disposition);
+        const fallback = `resq-reporte.${query.format === 'Excel' ? 'xlsx' : 'pdf'}`;
+        triggerDownload(blob, match?.[1] ?? fallback);
+      })
+    );
   }
 }
 

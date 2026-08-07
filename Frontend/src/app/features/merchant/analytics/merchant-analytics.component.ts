@@ -25,6 +25,10 @@ export class MerchantAnalyticsComponent implements OnInit {
   readonly loading = signal(true);
   readonly error   = signal<string | null>(null);
 
+  /** Which export format is currently in flight, if any. */
+  readonly downloadingFormat = signal<ReportFormat | null>(null);
+  readonly downloadError     = signal<string | null>(null);
+
   from = isoDaysAgo(30);
   to   = isoToday();
 
@@ -37,7 +41,9 @@ export class MerchantAnalyticsComponent implements OnInit {
       label:     s.day,
       income:    s.income,
       orders:    s.orders,
-      heightPct: s.income === 0 ? 0 : Math.max(Math.round((s.income / max) * 100), 6),
+      // A thin 2% sliver for zero-income days so they read as "no sales that day" instead
+      // of a missing bar that looks like a rendering gap (same fix as the admin dashboard).
+      heightPct: s.income === 0 ? 2 : Math.max(Math.round((s.income / max) * 100), 6),
       showLabel: i % step === 0
     }));
   });
@@ -62,7 +68,15 @@ export class MerchantAnalyticsComponent implements OnInit {
   }
 
   download(format: ReportFormat): void {
-    this.merchant.downloadSalesReport(this.from, this.to, format);
+    this.downloadingFormat.set(format);
+    this.downloadError.set(null);
+    this.merchant.downloadSalesReport(this.from, this.to, format).subscribe({
+      next:  () => this.downloadingFormat.set(null),
+      error: () => {
+        this.downloadingFormat.set(null);
+        this.downloadError.set('No se pudo descargar el reporte. Intentá de nuevo.');
+      }
+    });
   }
 }
 

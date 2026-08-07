@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminMerchantListItem, ReportFormat } from '../../../core/models/admin.models';
 import { ResqSelectComponent } from '../../../shared/ui/select/resq-select.component';
@@ -17,6 +18,10 @@ export class AdminReportsComponent implements OnInit {
 
   readonly merchants = signal<AdminMerchantListItem[]>([]);
 
+  /** Which export is currently in flight, if any — lets each button show its own spinner. */
+  readonly downloading = signal<'global' | 'ranking' | 'merchant' | null>(null);
+  readonly downloadError = signal<string | null>(null);
+
   from = isoDaysAgo(30);
   to   = isoToday();
   selectedMerchantId: number | null = null;
@@ -31,17 +36,29 @@ export class AdminReportsComponent implements OnInit {
   }
 
   global(format: ReportFormat): void {
-    this.admin.downloadGlobalReport(this.from, this.to, format);
+    this.runDownload('global', this.admin.downloadGlobalReport(this.from, this.to, format));
   }
 
   ranking(format: ReportFormat): void {
-    this.admin.downloadRankingReport(this.from, this.to, format);
+    this.runDownload('ranking', this.admin.downloadRankingReport(this.from, this.to, format));
   }
 
   byMerchant(format: ReportFormat): void {
     if (this.selectedMerchantId) {
-      this.admin.downloadMerchantReport(this.selectedMerchantId, this.from, this.to, format);
+      this.runDownload('merchant', this.admin.downloadMerchantReport(this.selectedMerchantId, this.from, this.to, format));
     }
+  }
+
+  private runDownload(which: 'global' | 'ranking' | 'merchant', request: Observable<void>): void {
+    this.downloading.set(which);
+    this.downloadError.set(null);
+    request.subscribe({
+      next:  () => this.downloading.set(null),
+      error: () => {
+        this.downloading.set(null);
+        this.downloadError.set('No se pudo descargar el reporte. Intentá de nuevo.');
+      }
+    });
   }
 }
 

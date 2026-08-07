@@ -40,9 +40,12 @@
     <div class="max-w-5xl mx-auto px-4 md:px-8 py-6 flex flex-col gap-5">
 
       <!-- ── Export buttons ── -->
+      @if (downloadError()) {
+        <p class="text-red-600 text-sm text-right">{{ downloadError() }}</p>
+      }
       <div class="flex justify-end gap-2">
-        <button (click)="download('Pdf')" class="bg-red-50 text-red-600 border border-red-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-red-100 transition-colors">Exportar PDF</button>
-        <button (click)="download('Excel')" class="bg-green-50 text-green-700 border border-green-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-green-100 transition-colors">Exportar Excel</button>
+        <button (click)="download('Pdf')" [disabled]="downloadingFormat() === 'Pdf'" class="bg-red-50 text-red-600 border border-red-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-red-100 transition-colors disabled:opacity-40">{{ downloadingFormat() === 'Pdf' ? 'Generando…' : 'Exportar PDF' }}</button>
+        <button (click)="download('Excel')" [disabled]="downloadingFormat() === 'Excel'" class="bg-green-50 text-green-700 border border-green-200 rounded-lg px-4 py-2 text-sm font-semibold hover:bg-green-100 transition-colors disabled:opacity-40">{{ downloadingFormat() === 'Excel' ? 'Generando…' : 'Exportar Excel' }}</button>
       </div>
 
       <!-- ── KPIs ── -->
