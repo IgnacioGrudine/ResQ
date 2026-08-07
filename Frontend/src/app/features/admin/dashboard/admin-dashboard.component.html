@@ -98,14 +98,19 @@
         </div>
       </div>
 
-      <!-- ── Activity chart + category breakdown ──
-           items-start: each card sizes to its own content instead of the grid default
-           (stretch) forcing both to match the taller one's height — with a growing
-           category list that used to leave a large empty block under the shorter chart. -->
+      <!-- ── Dashboard secondary panels ──
+           Two independent columns, each its own flex stack, rather than two separate
+           grid rows: with a grid row, even after fixing item-stretch the ROW TRACK itself
+           still sizes to its tallest cell, so a short left card left a gap before the next
+           row started. Stacking both left-column cards (and both right-column cards) inside
+           one flex-col each means every column's height is just the sum of its own cards. -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
+        <!-- Left column: activity chart + top merchants -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+
         <!-- Activity bars -->
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-5">
+        <div class="bg-white rounded-2xl shadow-sm p-5">
           <div class="flex items-start justify-between mb-5">
             <div>
               <h3 class="font-bold text-gray-800 flex items-center gap-2">
@@ -144,34 +149,8 @@
           }
         </div>
 
-        <!-- Category distribution -->
-        <div class="bg-white rounded-2xl shadow-sm p-5">
-          <h3 class="font-bold text-gray-800 mb-4">Por categoría</h3>
-          @if (categoryBars().length) {
-            <div class="flex flex-col gap-3">
-              @for (cat of categoryBars(); track cat.category) {
-                <div>
-                  <div class="flex justify-between text-xs mb-1">
-                    <span class="font-medium text-gray-600">{{ cat.category }}</span>
-                    <span class="text-gray-400">${{ cat.gmv | number:'1.0-0' }} · {{ cat.orders }}</span>
-                  </div>
-                  <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-fern rounded-full" [style.width.%]="cat.widthPct"></div>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="text-gray-400 text-sm py-6 text-center">Sin datos.</p>
-          }
-        </div>
-      </div>
-
-      <!-- ── Ranking + alerts ── -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
         <!-- Top merchants -->
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
           <h3 class="font-bold text-gray-800 px-5 pt-5 pb-3 flex items-center gap-2">
             <svg lucideStore class="w-4 h-4 text-fern"></svg> Top comercios por ingresos
           </h3>
@@ -204,6 +183,32 @@
             <p class="text-gray-400 text-sm px-5 py-8 text-center">Sin ventas en el período.</p>
           }
         </div>
+        </div>
+
+        <!-- Right column: category breakdown + alerts -->
+        <div class="flex flex-col gap-4">
+
+        <!-- Category distribution -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-bold text-gray-800 mb-4">Por categoría</h3>
+          @if (categoryBars().length) {
+            <div class="flex flex-col gap-3">
+              @for (cat of categoryBars(); track cat.category) {
+                <div>
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="font-medium text-gray-600">{{ cat.category }}</span>
+                    <span class="text-gray-400">${{ cat.gmv | number:'1.0-0' }} · {{ cat.orders }}</span>
+                  </div>
+                  <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-fern rounded-full" [style.width.%]="cat.widthPct"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-gray-400 text-sm py-6 text-center">Sin datos.</p>
+          }
+        </div>
 
         <!-- Alerts -->
         <div class="bg-white rounded-2xl shadow-sm p-5">
@@ -228,6 +233,7 @@
               <p class="text-gray-400 text-sm">Todo en orden, sin alertas.</p>
             </div>
           }
+        </div>
         </div>
       </div>
 
